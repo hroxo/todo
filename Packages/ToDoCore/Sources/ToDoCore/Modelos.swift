@@ -116,6 +116,8 @@ public final class Item {
     public var expiradoEm: Date?
     public var concluidoEm: Date?
     public var ordem: Int
+    /// Descrição curta do item principal (especificação 4.6). Vazia nos subtópicos.
+    public var nota: String?
 
     public var lista: Lista?
     public var pai: Item?
@@ -164,13 +166,16 @@ public final class Item {
     /// A lista a que o item pertence, também para subtópicos.
     public var listaEfetiva: Lista? { pai?.lista ?? lista }
 
-    /// "2/4 subtópicos · 2 fotos", ou o tipo quando não há subtópicos.
+    /// "2/4 subtópicos · descrição · 2 fotos", ou o tipo quando não há subtópicos.
     public var resumo: String {
         var partes: [String] = []
         if subtopicos.isEmpty {
             partes.append(tipo == .tarefa ? "Tarefa" : "Nota rápida")
         } else {
             partes.append("\(subtopicosFeitos)/\(subtopicos.count) subtópicos")
+        }
+        if nota != nil {
+            partes.append("descrição")
         }
         switch fotos.count {
         case 0: break

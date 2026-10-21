@@ -53,6 +53,7 @@ enum Demo {
             }
             _ = try? antes.adicionarFoto(foto(.systemBlue), a: roadmap)
             _ = try? antes.adicionarFoto(foto(.systemOrange), a: roadmap)
+            antes.definirNota(roadmap, "Focar nas dependências com a equipa de dados. O Pedro quer resposta até sexta.")
         }
         _ = item("Responder ao fornecedor", trabalho, horas: 1)
         if let demo = item("Preparar demo de sexta", trabalho, horas: 56) {

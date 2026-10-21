@@ -9,8 +9,23 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public var diasRetencaoConcluidos = 7
     public var horaNotificacao = 9
     public var minutoNotificacao = 0
+    public var avisosAtivos = true
 
     public init() {}
+
+    /// Campos em falta (gravados por uma versão anterior) ficam com a predefinição.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let base = Definicoes()
+        diasExpiracao = try c.decodeIfPresent(Int.self, forKey: .diasExpiracao) ?? base.diasExpiracao
+        diasManterCurto = try c.decodeIfPresent(Int.self, forKey: .diasManterCurto) ?? base.diasManterCurto
+        diasManterLongo = try c.decodeIfPresent(Int.self, forKey: .diasManterLongo) ?? base.diasManterLongo
+        diasRetencaoExpirados = try c.decodeIfPresent(Int.self, forKey: .diasRetencaoExpirados) ?? base.diasRetencaoExpirados
+        diasRetencaoConcluidos = try c.decodeIfPresent(Int.self, forKey: .diasRetencaoConcluidos) ?? base.diasRetencaoConcluidos
+        horaNotificacao = try c.decodeIfPresent(Int.self, forKey: .horaNotificacao) ?? base.horaNotificacao
+        minutoNotificacao = try c.decodeIfPresent(Int.self, forKey: .minutoNotificacao) ?? base.minutoNotificacao
+        avisosAtivos = try c.decodeIfPresent(Bool.self, forKey: .avisosAtivos) ?? base.avisosAtivos
+    }
 
     private static let chave = "definicoes"
 

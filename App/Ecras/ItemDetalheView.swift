@@ -16,6 +16,8 @@ struct ItemDetalheView: View {
 
     @State private var titulo = ""
     @FocusState private var tituloFocado: Bool
+    @State private var nota = ""
+    @FocusState private var notaFocada: Bool
     @State private var aEditar: Item?
     @State private var aApagar: Item?
     @State private var sugerirConcluir = false
@@ -55,6 +57,8 @@ struct ItemDetalheView: View {
                         }
                     }
 
+                descricao
+
                 secaoFotos
                 secaoSubtopicos
             }
@@ -89,7 +93,7 @@ struct ItemDetalheView: View {
                 }
 
                 Menu {
-                    MenuAcoesItem(item: item, listas: listas, aEditar: $aEditar, aApagar: $aApagar, completo: false)
+                    MenuAcoesItem(item: item, listas: listas, aEditar: $aEditar, aApagar: $aApagar, completo: false, aConcluir: concluir)
                 } label: {
                     Image(systemName: "ellipsis")
                 }
@@ -112,10 +116,21 @@ struct ItemDetalheView: View {
         .fullScreenCover(item: $fotoAberta) { foto in
             VisualizadorFoto(dados: foto.dados)
         }
-        .onAppear { titulo = item.titulo }
+        .onAppear {
+            titulo = item.titulo
+            nota = item.nota ?? ""
+        }
+        .onDisappear {
+            guard !item.isDeleted, item.modelContext != nil else { return }
+            guardarTitulo()
+            tarefas.definirNota(item, nota)
+        }
         .onChange(of: item.titulo) { _, novo in titulo = novo }
         .onChange(of: tituloFocado) { _, focado in
             if !focado { guardarTitulo() }
+        }
+        .onChange(of: notaFocada) { _, focada in
+            if !focada { tarefas.definirNota(item, nota) }
         }
         .onChange(of: selecaoFotos) { _, selecao in
             guard !selecao.isEmpty else { return }
@@ -176,6 +191,21 @@ struct ItemDetalheView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    /// Descrição curta do ponto (2–3 linhas), logo a seguir ao título.
+    private var descricao: some View {
+        TextField("Acrescentar descrição", text: $nota, axis: .vertical)
+            .font(.body)
+            .foregroundStyle(.secondary)
+            .lineLimit(1...3)
+            .focused($notaFocada)
+            .onChange(of: nota) { _, novo in
+                if novo.count > Tarefas.maxDescricao {
+                    nota = String(novo.prefix(Tarefas.maxDescricao))
+                }
+            }
+            .padding(.top, -10)
     }
 
     private var secaoFotos: some View {

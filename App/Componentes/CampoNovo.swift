@@ -13,10 +13,15 @@ struct CampoNovo: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "plus.circle.fill")
-                .font(.title2)
-                .foregroundStyle(cor)
-                .accessibilityHidden(true)
+            // Tocar no + também guarda, além do botão do teclado.
+            Button(action: submeter) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(cor)
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Adicionar")
             TextField(placeholder, text: $texto)
                 .focused($focado)
                 .submitLabel(.done)

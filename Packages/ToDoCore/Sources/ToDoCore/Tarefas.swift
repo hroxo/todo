@@ -24,6 +24,8 @@ public final class Tarefas {
         ("Pessoal", .roxo, "person.fill"),
     ]
     public static let maxFotos = 4
+    /// A descrição é curta: 2 a 3 linhas no ecrã.
+    public static let maxDescricao = 200
     /// O iOS guarda no máximo 64 notificações pendentes.
     public static let maxAvisos = 60
 
@@ -123,6 +125,17 @@ public final class Tarefas {
 
     public func editarTitulo(_ item: Item, para titulo: String) throws {
         item.titulo = try limpo(titulo)
+        registarAcao(em: item)
+    }
+
+    /// Escreve, muda ou apaga (texto vazio) a descrição curta de um item principal
+    /// (especificação 4.6). Os subtópicos não têm descrição. Conta como ação quando muda.
+    public func definirNota(_ item: Item, _ texto: String) {
+        guard !item.ehSubtopico else { return }
+        let limpo = String(texto.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.maxDescricao))
+        let nova = limpo.isEmpty ? nil : limpo
+        guard nova != item.nota else { return }
+        item.nota = nova
         registarAcao(em: item)
     }
 
@@ -287,6 +300,7 @@ public final class Tarefas {
     /// Avisos a agendar: 24 horas antes de cada item ativo expirar, os mais próximos primeiro.
     /// Um aviso que calharia entre as 22:00 e as 08:00 passa para a hora das notificações.
     public func planoAvisos() throws -> [Aviso] {
+        guard definicoes.avisosAtivos else { return [] }
         let agora = relogio.agora
         let avisos: [Aviso] = try itensPrincipais().compactMap { item in
             guard item.estado == .ativo, !item.fixado, let limite = item.expiraEm else { return nil }

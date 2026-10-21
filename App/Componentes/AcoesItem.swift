@@ -9,8 +9,10 @@ struct MenuAcoesItem: View {
     let listas: [Lista]
     @Binding var aEditar: Item?
     @Binding var aApagar: Item?
-    /// Falso no Detalhe, onde Fixar, Concluir e Manter já têm botões próprios.
+    /// Falso no Detalhe, onde Fixar e Manter já têm botões próprios.
     var completo = true
+    /// Concluir a partir do Detalhe (fecha o ecrã); na lista conclui no lugar.
+    var aConcluir: () -> Void = {}
 
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
@@ -43,6 +45,14 @@ struct MenuAcoesItem: View {
                 tarefas.definirFixado(item, !item.fixado)
             } label: {
                 Label(item.fixado ? "Desafixar" : "Fixar", systemImage: item.fixado ? "pin.slash" : "pin")
+            }
+        }
+
+        if !completo && item.estado == .ativo {
+            Button {
+                aConcluir()
+            } label: {
+                Label("Concluir", systemImage: "checkmark.circle")
             }
         }
 
