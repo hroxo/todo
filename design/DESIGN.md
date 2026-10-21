@@ -9,7 +9,8 @@ Este documento fixa as decisões visuais e de interação da v1. Quem implementa
 Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJDAjwnshfj
 
 - Artboards 1–6: Início, Lista, Detalhe + Manter, Captura, Expirados, Personalizar lista. Também: ícone e os 4 estados do Manter.
-- Artboards 7–11 (v1.1): 7 Início — ligar calendário · 8 Início — hoje no calendário · 9 Definições reorganizadas · 10 Detalhe com descrição.
+- Artboards 7–10 (v1.1): 7 Início — ligar calendário · 8 Início — hoje no calendário · 9 Definições reorganizadas · 10 Detalhe com descrição.
+- Artboards 11–14 (v1.2): 11 Início com 6 espaços (pág. 1) e calendário por espaço · 12 página 2 (máx. 8) · 13 Definições › Calendários por espaço · 14 escolher o espaço de um calendário.
 
 ---
 
@@ -253,6 +254,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Ligado (mock 8)**: cabeçalho "HOJE NO CALENDÁRIO" com "Ver semana" à direita; grupo branco com uma linha por evento (58 pt): hora de início e fim, barra vertical de 4 pt na cor do calendário, título (`.body` semibold) e local ou calendário (`.footnote`), ficha vermelha "AGORA" no evento a decorrer e um botão "+" (círculo de 30 pt na cor Fundo da lista de destino, alvo de 44 pt) para criar um ponto a partir do evento.
 - Sem eventos hoje: uma linha "Nada no calendário hoje".
 - Ícones: `calendar`, `plus`. Cores dos calendários: as que o iOS dá a cada calendário.
+
+### 7.12b Espaços com setas e calendário por espaço (mocks 11–14)
+
+- **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 4 espaços, sem setas, como antes.
+- **Máximo de 8**: na última página, "Nova lista" só aparece se houver menos de 8; com 8, aparece a nota "Máximo de 8 espaços".
+- **Hoje no calendário por espaço**: um só grupo branco; dentro, um cabeçalho por espaço (círculo do ícone de 24 pt, nome em `.subheadline` bold, "2 eventos") seguido das linhas dos eventos desse espaço. Calendários sem espaço não aparecem.
+- **Definições › Calendários (mock 13)**: calendários agrupados por conta; cada linha mostra o ponto de cor do calendário, o nome e, à direita, o espaço escolhido (ponto da cor do espaço + nome, ou "Nenhum"). Tocar abre a escolha do espaço (mock 14): lista dos espaços com visto no escolhido e "Nenhum — não aparece no Início".
 
 ### 7.13 Descrição curta e Concluir (mock 10) [Decidido 21/10/2026]
 
