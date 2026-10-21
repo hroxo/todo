@@ -72,7 +72,7 @@ struct InicioView: View {
                 Text(mensagemApagar(lista))
             }
             .task {
-                try? tarefas.criarListasIniciaisSeVazio()
+                _ = try? tarefas.criarListasIniciaisSeVazio()
             }
         }
     }
