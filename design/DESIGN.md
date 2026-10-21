@@ -259,7 +259,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 - **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 4 espaços, sem setas, como antes.
 - **Máximo de 8**: na última página, "Nova lista" só aparece se houver menos de 8; com 8, aparece a nota "Máximo de 8 espaços".
-- **Hoje no calendário por espaço**: um só grupo branco; dentro, um cabeçalho por espaço (círculo do ícone de 24 pt, nome em `.subheadline` bold, "2 eventos") seguido das linhas dos eventos desse espaço. Calendários sem espaço não aparecem.
+- **Hoje no calendário por espaço** [Decidido]: eventos de todos os espaços, num só grupo branco, por hora. Cabeçalho "HOJE NO CALENDÁRIO" com "4 eventos · todos os espaços". Cada linha (62 pt): horas, barra da cor do calendário, título e, por baixo, o espaço (círculo do ícone de 18 pt, nome em `.footnote` semibold) e o local. O "+" fica na cor do espaço e cria o ponto nesse espaço. Calendários sem espaço não aparecem.
+- Imagens dos mocks: `design/mocks/*.png` (geradas com `scripts/mocks.sh` a partir de `design/mocks/html/`).
 - **Definições › Calendários (mock 13)**: calendários agrupados por conta; cada linha mostra o ponto de cor do calendário, o nome e, à direita, o espaço escolhido (ponto da cor do espaço + nome, ou "Nenhum"). Tocar abre a escolha do espaço (mock 14): lista dos espaços com visto no escolhido e "Nenhum — não aparece no Início".
 
 ### 7.13 Descrição curta e Concluir (mock 10) [Decidido 21/10/2026]
