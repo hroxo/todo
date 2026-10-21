@@ -1,0 +1,9 @@
+.DS_Store
+# Gerado pelo XcodeGen a partir do project.yml
+ToDo.xcodeproj/
+# Saídas de compilação
+build/
+.build/
+.swiftpm/
+Payload/
+*.ipa

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "LICENSE"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escolher Xcode
+        run: |
+          echo "Xcodes instalados no runner:"
+          ls -d /Applications/Xcode*.app
+          # Só versões estáveis (Xcode_26.1.app), sem beta/RC; fica a mais recente.
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -E '/Xcode_[0-9]+(\.[0-9]+)*\.app$' | sort -V | tail -1)
+          echo "Escolhido: $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
+
+      - name: Testes do núcleo
+        working-directory: Packages/ToDoCore
+        run: swift test
+
+      - name: Gerar projeto (XcodeGen)
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Compilar sem assinatura
+        run: |
+          xcodebuild build \
+            -project ToDo.xcodeproj \
+            -scheme ToDo \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Empacotar .ipa
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/ToDo.app Payload/
+          zip -qry ToDo.ipa Payload
+          ls -lh ToDo.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ToDo-ipa
+          path: ToDo.ipa
+          retention-days: 14

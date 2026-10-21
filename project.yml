@@ -1,0 +1,33 @@
+# Gerado pelo XcodeGen no CI: `xcodegen generate` cria o ToDo.xcodeproj a partir daqui.
+name: ToDo
+options:
+  bundleIdPrefix: com.hugo
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  ToDoCore:
+    path: Packages/ToDoCore
+
+targets:
+  ToDo:
+    type: application
+    platform: iOS
+    sources: [App]
+    dependencies:
+      - package: ToDoCore
+    settings:
+      base:
+        PRODUCT_NAME: ToDo
+        PRODUCT_BUNDLE_IDENTIFIER: com.hugo.todo
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: ToDo
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+    scheme: {}
