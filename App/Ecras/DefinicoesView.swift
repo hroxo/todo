@@ -35,7 +35,9 @@ struct DefinicoesView: View {
                                     .foregroundStyle(.secondary)
                                     .monospacedDigit()
                             }
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                         .swipeActions(edge: .trailing) {
                             Button {
                                 aApagar = lista
@@ -52,15 +54,19 @@ struct DefinicoesView: View {
                         Tarefas(contexto: contexto).reordenar(ordenadas)
                     }
 
-                    Button {
-                        formulario = .nova
-                    } label: {
-                        Label("Nova lista", systemImage: "plus")
+                    if listas.count < Tarefas.maxListas {
+                        Button {
+                            formulario = .nova
+                        } label: {
+                            Label("Nova lista", systemImage: "plus")
+                        }
                     }
                 } header: {
                     Text("Listas")
                 } footer: {
-                    Text("Toca numa lista para a personalizar. Mantém premido e arrasta para mudar a ordem.")
+                    Text(listas.count < Tarefas.maxListas
+                         ? "Toca numa lista para a personalizar. Mantém premido e arrasta para mudar a ordem."
+                         : "Chegaste ao máximo de \(Tarefas.maxListas) espaços. Apaga um para criar outro.")
                 }
 
                 secaoCalendario
@@ -210,25 +216,32 @@ struct DefinicoesView: View {
     }
 }
 
-/// Escolher os calendários que aparecem no Início, agrupados por conta.
+/// Calendários agrupados por conta, cada um com o seu espaço (mock 13).
 struct CalendariosView: View {
     @Environment(Calendario.self) private var calendario
+    @Query(sort: \Lista.ordem) private var listas: [Lista]
 
     var body: some View {
         let contas = Dictionary(grouping: calendario.calendarios, by: { $0.source.title })
         List {
+            Section {
+            } footer: {
+                Text("Escolhe em que espaço aparece cada calendário. \"Nenhum\" esconde-o do Início.")
+            }
             ForEach(contas.keys.sorted(), id: \.self) { conta in
                 Section(conta) {
                     ForEach(contas[conta] ?? [], id: \.calendarIdentifier) { item in
-                        Toggle(isOn: Binding(
-                            get: { calendario.visivel(item) },
-                            set: { calendario.definir(item, visivel: $0) }
-                        )) {
+                        NavigationLink {
+                            EscolherEspacoView(calendario: item)
+                        } label: {
                             HStack(spacing: 10) {
                                 Circle()
                                     .fill(Color(cgColor: item.cgColor))
                                     .frame(width: 12, height: 12)
                                 Text(item.title)
+                                    .lineLimit(1)
+                                Spacer()
+                                rotuloEspaco(item)
                             }
                         }
                     }
@@ -236,7 +249,6 @@ struct CalendariosView: View {
             }
         }
         .navigationTitle("Calendários")
-        .navigationBarTitleDisplayMode(.inline)
         .overlay {
             if calendario.calendarios.isEmpty {
                 ContentUnavailableView(
@@ -246,6 +258,86 @@ struct CalendariosView: View {
                 )
             }
         }
+    }
+
+    @ViewBuilder
+    private func rotuloEspaco(_ item: EKCalendar) -> some View {
+        if let id = calendario.espaco(de: item.calendarIdentifier), let lista = listas.first(where: { $0.id == id }) {
+            HStack(spacing: 6) {
+                Circle().fill(lista.cor.base).frame(width: 10, height: 10)
+                Text(lista.nome)
+            }
+            .foregroundStyle(.secondary)
+        } else {
+            Text("Nenhum")
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Escolher o espaço de um calendário (mock 14).
+struct EscolherEspacoView: View {
+    let calendario: EKCalendar
+
+    @Environment(Calendario.self) private var leitor
+    @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Lista.ordem) private var listas: [Lista]
+
+    var body: some View {
+        let atual = leitor.espaco(de: calendario.calendarIdentifier)
+        List {
+            Section {
+                ForEach(listas) { lista in
+                    Button {
+                        escolher(lista.id)
+                    } label: {
+                        HStack(spacing: 12) {
+                            IconeListaView(lista: lista, tamanho: 30)
+                            Text(lista.nome)
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                            if atual == lista.id {
+                                Image(systemName: "checkmark")
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                    }
+                    .accessibilityAddTraits(atual == lista.id ? .isSelected : [])
+                }
+                Button {
+                    escolher(nil)
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .strokeBorder(Color(.systemGray3), style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
+                            .frame(width: 30, height: 30)
+                        Text("Nenhum")
+                            .foregroundStyle(Color.primary)
+                        Spacer()
+                        if atual == nil {
+                            Image(systemName: "checkmark")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.accentColor)
+                        } else {
+                            Text("Não aparece no Início")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Mostrar no espaço")
+            }
+        }
+        .navigationTitle(calendario.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .sensoryFeedback(.selection, trigger: atual)
+    }
+
+    private func escolher(_ espaco: UUID?) {
+        leitor.definir(calendario.calendarIdentifier, espaco: espaco)
+        dismiss()
     }
 }
 

@@ -3,15 +3,15 @@ import SwiftUI
 import ToDoCore
 import UIKit
 
-/// Fundo do Início (DESIGN.md 7.12, mocks 7 e 8): o cartão para ligar o calendário ou os
-/// eventos de hoje, com um "+" que cria um ponto a partir de cada evento.
+/// Fundo do Início (DESIGN.md 7.12 e 7.12b, mocks 7, 8 e 11): o cartão para ligar o calendário
+/// ou os eventos de hoje de todos os espaços, com o espaço por baixo de cada um e um "+" que
+/// cria o ponto nesse espaço.
 struct SecaoCalendario: View {
     @Environment(Calendario.self) private var calendario
     @Environment(EstadoApp.self) private var estado
     @Environment(\.modelContext) private var contexto
     @Environment(\.openURL) private var abrirURL
     @Query(sort: \Lista.ordem) private var listas: [Lista]
-    @AppStorage("ultimaListaId") private var ultimaListaId = ""
     @AppStorage("mostrarCalendario") private var mostrar = true
 
     @State private var confirmacao: String?
@@ -136,7 +136,15 @@ struct SecaoCalendario: View {
     private var hoje: some View {
         TimelineView(.periodic(from: .now, by: 60)) { contexto in
             VStack(alignment: .leading, spacing: 8) {
-                TituloSecao(texto: "Hoje no calendário")
+                HStack {
+                    TituloSecao(texto: "Hoje no calendário")
+                    Spacer()
+                    if !calendario.eventos.isEmpty {
+                        Text(calendario.eventos.count == 1 ? "1 evento" : "\(calendario.eventos.count) eventos · todos os espaços")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 if let confirmacao {
                     Label(confirmacao, systemImage: "checkmark.circle.fill")
@@ -147,10 +155,12 @@ struct SecaoCalendario: View {
 
                 VStack(spacing: 0) {
                     if calendario.eventos.isEmpty {
-                        Text("Nada no calendário hoje")
+                        Text("Nada no calendário hoje. Em Definições › Calendários escolhes o espaço de cada calendário.")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
                             .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
                     }
                     ForEach(calendario.eventos) { evento in
                         linha(evento, agora: contexto.date)
@@ -200,46 +210,56 @@ struct SecaoCalendario: View {
                             .background(Color.red, in: .rect(cornerRadius: 6))
                     }
                 }
-                if !evento.detalhe.isEmpty {
-                    Text(evento.detalhe)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                if let espaco = espaco(de: evento) {
+                    HStack(spacing: 6) {
+                        IconeListaView(lista: espaco, tamanho: 18)
+                        Text(espaco.nome)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary.opacity(0.8))
+                        if !evento.detalhe.isEmpty {
+                            Text("· \(evento.detalhe)")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.footnote)
+                    .lineLimit(1)
                 }
             }
 
             Spacer(minLength: 0)
 
-            botaoCriar(evento)
+            if let espaco = espaco(de: evento) {
+                botaoCriar(evento, em: espaco)
+            }
         }
         .padding(.leading, 16)
         .padding(.trailing, 4)
-        .frame(minHeight: 58)
+        .frame(minHeight: 62)
         .accessibilityElement(children: .contain)
     }
 
-    /// Toque: cria na última lista usada. Pressão longa: escolher a lista.
-    private func botaoCriar(_ evento: EventoHoje) -> some View {
-        let destino = listaPorDefeito
-        return Menu {
+    /// Toque: cria o ponto no espaço do evento. Pressão longa: escolher outro espaço.
+    private func botaoCriar(_ evento: EventoHoje, em espaco: Lista) -> some View {
+        Menu {
             ForEach(listas) { lista in
                 Button("Criar em \(lista.nome)") { criar(evento, em: lista) }
             }
         } label: {
             Image(systemName: "plus")
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(destino?.cor.tinta ?? .accentColor)
+                .foregroundStyle(espaco.cor.tinta)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(destino?.cor.fundo ?? Color(.tertiarySystemFill)))
+                .background(Circle().fill(espaco.cor.fundo))
                 .frame(width: 44, height: 44)
         } primaryAction: {
-            if let destino { criar(evento, em: destino) }
+            criar(evento, em: espaco)
         }
-        .accessibilityLabel("Criar ponto a partir de \(evento.titulo)")
+        .accessibilityLabel("Criar ponto em \(espaco.nome) a partir de \(evento.titulo)")
     }
 
-    private var listaPorDefeito: Lista? {
-        listas.first { $0.id.uuidString == ultimaListaId } ?? listas.first
+    private func espaco(de evento: EventoHoje) -> Lista? {
+        guard let id = calendario.espaco(de: evento.calendarioId) else { return nil }
+        return listas.first { $0.id == id }
     }
 
     private func criar(_ evento: EventoHoje, em lista: Lista) {

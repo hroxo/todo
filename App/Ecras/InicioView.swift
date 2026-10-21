@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Ecrã Início (mock "Início"): data, aviso de Expirados, grelha de cartões das listas e os
-/// itens que expiram hoje.
+/// Ecrã Início (mocks 1 e 11): data, aviso de Expirados, grelha de espaços (páginas de 4 com
+/// setas quando há mais de 4), os itens que expiram hoje e o calendário.
 struct InicioView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
@@ -15,6 +15,20 @@ struct InicioView: View {
     @AppStorage("mostrarCalendario") private var mostrarCalendario = true
     @State private var formulario: PersonalizarListaView.Modo?
     @State private var aApagar: Lista?
+    @State private var pagina = 0
+
+    /// Um lugar da grelha: um espaço ou o cartão "Nova lista".
+    private enum Celula: Identifiable {
+        case lista(Lista)
+        case nova
+
+        var id: String {
+            switch self {
+            case .lista(let lista): lista.id.uuidString
+            case .nova: "nova"
+            }
+        }
+    }
 
     private let colunas = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
@@ -42,32 +56,7 @@ struct InicioView: View {
                         avisoExpirados
                     }
 
-                    LazyVGrid(columns: colunas, spacing: 12) {
-                        ForEach(listas) { lista in
-                            NavigationLink(value: lista) {
-                                CartaoLista(lista: lista, agora: agora)
-                            }
-                            .buttonStyle(.plain)
-                            .contextMenu {
-                                Button {
-                                    formulario = .editar(lista)
-                                } label: {
-                                    Label("Personalizar lista", systemImage: "paintbrush")
-                                }
-                                Button(role: .destructive) {
-                                    aApagar = lista
-                                } label: {
-                                    Label("Apagar lista", systemImage: "trash")
-                                }
-                            }
-                        }
-                        Button {
-                            formulario = .nova
-                        } label: {
-                            CartaoNovaLista()
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    grelhaEspacos(agora: agora)
 
                     if !hoje.isEmpty {
                         TituloSecao(texto: "Expiram hoje")
@@ -125,6 +114,130 @@ struct InicioView: View {
                 Text(mensagemApagar(lista))
             }
         }
+    }
+
+    private func celulas() -> [Celula] {
+        var resultado = listas.map { Celula.lista($0) }
+        if listas.count < Tarefas.maxListas {
+            resultado.append(.nova)
+        }
+        return resultado
+    }
+
+    @ViewBuilder
+    private func grelhaEspacos(agora: Date) -> some View {
+        let paginas = Espacos.paginas(celulas(), espacos: listas.count)
+        if paginas.count <= 1 {
+            LazyVGrid(columns: colunas, spacing: 12) {
+                ForEach(paginas.first ?? []) { celula($0, agora: agora, altura: 148) }
+            }
+        } else {
+            VStack(spacing: 10) {
+                TabView(selection: $pagina) {
+                    ForEach(paginas.indices, id: \.self) { indice in
+                        LazyVGrid(columns: colunas, spacing: 12) {
+                            ForEach(paginas[indice]) { celula($0, agora: agora, altura: 128) }
+                        }
+                        .padding(.vertical, 8)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .tag(indice)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .frame(height: 128 * 2 + 12 + 16)
+
+                controlosPagina(total: paginas.count)
+
+                if listas.count >= Tarefas.maxListas {
+                    Text("Máximo de \(Tarefas.maxListas) espaços")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .onChange(of: paginas.count) { _, total in
+                if pagina >= total { pagina = max(0, total - 1) }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func celula(_ celula: Celula, agora: Date, altura: CGFloat) -> some View {
+        switch celula {
+        case .lista(let lista):
+            NavigationLink(value: lista) {
+                CartaoLista(lista: lista, agora: agora, altura: altura)
+            }
+            .buttonStyle(.plain)
+            .contextMenu {
+                Button {
+                    formulario = .editar(lista)
+                } label: {
+                    Label("Personalizar lista", systemImage: "paintbrush")
+                }
+                Button(role: .destructive) {
+                    aApagar = lista
+                } label: {
+                    Label("Apagar lista", systemImage: "trash")
+                }
+            }
+        case .nova:
+            Button {
+                formulario = .nova
+            } label: {
+                CartaoNovaLista(altura: altura)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    /// Setas ‹ › de vidro, pontos de página e "Espaços 1–4 de 6" (DESIGN.md 7.12b).
+    private func controlosPagina(total: Int) -> some View {
+        HStack {
+            Button {
+                withAnimation { pagina = max(0, pagina - 1) }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.headline)
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .disabled(pagina == 0)
+            .accessibilityLabel("Espaços anteriores")
+
+            Spacer()
+
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    ForEach(0..<total, id: \.self) { indice in
+                        Circle()
+                            .fill(indice == pagina ? Color.primary : Color(.systemGray3))
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                Text(Espacos.rotuloPagina(pagina, espacos: listas.count))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Espacos.rotuloPagina(pagina, espacos: listas.count))
+
+            Spacer()
+
+            Button {
+                withAnimation { pagina = min(total - 1, pagina + 1) }
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.headline)
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .disabled(pagina >= total - 1)
+            .accessibilityLabel("Espaços seguintes")
+        }
+        .sensoryFeedback(.selection, trigger: pagina)
     }
 
     private var avisoExpirados: some View {

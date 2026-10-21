@@ -5,6 +5,8 @@ import ToDoCore
 struct CartaoLista: View {
     let lista: Lista
     let agora: Date
+    /// 148 pt; 128 pt quando os espaços estão em páginas.
+    var altura: CGFloat = 148
 
     var body: some View {
         let cor = lista.cor
@@ -31,7 +33,7 @@ struct CartaoLista: View {
         }
         .foregroundStyle(cor.texto)
         .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 148, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: altura, alignment: .leading)
         .background(cor.base, in: .rect(cornerRadius: 22, style: .continuous))
         .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
@@ -42,6 +44,8 @@ struct CartaoLista: View {
 
 /// Último lugar da grelha: abre Personalizar lista para criar uma nova.
 struct CartaoNovaLista: View {
+    var altura: CGFloat = 148
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "plus")
@@ -50,7 +54,7 @@ struct CartaoNovaLista: View {
                 .font(.subheadline.weight(.semibold))
         }
         .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, minHeight: 148)
+        .frame(maxWidth: .infinity, minHeight: altura)
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(Color(.systemGray3), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))

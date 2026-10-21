@@ -37,8 +37,8 @@ print(candidatos[0][2], candidatos[0][0], file=sys.stderr)
 if [ "${1:-}" = "arrancar" ]; then
   UDID=$(escolher_simulador)
   echo "$UDID" > "$FICHEIRO_UDID"
-  echo "A arrancar o simulador $UDID"
-  xcrun simctl boot "$UDID" || true
+  echo "A arrancar o simulador $UDID (em segundo plano)"
+  nohup xcrun simctl boot "$UDID" > /dev/null 2>&1 &
   exit 0
 fi
 

@@ -7,6 +7,8 @@ public enum ErroTarefas: Error, Equatable {
     case subtopicoDeSubtopico
     /// No máximo `Tarefas.maxFotos` fotos por item (DESIGN.md 7.7).
     case limiteFotos
+    /// No máximo `Tarefas.maxListas` espaços (especificação 4.4).
+    case limiteListas
 }
 
 /// Notificação a agendar para um item que vai expirar (especificação 6).
@@ -24,6 +26,8 @@ public final class Tarefas {
         ("Pessoal", .roxo, "person.fill"),
     ]
     public static let maxFotos = 4
+    /// Máximo de espaços (listas); com mais de 4, o Início mostra páginas com setas.
+    public static let maxListas = 8
     /// A descrição é curta: 2 a 3 linhas no ecrã.
     public static let maxDescricao = 200
     /// O iOS guarda no máximo 64 notificações pendentes.
@@ -65,7 +69,9 @@ public final class Tarefas {
     @discardableResult
     public func criarLista(nome: String, cor: CorLista, icone: String = IconesLista.padrao, emoji: String? = nil) throws -> Lista {
         let nome = try limpo(nome)
-        let ordem = (try listas().map(\.ordem).max() ?? -1) + 1
+        let existentes = try listas()
+        guard existentes.count < Self.maxListas else { throw ErroTarefas.limiteListas }
+        let ordem = (existentes.map(\.ordem).max() ?? -1) + 1
         let lista = Lista(nome: nome, cor: cor, ordem: ordem, icone: icone, emoji: emojiLimpo(emoji))
         contexto.insert(lista)
         return lista

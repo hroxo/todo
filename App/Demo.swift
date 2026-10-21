@@ -29,7 +29,10 @@ enum Demo {
         let t = tarefas(contexto, horasAtras: 0)
         guard let trabalho = try? t.criarLista(nome: "Trabalho", cor: .azul, icone: "briefcase.fill"),
               let pessoal = try? t.criarLista(nome: "Pessoal", cor: .roxo, icone: "person.fill"),
-              let ideias = try? t.criarLista(nome: "Ideias", cor: .amarelo, icone: "lightbulb.fill")
+              let ideias = try? t.criarLista(nome: "Ideias", cor: .amarelo, icone: "lightbulb.fill"),
+              let casa = try? t.criarLista(nome: "Casa", cor: .verde, icone: "house.fill"),
+              let ginasio = try? t.criarLista(nome: "Ginásio", cor: .vermelho, icone: "dumbbell.fill"),
+              let viagem = try? t.criarLista(nome: "Viagem", cor: .ceu, icone: "airplane")
         else { return }
 
         func item(_ titulo: String, _ lista: Lista, horas: Double, tipo: TipoItem = .tarefa) -> Item? {
@@ -79,6 +82,12 @@ enum Demo {
         // Ideias
         _ = item("Ideia: métrica de abandono", ideias, horas: 62, tipo: .notaRapida)
         _ = item("App de receitas com fotos", ideias, horas: 8, tipo: .notaRapida)
+
+        // Mais espaços, para as setas de página.
+        _ = item("Trocar a lâmpada da cozinha", casa, horas: 12)
+        _ = item("Pagar o condomínio", casa, horas: 40)
+        _ = item("Renovar inscrição", ginasio, horas: 20)
+        _ = item("Reservar hotel em Lisboa", viagem, horas: 6)
 
         // Expirados: criados há mais de 3 dias, expiram na avaliação abaixo.
         _ = item("Comprar pilhas para o comando", pessoal, horas: 24 * 4)

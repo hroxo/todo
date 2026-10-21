@@ -18,7 +18,7 @@ struct ToDoApp: App {
     static let notificacoes = Notificacoes(contentor: contentor)
 
     @State private var estado = EstadoApp(notificacoes: ToDoApp.notificacoes)
-    @State private var calendario = Calendario()
+    @State private var calendario = Calendario(contentor: ToDoApp.contentor)
     @Environment(\.scenePhase) private var fase
     @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
 
