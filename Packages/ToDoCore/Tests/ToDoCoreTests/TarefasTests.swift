@@ -2,43 +2,7 @@ import XCTest
 import SwiftData
 @testable import ToDoCore
 
-final class RelogioFixo: Relogio {
-    var agora: Date
-    init(_ agora: Date) { self.agora = agora }
-}
-
-final class TarefasTests: XCTestCase {
-    private var contentor: ModelContainer!
-    private var contexto: ModelContext!
-    private var relogio: RelogioFixo!
-    private var calendario: Calendar!
-    private var tarefas: Tarefas!
-
-    // 21/10/2026 10:00 em Lisboa.
-    private let inicio = Date(timeIntervalSince1970: 1_792_573_200)
-
-    override func setUpWithError() throws {
-        contentor = try BaseDados.contentor(emMemoria: true)
-        contexto = ModelContext(contentor)
-        relogio = RelogioFixo(inicio)
-        var calendario = Calendar(identifier: .gregorian)
-        calendario.timeZone = TimeZone(identifier: "Europe/Lisbon")!
-        self.calendario = calendario
-        tarefas = Tarefas(contexto: contexto, relogio: relogio, calendario: calendario)
-    }
-
-    private func dias(_ n: Int, desde data: Date) -> Date {
-        calendario.date(byAdding: .day, value: n, to: data)!
-    }
-
-    private func avancar(dias n: Int) {
-        relogio.agora = dias(n, desde: relogio.agora)
-    }
-
-    private func contarItens() throws -> Int {
-        try contexto.fetchCount(FetchDescriptor<Item>())
-    }
-
+final class TarefasTests: BaseTestes {
     // MARK: - Listas
 
     func testListasIniciaisCriadasUmaSoVez() throws {
@@ -48,6 +12,27 @@ final class TarefasTests: XCTestCase {
         let listas = try tarefas.listas()
         XCTAssertEqual(listas.map(\.nome), ["Trabalho", "Pessoal"])
         XCTAssertEqual(listas.map(\.ordem), [0, 1])
+        XCTAssertEqual(listas.map(\.cor), [.azul, .roxo])
+        XCTAssertEqual(listas.map(\.icone), ["briefcase.fill", "person.fill"])
+    }
+
+    func testEditarListaComEmoji() throws {
+        let lista = try tarefas.criarLista(nome: "Casa", cor: .verde)
+        XCTAssertEqual(lista.icone, IconesLista.padrao)
+        XCTAssertNil(lista.emoji)
+
+        try tarefas.editar(lista, nome: "Casa", cor: .castanho, icone: "house.fill", emoji: " 🏠 ")
+        XCTAssertEqual(lista.cor, .castanho)
+        XCTAssertEqual(lista.emoji, "🏠")
+
+        try tarefas.editar(lista, nome: "Casa", cor: .castanho, icone: "house.fill", emoji: "")
+        XCTAssertNil(lista.emoji)
+    }
+
+    func testCorAntigaDoM1() {
+        XCTAssertEqual(CorLista.deChave("ciano"), .turquesa)
+        XCTAssertEqual(CorLista.deChave("indigo"), .indigo)
+        XCTAssertEqual(CorLista.deChave("inexistente"), .azul)
     }
 
     func testCriarListaFicaNoFim() throws {

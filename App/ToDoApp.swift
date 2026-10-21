@@ -4,7 +4,7 @@ import ToDoCore
 
 @main
 struct ToDoApp: App {
-    let contentor: ModelContainer = {
+    static let contentor: ModelContainer = {
         do {
             return try BaseDados.contentor()
         } catch {
@@ -12,12 +12,42 @@ struct ToDoApp: App {
         }
     }()
 
+    static let notificacoes = Notificacoes(contentor: contentor)
+
+    @State private var estado = EstadoApp(notificacoes: ToDoApp.notificacoes)
+    @Environment(\.scenePhase) private var fase
+    @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
+
+    init() {
+        // Antes de tudo, para o iOS poder entregar as ações das notificações.
+        Self.notificacoes.configurar()
+    }
+
     var body: some Scene {
         WindowGroup {
-            InicioView()
-                // Escuro por defeito (especificação 5.4); a escolha de modo claro vem com as Definições.
-                .preferredColorScheme(.dark)
+            RaizView()
+                .environment(estado)
+                .preferredColorScheme(Aparencia(rawValue: aparencia)?.esquema)
+                .task { Self.notificacoes.pedirPermissao() }
         }
-        .modelContainer(contentor)
+        .modelContainer(Self.contentor)
+        .onChange(of: fase) { _, nova in
+            switch nova {
+            case .active: manutencao()
+            case .background: Self.notificacoes.reagendar()
+            default: break
+            }
+        }
+    }
+
+    /// Sempre que a app abre ou volta ao primeiro plano (especificação 4.2).
+    @MainActor
+    private func manutencao() {
+        let contexto = Self.contentor.mainContext
+        let tarefas = Tarefas(contexto: contexto)
+        _ = try? tarefas.criarListasIniciaisSeVazio()
+        _ = try? tarefas.avaliar()
+        try? contexto.save()
+        Self.notificacoes.reagendar()
     }
 }

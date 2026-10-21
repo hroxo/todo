@@ -1,67 +1,87 @@
 import SwiftUI
 import ToDoCore
 
-/// Menu "…" de um item principal (especificação 5.2): Fixar, Editar, Mover, Converter, Apagar.
-/// Editar e Apagar só marcam o item; o alerta e a confirmação vêm de `acoesDeItem`.
-struct MenuItem: View {
+/// Ações de um item principal, para o menu "…" e para o menu de pressão longa (alternativa
+/// aos gestos, especificação 11). Editar e Apagar só marcam o item; o alerta e a confirmação
+/// vêm de `acoesDeItem`.
+struct MenuAcoesItem: View {
     let item: Item
     let listas: [Lista]
     @Binding var aEditar: Item?
     @Binding var aApagar: Item?
+    /// Falso no Detalhe, onde Fixar, Concluir e Manter já têm botões próprios.
+    var completo = true
 
     @Environment(\.modelContext) private var contexto
+    @Environment(EstadoApp.self) private var estado
 
     var body: some View {
-        Menu {
+        let tarefas = Tarefas(contexto: contexto)
+        let definicoes = tarefas.definicoes
+
+        if completo {
+            if item.estado == .ativo && !item.fixado {
+                Button {
+                    tarefas.manter(item, longo: false)
+                    estado.reagendarAvisos()
+                } label: {
+                    Label("Manter mais \(definicoes.diasManterCurto) dias", systemImage: "arrow.clockwise")
+                }
+                Button {
+                    tarefas.manter(item, longo: true)
+                    estado.reagendarAvisos()
+                } label: {
+                    Label("Manter mais \(definicoes.diasManterLongo) dias", systemImage: "arrow.clockwise")
+                }
+            }
             Button {
-                Tarefas(contexto: contexto).definirFixado(item, !item.fixado)
+                withAnimation { tarefas.concluir(item) }
+            } label: {
+                Label("Concluir", systemImage: "checkmark.circle")
+            }
+            Button {
+                tarefas.definirFixado(item, !item.fixado)
             } label: {
                 Label(item.fixado ? "Desafixar" : "Fixar", systemImage: item.fixado ? "pin.slash" : "pin")
             }
+        }
 
-            Button {
-                aEditar = item
-            } label: {
-                Label("Editar", systemImage: "pencil")
-            }
+        Button {
+            aEditar = item
+        } label: {
+            Label("Editar título", systemImage: "pencil")
+        }
 
-            Menu {
-                ForEach(listas.filter { $0 != item.lista }) { lista in
-                    Button(lista.nome) {
-                        withAnimation { Tarefas(contexto: contexto).mover(item, para: lista) }
-                    }
+        Menu {
+            ForEach(listas.filter { $0 != item.lista }) { lista in
+                Button(lista.nome) {
+                    withAnimation { tarefas.mover(item, para: lista) }
                 }
-            } label: {
-                Label("Mover para", systemImage: "folder")
-            }
-
-            Button {
-                Tarefas(contexto: contexto).converter(item)
-            } label: {
-                Label(
-                    item.tipo == .tarefa ? "Converter em nota" : "Converter em tarefa",
-                    systemImage: "arrow.left.arrow.right"
-                )
-            }
-
-            Divider()
-
-            Button(role: .destructive) {
-                aApagar = item
-            } label: {
-                Label("Apagar", systemImage: "trash")
             }
         } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.title3)
-                .foregroundStyle(.secondary)
+            Label("Mover para", systemImage: "folder")
         }
-        .buttonStyle(.borderless)
-        .accessibilityLabel("Mais ações")
+
+        Button {
+            tarefas.converter(item)
+        } label: {
+            Label(
+                item.tipo == .tarefa ? "Converter em nota" : "Converter em tarefa",
+                systemImage: "arrow.left.arrow.right"
+            )
+        }
+
+        Divider()
+
+        Button(role: .destructive) {
+            aApagar = item
+        } label: {
+            Label("Apagar", systemImage: "trash")
+        }
     }
 }
 
-/// Alerta de edição do título e confirmação de apagar, partilhados pela lista e pelo detalhe.
+/// Alerta de edição do título e confirmação de apagar, partilhados pelos ecrãs.
 struct AcoesDeItem: ViewModifier {
     @Binding var aEditar: Item?
     @Binding var aApagar: Item?
@@ -94,6 +114,7 @@ struct AcoesDeItem: ViewModifier {
             } message: { item in
                 Text(mensagemApagar(item))
             }
+            .sensoryFeedback(.warning, trigger: aApagar) { _, novo in novo != nil }
     }
 
     private func mensagemApagar(_ item: Item) -> String {

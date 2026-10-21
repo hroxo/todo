@@ -1,40 +1,60 @@
 import SwiftUI
 import ToDoCore
 
-/// Cartão de uma lista no ecrã Início: nome, cor e número grande de itens ativos.
+/// Cartão de uma lista na grelha do Início (DESIGN.md 7.2).
 struct CartaoLista: View {
     let lista: Lista
-
-    private var ativos: Int { lista.itensAtivos.count }
+    let agora: Date
 
     var body: some View {
-        HStack(spacing: 16) {
-            Circle()
-                .stroke(lista.cor.cor, lineWidth: 6)
-                .frame(width: 30, height: 30)
+        let cor = lista.cor
+        let ativos = lista.itensAtivos.count
 
-            Text(lista.nome)
-                .font(.title3.weight(.semibold))
-                .lineLimit(1)
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 0) {
-                Text("\(ativos)")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(lista.cor.cor)
-                Text(ativos == 1 ? "ativo" : "ativos")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                IconeListaView(lista: lista, tamanho: 40, fundo: cor.ficha)
+                Spacer()
+                AnelExpiracao(
+                    fracao: lista.frescura(agora: agora),
+                    cor: cor.texto,
+                    tamanho: 36,
+                    espessura: 6,
+                    trilho: cor.ficha
+                )
             }
+            Spacer(minLength: 12)
+            Text(lista.nome)
+                .font(.headline.bold())
+                .lineLimit(2)
+            Text(ativos == 1 ? "1 ativo" : "\(ativos) ativos")
+                .font(.footnote.weight(.semibold))
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
+        .foregroundStyle(cor.texto)
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 148, alignment: .leading)
+        .background(cor.base, in: .rect(cornerRadius: 22, style: .continuous))
+        .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(lista.nome), \(ativos) \(ativos == 1 ? "item ativo" : "itens ativos")")
+        .accessibilityLabel("\(lista.nome), \(ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos")")
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Último lugar da grelha: abre Personalizar lista para criar uma nova.
+struct CartaoNovaLista: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "plus")
+                .font(.title2.weight(.semibold))
+            Text("Nova lista")
+                .font(.subheadline.weight(.semibold))
+        }
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, minHeight: 148)
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Color(.systemGray3), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+        )
+        .contentShape(.rect(cornerRadius: 22))
     }
 }

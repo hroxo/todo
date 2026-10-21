@@ -1,39 +1,52 @@
 import SwiftUI
 import ToDoCore
 
-/// Linha de um item principal na lista.
+/// Linha de um item principal (DESIGN.md 7.4): anel, título, resumo e tempo restante.
 struct LinhaItem: View {
     let item: Item
-    let cor: Color
-    let aoConcluir: () -> Void
+    let cor: CorLista
+    let agora: Date
+
+    private var prazo: Prazo? { Prazo(item: item, agora: agora) }
 
     var body: some View {
-        HStack(spacing: 12) {
-            CirculoConcluir(feito: item.estado == .concluido, cor: cor, acao: aoConcluir)
+        HStack(spacing: 14) {
+            IndicadorPrazo(item: item, cor: cor, agora: agora)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.titulo)
-                    .lineLimit(2)
-                if !item.subtopicos.isEmpty {
-                    Text("\(item.subtopicosFeitos)/\(item.subtopicos.count) subtópicos")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .font(.body.weight(.semibold))
+                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    if !item.fotos.isEmpty {
+                        Image(systemName: "photo")
+                    }
+                    Text(item.resumo)
                 }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
 
-            if item.tipo == .notaRapida {
-                Image(systemName: "note.text")
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Nota rápida")
-            }
             if item.fixado {
-                Image(systemName: "pin.fill")
-                    .foregroundStyle(cor)
-                    .accessibilityLabel("Fixado")
+                Text("Não expira")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else if let prazo {
+                Text(prazo.rotuloCurto)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(prazo.ultimoDia ? CoresEstado.expiraTinta : cor.tinta)
             }
         }
-        .padding(.vertical, 4)
+        .frame(minHeight: 62)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(rotuloAcessivel)
+    }
+
+    private var rotuloAcessivel: String {
+        let tempo = item.fixado ? "Não expira" : (prazo?.rotuloLongo ?? "")
+        return [item.titulo, item.resumo, tempo].filter { !$0.isEmpty }.joined(separator: ", ")
     }
 }

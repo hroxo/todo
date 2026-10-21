@@ -1,10 +1,50 @@
 import Foundation
 import SwiftData
 
-/// Cores da paleta fixa das listas (especificação 4.4). O núcleo só guarda o identificador;
-/// a cor real é definida na interface.
+/// As 12 cores da paleta das listas (DESIGN.md 3.2). O núcleo só guarda a chave; as cores
+/// reais estão no catálogo de recursos da app.
 public enum CorLista: String, CaseIterable, Codable, Sendable {
-    case vermelho, laranja, amarelo, verde, ciano, azul, roxo, rosa
+    case azul, roxo, amarelo, vermelho, laranja, verde, turquesa, ceu, indigo, rosa, castanho, grafite
+
+    /// Lê a chave guardada, incluindo as cores do M1 que deixaram de existir.
+    public static func deChave(_ chave: String) -> CorLista {
+        if let cor = CorLista(rawValue: chave) { return cor }
+        switch chave {
+        case "ciano": return .turquesa
+        default: return .azul
+        }
+    }
+}
+
+/// Ícones possíveis de uma lista (DESIGN.md 6.1): um SF Symbol ou um emoji.
+public enum IconesLista {
+    public static let padrao = "checkmark.circle.fill"
+
+    public static let simbolos: [(nome: String, simbolo: String)] = [
+        ("Trabalho", "briefcase.fill"),
+        ("Pessoa", "person.fill"),
+        ("Casa", "house.fill"),
+        ("Lâmpada", "lightbulb.fill"),
+        ("Coração", "heart.fill"),
+        ("Carrinho", "cart.fill"),
+        ("Livro", "book.fill"),
+        ("Haltere", "dumbbell.fill"),
+        ("Avião", "airplane"),
+        ("Estrela", "star.fill"),
+        ("Lua", "moon.fill"),
+        ("Folha", "leaf.fill"),
+        ("Presente", "gift.fill"),
+        ("Música", "music.note"),
+        ("Câmara", "camera.fill"),
+        ("Código", "chevron.left.forwardslash.chevron.right"),
+        ("Calendário", "calendar"),
+        ("Visto", "checkmark.circle.fill"),
+    ]
+
+    public static let emojis = [
+        "💼", "🏠", "💡", "🛒", "🏋️", "✈️", "📚", "🎯", "🧠",
+        "🎵", "🌱", "🐶", "🍳", "💰", "🎮", "❤️", "🚗", "⭐",
+    ]
 }
 
 public enum TipoItem: String, CaseIterable, Codable, Sendable {
@@ -21,25 +61,43 @@ public final class Lista {
     public var nome: String
     public var corRaw: String
     public var ordem: Int
+    /// Nome do SF Symbol. Ignorado quando há `emoji`.
+    public var icone: String = "checkmark.circle.fill"
+    public var emoji: String?
 
     /// Só os itens principais; os subtópicos pertencem ao item pai.
     @Relationship(deleteRule: .cascade, inverse: \Item.lista)
     public var itens: [Item] = []
 
-    public init(id: UUID = UUID(), nome: String, cor: CorLista, ordem: Int) {
+    public init(id: UUID = UUID(), nome: String, cor: CorLista, ordem: Int, icone: String = IconesLista.padrao, emoji: String? = nil) {
         self.id = id
         self.nome = nome
         self.corRaw = cor.rawValue
         self.ordem = ordem
+        self.icone = icone
+        self.emoji = emoji
     }
 
     public var cor: CorLista {
-        get { CorLista(rawValue: corRaw) ?? .azul }
+        get { CorLista.deChave(corRaw) }
         set { corRaw = newValue.rawValue }
     }
 
     public var itensAtivos: [Item] {
         itens.filter { $0.estado == .ativo }.sorted { $0.ordem < $1.ordem }
+    }
+
+    /// Itens ativos que expiram nas próximas 24 horas.
+    public func expiramHoje(agora: Date) -> [Item] {
+        itensAtivos.filter { Prazo(item: $0, agora: agora)?.ultimoDia == true }
+    }
+
+    /// Proporção dos itens com prazo que ainda não estão no último dia (o mini-anel do
+    /// cartão). Sem itens com prazo, a lista está "fresca".
+    public func frescura(agora: Date) -> Double {
+        let prazos = itensAtivos.compactMap { Prazo(item: $0, agora: agora) }
+        guard !prazos.isEmpty else { return 1 }
+        return Double(prazos.filter { !$0.ultimoDia }.count) / Double(prazos.count)
     }
 }
 
@@ -64,6 +122,9 @@ public final class Item {
 
     @Relationship(deleteRule: .cascade, inverse: \Item.pai)
     public var subtopicos: [Item] = []
+
+    @Relationship(deleteRule: .cascade, inverse: \Foto.item)
+    public var fotos: [Foto] = []
 
     public init(id: UUID = UUID(), titulo: String, tipo: TipoItem, criadoEm: Date, ordem: Int) {
         self.id = id
@@ -96,6 +157,43 @@ public final class Item {
         subtopicos.filter { $0.estado == .concluido }.count
     }
 
+    public var fotosOrdenadas: [Foto] {
+        fotos.sorted { $0.ordem < $1.ordem }
+    }
+
     /// A lista a que o item pertence, também para subtópicos.
     public var listaEfetiva: Lista? { pai?.lista ?? lista }
+
+    /// "2/4 subtópicos · 2 fotos", ou o tipo quando não há subtópicos.
+    public var resumo: String {
+        var partes: [String] = []
+        if subtopicos.isEmpty {
+            partes.append(tipo == .tarefa ? "Tarefa" : "Nota rápida")
+        } else {
+            partes.append("\(subtopicosFeitos)/\(subtopicos.count) subtópicos")
+        }
+        switch fotos.count {
+        case 0: break
+        case 1: partes.append("1 foto")
+        case let n: partes.append("\(n) fotos")
+        }
+        return partes.joined(separator: " · ")
+    }
+}
+
+/// Foto anexada a um item, em JPEG reduzido, guardada fora da base de dados.
+@Model
+public final class Foto {
+    @Attribute(.unique) public var id: UUID
+    @Attribute(.externalStorage) public var dados: Data
+    public var ordem: Int
+    public var criadaEm: Date
+    public var item: Item?
+
+    public init(id: UUID = UUID(), dados: Data, ordem: Int, criadaEm: Date) {
+        self.id = id
+        self.dados = dados
+        self.ordem = ordem
+        self.criadaEm = criadaEm
+    }
 }
