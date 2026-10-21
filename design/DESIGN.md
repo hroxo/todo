@@ -2,14 +2,14 @@
 
 Versão 1.1 · 21 de outubro de 2026 · Complementa o `CLAUDE.md` e a especificação funcional.
 
-Novidades da 1.1: Definições reorganizadas (7.11), calendário no Início (7.12), notas nos pontos e subtópicos (7.13), aparência a seguir o iPhone (1.6).
+Novidades da 1.1: Definições reorganizadas (7.11), calendário no Início (7.12), descrição curta nos pontos (7.13), aparência a seguir o iPhone (1.6).
 
 Este documento fixa as decisões visuais e de interação da v1. Quem implementa deve segui-lo à letra no que está **[Decidido]**. Nas **[Proposta]**, deve seguir o texto e assinalar dúvidas em vez de inventar.
 
 Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJDAjwnshfj
 
 - Artboards 1–6: Início, Lista, Detalhe + Manter, Captura, Expirados, Personalizar lista. Também: ícone e os 4 estados do Manter.
-- Artboards 7–11 (v1.1): 7 Início — ligar calendário · 8 Início — hoje no calendário · 9 Definições reorganizadas · 10 Detalhe com nota · 11 Subtópico com nota.
+- Artboards 7–11 (v1.1): 7 Início — ligar calendário · 8 Início — hoje no calendário · 9 Definições reorganizadas · 10 Detalhe com descrição.
 
 ---
 
@@ -254,12 +254,12 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Sem eventos hoje: uma linha "Nada no calendário hoje".
 - Ícones: `calendar`, `plus`. Cores dos calendários: as que o iOS dá a cada calendário.
 
-### 7.13 Notas nos pontos e subtópicos (mocks 10 e 11)
+### 7.13 Descrição curta e Concluir (mock 10) [Decidido 21/10/2026]
 
-- **Detalhe (mock 10)**: secção "NOTA" logo a seguir ao título, num cartão branco de 18 pt com o texto em `.body`. Tocar edita no próprio cartão (campo de várias linhas). Sem nota, o cartão mostra "Acrescentar nota" em `.secondary`.
-- Nos subtópicos, a nota aparece numa segunda linha (`.footnote`, `.secondary`) com o ícone `note.text`, cortada a uma linha. Cada linha de subtópico tem uma seta e, ao tocar no texto, abre a folha do subtópico; o círculo continua a marcar feito/por fazer.
-- **Folha do subtópico (mock 11)**: `.sheet` com Cancelar · "Subtópico" · OK (cápsula na cor da lista); o círculo de feito e o título editável; secção "NOTA" com um campo grande de várias linhas; a ajuda "Escrever ou mudar a nota conta como ação: o item ganha mais 3 dias."
-- Na Lista, um item com nota mostra o ícone `note.text` nos metadados ("2/4 subtópicos · nota · 2 fotos").
+- **Descrição**: logo abaixo do título do Detalhe, sem cabeçalho nem cartão, em `.body` `.secondary`, no máximo 3 linhas (200 caracteres). Edita-se no lugar; vazia mostra "Acrescentar descrição".
+- **Subtópicos**: ficam como estão (círculo + texto); sem descrição, sem fotos. O + à esquerda do campo de novo subtópico também guarda.
+- **Concluir**: o visto verde fica no grupo de vidro do topo e há também "Concluir" no menu "…".
+- Na Lista, um ponto com descrição mostra "descrição" nos metadados ("2/4 subtópicos · descrição · 2 fotos").
 
 ## 8. Movimento e feedback
 
