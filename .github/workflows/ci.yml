@@ -10,6 +10,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Para publicar o .ipa na release "ultima".
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-26
@@ -59,3 +63,15 @@ jobs:
           name: ToDo-ipa
           path: ToDo.ipa
           retention-days: 14
+
+      # Link fixo para descarregar no iPhone e abrir com o SideStore.
+      - name: Publicar na release "ultima"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima --yes --cleanup-tag || true
+          gh release create ultima ToDo.ipa \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Última compilação" \
+            --notes "Compilado a partir de ${GITHUB_SHA::7}."
