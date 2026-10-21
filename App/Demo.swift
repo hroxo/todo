@@ -5,7 +5,8 @@ import UIKit
 
 /// Modo de demonstração para as capturas de ecrã do CI. Só se liga com o argumento de
 /// arranque `-demo YES`: base de dados em memória com dados parecidos com os dos mocks, sem
-/// notificações. `-ecra <nome>` abre um ecrã e `-manter <fase>` mostra um estado do Manter.
+/// notificações. `-ecra <nome>` abre um ecrã, `-manter <fase>` mostra um estado do Manter e
+/// `-calendario ligar` mostra o calendário por ligar (por defeito, ligado com eventos de exemplo).
 enum Demo {
     static var ativo: Bool { UserDefaults.standard.bool(forKey: "demo") }
     static var ecra: String? { UserDefaults.standard.string(forKey: "ecra") }
@@ -117,6 +118,8 @@ enum Demo {
             estado.mostrarCaptura = true
         case "personalizar":
             estado.abrirPersonalizar = true
+        case "calendario":
+            estado.rolarParaCalendario = true
         case "expirados":
             estado.separador = .expirados
         case "concluidos":

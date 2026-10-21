@@ -12,6 +12,7 @@ struct InicioView: View {
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "ativo" && $0.fixado == false && $0.pai == nil })
     private var ativos: [Item]
 
+    @AppStorage("mostrarCalendario") private var mostrarCalendario = true
     @State private var formulario: PersonalizarListaView.Modo?
     @State private var aApagar: Lista?
 
@@ -25,6 +26,7 @@ struct InicioView: View {
         @Bindable var estadoLigado = estado
 
         NavigationStack(path: $estadoLigado.caminho) {
+            ScrollViewReader { rolagem in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -83,9 +85,21 @@ struct InicioView: View {
                         }
                         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
                     }
+
+                    if mostrarCalendario {
+                        SecaoCalendario()
+                            .padding(.top, 4)
+                            .id("calendario")
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 24)
+            }
+            .onChange(of: estado.rolarParaCalendario) { _, rolar in
+                guard rolar else { return }
+                estado.rolarParaCalendario = false
+                withAnimation { rolagem.scrollTo("calendario", anchor: .bottom) }
+            }
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Listas")

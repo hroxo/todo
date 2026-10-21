@@ -48,6 +48,8 @@ ECRAS=(
   "8-expirados|expirados|"
   "9-concluidos|concluidos|"
   "10-definicoes|definicoes|"
+  "11-calendario|calendario|"
+  "12-calendario-ligar|calendario|-calendario ligar"
 )
 
 primeira=1

@@ -1,12 +1,17 @@
+import EventKit
 import SwiftData
 import SwiftUI
 import ToDoCore
+import UIKit
 
-/// Definições (especificação 4.8, mock 9): listas primeiro; depois notificações, aparência e,
-/// em Avançado, os prazos. O calendário entra no M5; importar e backup no M6.
+/// Definições (especificação 4.8, mock 9): listas primeiro; depois calendário, notificações,
+/// aparência e, em Avançado, os prazos. Importar e backup chegam no M6.
 struct DefinicoesView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
+    @Environment(Calendario.self) private var calendario
+    @Environment(\.openURL) private var abrirURL
+    @AppStorage("mostrarCalendario") private var mostrarCalendario = true
     @Query(sort: \Lista.ordem) private var listas: [Lista]
     @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
     @State private var definicoes = Definicoes.carregar()
@@ -57,6 +62,8 @@ struct DefinicoesView: View {
                 } footer: {
                     Text("Toca numa lista para a personalizar. Mantém premido e arrasta para mudar a ordem.")
                 }
+
+                secaoCalendario
 
                 Section {
                     Toggle(isOn: $definicoes.avisosAtivos) {
@@ -130,6 +137,56 @@ struct DefinicoesView: View {
         }
     }
 
+    private var secaoCalendario: some View {
+        Section {
+            switch calendario.acesso {
+            case .autorizado:
+                NavigationLink {
+                    CalendariosView()
+                } label: {
+                    LabeledContent {
+                        Text(calendario.fontes)
+                            .lineLimit(1)
+                    } label: {
+                        Label {
+                            Text("Calendários")
+                        } icon: {
+                            IconeDefinicao(simbolo: "calendar", cor: .red)
+                        }
+                    }
+                }
+                Toggle("Mostrar eventos no Início", isOn: $mostrarCalendario)
+            case .porPedir:
+                Button {
+                    Task {
+                        await calendario.pedirAcesso()
+                        mostrarCalendario = true
+                    }
+                } label: {
+                    Label {
+                        Text("Ligar calendário")
+                    } icon: {
+                        IconeDefinicao(simbolo: "calendar", cor: .red)
+                    }
+                }
+            case .recusado:
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { abrirURL(url) }
+                } label: {
+                    Label {
+                        Text("Dar acesso em Ajustes")
+                    } icon: {
+                        IconeDefinicao(simbolo: "calendar", cor: .red)
+                    }
+                }
+            }
+        } header: {
+            Text("Calendário")
+        } footer: {
+            Text("Lê os calendários das contas do iPhone (iCloud, Google, Outlook). Para juntar uma conta: Ajustes › Calendário › Contas.")
+        }
+    }
+
     private var horaAvisos: Binding<Date> {
         Binding(
             get: {
@@ -150,6 +207,45 @@ struct DefinicoesView: View {
 
     private var versao: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+    }
+}
+
+/// Escolher os calendários que aparecem no Início, agrupados por conta.
+struct CalendariosView: View {
+    @Environment(Calendario.self) private var calendario
+
+    var body: some View {
+        let contas = Dictionary(grouping: calendario.calendarios, by: { $0.source.title })
+        List {
+            ForEach(contas.keys.sorted(), id: \.self) { conta in
+                Section(conta) {
+                    ForEach(contas[conta] ?? [], id: \.calendarIdentifier) { item in
+                        Toggle(isOn: Binding(
+                            get: { calendario.visivel(item) },
+                            set: { calendario.definir(item, visivel: $0) }
+                        )) {
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .fill(Color(cgColor: item.cgColor))
+                                    .frame(width: 12, height: 12)
+                                Text(item.title)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Calendários")
+        .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if calendario.calendarios.isEmpty {
+                ContentUnavailableView(
+                    "Sem calendários",
+                    systemImage: "calendar",
+                    description: Text("Junta contas em Ajustes › Calendário › Contas.")
+                )
+            }
+        }
     }
 }
 

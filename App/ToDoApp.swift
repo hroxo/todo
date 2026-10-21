@@ -18,6 +18,7 @@ struct ToDoApp: App {
     static let notificacoes = Notificacoes(contentor: contentor)
 
     @State private var estado = EstadoApp(notificacoes: ToDoApp.notificacoes)
+    @State private var calendario = Calendario()
     @Environment(\.scenePhase) private var fase
     @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
 
@@ -30,6 +31,7 @@ struct ToDoApp: App {
         WindowGroup {
             RaizView()
                 .environment(estado)
+                .environment(calendario)
                 .preferredColorScheme(Aparencia(rawValue: aparencia)?.esquema)
                 .task {
                     if !Demo.ativo { Self.notificacoes.pedirPermissao() }
@@ -38,7 +40,9 @@ struct ToDoApp: App {
         .modelContainer(Self.contentor)
         .onChange(of: fase) { _, nova in
             switch nova {
-            case .active: manutencao()
+            case .active:
+                manutencao()
+                calendario.atualizar()
             case .background where !Demo.ativo: Self.notificacoes.reagendar()
             default: break
             }

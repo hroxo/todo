@@ -111,6 +111,26 @@ public final class Tarefas {
         return item
     }
 
+    /// Ponto criado a partir de um evento do calendário (especificação 4.7): ativo, com o
+    /// título do evento e a hora (e o local) na descrição.
+    @discardableResult
+    public func criarPontoDeEvento(
+        titulo: String,
+        inicio: Date,
+        fim: Date,
+        diaInteiro: Bool,
+        detalhe: String?,
+        em lista: Lista
+    ) throws -> Item {
+        let item = try criarItem(titulo: titulo, em: lista)
+        var partes = ["Calendário: " + (diaInteiro ? "todo o dia" : Formatos.intervalo(inicio, fim, calendario: calendario))]
+        if let detalhe, !detalhe.isEmpty {
+            partes.append(detalhe)
+        }
+        definirNota(item, partes.joined(separator: " · "))
+        return item
+    }
+
     @discardableResult
     public func adicionarSubtopico(titulo: String, a pai: Item) throws -> Item {
         guard !pai.ehSubtopico else { throw ErroTarefas.subtopicoDeSubtopico }

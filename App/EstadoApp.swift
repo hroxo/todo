@@ -15,6 +15,8 @@ final class EstadoApp {
     var mostrarCaptura = false
     /// Só para o modo de demonstração: abre Personalizar lista no Início.
     var abrirPersonalizar = false
+    /// Só para o modo de demonstração: desce até ao calendário no Início.
+    var rolarParaCalendario = false
     /// A lista que está aberta, para a captura rápida a pré-selecionar.
     var listaAtual: Lista?
 

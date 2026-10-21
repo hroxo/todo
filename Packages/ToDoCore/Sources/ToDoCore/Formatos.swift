@@ -20,6 +20,17 @@ public enum Formatos {
         return String(format: "%02d/%02d", c.day!, c.month!)
     }
 
+    /// "14:30".
+    public static func hora(_ data: Date, calendario: Calendar = .current) -> String {
+        let c = calendario.dateComponents([.hour, .minute], from: data)
+        return String(format: "%02d:%02d", c.hour!, c.minute!)
+    }
+
+    /// "14:30–15:30".
+    public static func intervalo(_ inicio: Date, _ fim: Date, calendario: Calendar = .current) -> String {
+        hora(inicio, calendario: calendario) + "–" + hora(fim, calendario: calendario)
+    }
+
     /// "ontem, 18:40".
     public static func momento(_ data: Date, agora: Date, calendario: Calendar = .current) -> String {
         let c = calendario.dateComponents([.hour, .minute], from: data)
