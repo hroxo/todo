@@ -6,7 +6,10 @@ import ToDoCore
 struct ToDoApp: App {
     static let contentor: ModelContainer = {
         do {
-            return try BaseDados.contentor()
+            guard Demo.ativo else { return try BaseDados.contentor() }
+            let contentor = try BaseDados.contentor(emMemoria: true)
+            Demo.povoar(ModelContext(contentor))
+            return contentor
         } catch {
             fatalError("Não foi possível abrir a base de dados: \(error)")
         }
@@ -28,13 +31,15 @@ struct ToDoApp: App {
             RaizView()
                 .environment(estado)
                 .preferredColorScheme(Aparencia(rawValue: aparencia)?.esquema)
-                .task { Self.notificacoes.pedirPermissao() }
+                .task {
+                    if !Demo.ativo { Self.notificacoes.pedirPermissao() }
+                }
         }
         .modelContainer(Self.contentor)
         .onChange(of: fase) { _, nova in
             switch nova {
             case .active: manutencao()
-            case .background: Self.notificacoes.reagendar()
+            case .background where !Demo.ativo: Self.notificacoes.reagendar()
             default: break
             }
         }
@@ -48,6 +53,6 @@ struct ToDoApp: App {
         _ = try? tarefas.criarListasIniciaisSeVazio()
         _ = try? tarefas.avaliar()
         try? contexto.save()
-        Self.notificacoes.reagendar()
+        if !Demo.ativo { Self.notificacoes.reagendar() }
     }
 }

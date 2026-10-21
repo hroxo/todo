@@ -11,9 +11,21 @@ struct BotaoManter: View {
     /// Verdadeiro para o prazo longo.
     let aoManter: (Bool) -> Void
 
-    private enum Fase { case parado, premido, esquerda, direita }
+    private enum Fase {
+        case parado, premido, esquerda, direita
 
-    @State private var fase = Fase.parado
+        /// Parado, exceto nas capturas do modo de demonstração.
+        static var inicial: Fase {
+            switch Demo.faseManter {
+            case "premido": .premido
+            case "esquerda": .esquerda
+            case "direita": .direita
+            default: .parado
+            }
+        }
+    }
+
+    @State private var fase = Fase.inicial
     @State private var tocando = false
     @State private var temporizador: Task<Void, Never>?
     @State private var premidos = 0

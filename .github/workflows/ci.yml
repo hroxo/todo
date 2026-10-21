@@ -17,7 +17,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -75,3 +75,30 @@ jobs:
             --prerelease \
             --title "Última compilação" \
             --notes "Compilado a partir de ${GITHUB_SHA::7}."
+
+      # Capturas de ecrã no simulador, em modo de demonstração (scripts/capturas.sh descarrega-as).
+      # Não bloqueiam o .ipa, que já foi publicado acima.
+      - name: Compilar para o simulador
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project ToDo.xcodeproj \
+            -scheme ToDo \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            | grep -E "error:|\*\* BUILD"
+
+      - name: Capturas de ecrã
+        id: capturas
+        continue-on-error: true
+        run: scripts/capturas-ci.sh build-sim/Build/Products/Debug-iphonesimulator/ToDo.app capturas
+
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('capturas/**/*.png') != ''
+        with:
+          name: capturas
+          path: capturas
+          retention-days: 14

@@ -10,7 +10,11 @@ final class EstadoApp {
     }
 
     var separador: Separador = .listas
+    /// Navegação do separador Listas (Lista → Detalhe).
+    var caminho = NavigationPath()
     var mostrarCaptura = false
+    /// Só para o modo de demonstração: abre Personalizar lista no Início.
+    var abrirPersonalizar = false
     /// A lista que está aberta, para a captura rápida a pré-selecionar.
     var listaAtual: Lista?
 

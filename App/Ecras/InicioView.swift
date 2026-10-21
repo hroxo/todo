@@ -22,8 +22,9 @@ struct InicioView: View {
         let hoje = ativos
             .filter { Prazo(item: $0, agora: agora)?.ultimoDia == true }
             .sorted { ($0.expiraEm ?? .distantFuture) < ($1.expiraEm ?? .distantFuture) }
+        @Bindable var estadoLigado = estado
 
-        NavigationStack {
+        NavigationStack(path: $estadoLigado.caminho) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -92,6 +93,11 @@ struct InicioView: View {
             .navigationDestination(for: Lista.self) { ListaView(lista: $0) }
             .navigationDestination(for: Item.self) { ItemDetalheView(item: $0) }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
+            .onChange(of: estado.abrirPersonalizar) { _, abrir in
+                guard abrir, let lista = listas.first else { return }
+                estado.abrirPersonalizar = false
+                formulario = .editar(lista)
+            }
             .confirmationDialog(
                 "Apagar a lista «\(aApagar?.nome ?? "")»?",
                 isPresented: Binding(presente: $aApagar),

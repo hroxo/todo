@@ -7,6 +7,7 @@ import ToDoCore
 /// ao tocá-lo abre-se a captura e volta-se ao separador anterior.
 struct RaizView: View {
     @Environment(EstadoApp.self) private var estado
+    @Environment(\.modelContext) private var contexto
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
 
     var body: some View {
@@ -36,6 +37,11 @@ struct RaizView: View {
                 estado.separador = anterior == .captura ? .listas : anterior
                 estado.mostrarCaptura = true
             }
+        }
+        .task {
+            guard Demo.ativo else { return }
+            try? await Task.sleep(for: .milliseconds(600))
+            Demo.abrir(estado: estado, contexto: contexto)
         }
         .sheet(isPresented: $estado.mostrarCaptura) {
             CapturaView()
