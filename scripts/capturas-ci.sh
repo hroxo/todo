@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
-# Corre no CI (macOS). Instala a app no simulador, abre cada ecrã em modo de demonstração e
-# tira capturas em modo escuro e claro.
-# Uso: scripts/capturas-ci.sh <ToDo.app do simulador> <pasta de saída>
+# Corre no CI (macOS). Duas fases:
+#   scripts/capturas-ci.sh arrancar
+#     escolhe o simulador e começa a arrancá-lo, sem esperar (o primeiro arranque demora
+#     vários minutos e corre enquanto o CI testa e compila);
+#   scripts/capturas-ci.sh <ToDo.app do simulador> <pasta de saída>
+#     instala a app, abre cada ecrã em modo de demonstração e tira a captura em escuro e
+#     em claro sem reabrir a app.
 set -euo pipefail
 
-APP="$1"
-SAIDA="$2"
 BUNDLE="com.hugo.todo"
+FICHEIRO_UDID="${RUNNER_TEMP:-/tmp}/simulador-udid"
 
-# O iPhone do runtime iOS mais recente, de preferência um "Pro" (não Max).
-UDID=$(xcrun simctl list devices available -j | python3 -c '
+escolher_simulador() {
+  # O iPhone do runtime iOS mais recente, de preferência um "Pro" (não Max).
+  xcrun simctl list devices available -j | python3 -c '
 import json, re, sys
 dispositivos = json.load(sys.stdin)["devices"]
 candidatos = []
@@ -27,14 +31,35 @@ if not candidatos:
 candidatos.sort(key=lambda c: (c[0], c[1], c[2]), reverse=True)
 print(candidatos[0][3])
 print(candidatos[0][2], candidatos[0][0], file=sys.stderr)
-')
+'
+}
+
+if [ "${1:-}" = "arrancar" ]; then
+  UDID=$(escolher_simulador)
+  echo "$UDID" > "$FICHEIRO_UDID"
+  echo "A arrancar o simulador $UDID"
+  xcrun simctl boot "$UDID" || true
+  exit 0
+fi
+
+APP="$1"
+SAIDA="$2"
+
+if [ -f "$FICHEIRO_UDID" ]; then
+  UDID=$(cat "$FICHEIRO_UDID")
+else
+  UDID=$(escolher_simulador)
+  xcrun simctl boot "$UDID" || true
+fi
 echo "Simulador: $UDID"
 
-xcrun simctl boot "$UDID" || true
-xcrun simctl bootstatus "$UDID" -b
+inicio=$(date +%s)
+xcrun simctl bootstatus "$UDID" -b > /dev/null
+echo "Simulador pronto em $(( $(date +%s) - inicio )) s"
 xcrun simctl install "$UDID" "$APP"
 xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
   --wifiBars 3 --cellularMode active --cellularBars 4 || true
+mkdir -p "$SAIDA/escuro" "$SAIDA/claro"
 
 # nome do ficheiro | ecrã | argumentos extra
 ECRAS=(
@@ -53,18 +78,19 @@ ECRAS=(
 )
 
 primeira=1
-for tema in dark light; do
-  xcrun simctl ui "$UDID" appearance "$tema"
-  pasta="$SAIDA/$([ "$tema" = dark ] && echo escuro || echo claro)"
-  mkdir -p "$pasta"
-  for entrada in "${ECRAS[@]}"; do
-    IFS='|' read -r nome ecra extra <<< "$entrada"
-    # shellcheck disable=SC2086
-    xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" -demo YES -ecra "$ecra" $extra > /dev/null
-    if [ "$primeira" = 1 ]; then sleep 10; primeira=0; else sleep 5; fi
-    xcrun simctl io "$UDID" screenshot "$pasta/$nome.png" > /dev/null
-    echo "  $pasta/$nome.png"
-  done
+for entrada in "${ECRAS[@]}"; do
+  IFS='|' read -r nome ecra extra <<< "$entrada"
+  xcrun simctl ui "$UDID" appearance dark
+  # shellcheck disable=SC2086
+  xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" -demo YES -ecra "$ecra" $extra > /dev/null
+  if [ "$primeira" = 1 ]; then sleep 8; primeira=0; else sleep 3; fi
+  xcrun simctl io "$UDID" screenshot "$SAIDA/escuro/$nome.png" > /dev/null
+  # O tema muda com a app aberta; basta esperar pela transição.
+  xcrun simctl ui "$UDID" appearance light
+  sleep 1.5
+  xcrun simctl io "$UDID" screenshot "$SAIDA/claro/$nome.png" > /dev/null
+  echo "  $nome"
 done
 
 xcrun simctl terminate "$UDID" "$BUNDLE" || true
+echo "Capturas em $(( $(date +%s) - inicio )) s"

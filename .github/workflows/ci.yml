@@ -32,6 +32,11 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks | grep -i iphoneos
 
+      # O primeiro arranque do simulador demora minutos: começa já, em paralelo com o resto.
+      - name: Arrancar o simulador
+        continue-on-error: true
+        run: scripts/capturas-ci.sh arrancar
+
       - name: Testes do núcleo
         working-directory: Packages/ToDoCore
         run: swift test
