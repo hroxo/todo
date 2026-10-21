@@ -8,3 +8,7 @@ build/
 Payload/
 *.ipa
 capturas/
+# Propriedade intelectual: documentação estratégica, só local (nunca publicar)
+CLAUDE.md
+docs/RACIONAIS.md
+docs/PROGRESSO.md

@@ -1,0 +1,1 @@
+Gerado por scripts/readme-media.py a partir de capturas/0.6.0-bcea12e
