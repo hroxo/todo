@@ -1,10 +1,15 @@
 # Guia de UI — App ToDo pessoal (v1)
 
-Versão 1.0 · 21 de outubro de 2026 · Complementa o `CLAUDE.md` e a especificação funcional.
+Versão 1.1 · 21 de outubro de 2026 · Complementa o `CLAUDE.md` e a especificação funcional.
+
+Novidades da 1.1: Definições reorganizadas (7.11), calendário no Início (7.12), notas nos pontos e subtópicos (7.13), aparência a seguir o iPhone (1.6).
 
 Este documento fixa as decisões visuais e de interação da v1. Quem implementa deve segui-lo à letra no que está **[Decidido]**. Nas **[Proposta]**, deve seguir o texto e assinalar dúvidas em vez de inventar.
 
 Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJDAjwnshfj
+
+- Artboards 1–6: Início, Lista, Detalhe + Manter, Captura, Expirados, Personalizar lista. Também: ícone e os 4 estados do Manter.
+- Artboards 7–11 (v1.1): 7 Início — ligar calendário · 8 Início — hoje no calendário · 9 Definições reorganizadas · 10 Detalhe com nota · 11 Subtópico com nota.
 
 ---
 
@@ -16,6 +21,7 @@ Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJD
 4. **O anel conta o tempo.** Cada item mostra um anel que se esvazia nos 3 dias. No último dia fica laranja. É o elemento-assinatura da app. [Decidido]
 5. **Nada sai do ecrã.** Todo o conteúdo cabe na largura e altura disponíveis, respeita as safe areas e nunca fica por baixo da barra de separadores sem poder ser percorrido. [Decidido]
 6. **Claro, vivo e minimalista.** Tema claro como referência, com cores saturadas nas listas e superfícies brancas. O modo escuro existe, derivado automaticamente das cores do catálogo (secção 3). [Decidido: claro como referência · Proposta: escuro derivado, sem desenho próprio na v1]
+   A app segue o tema do iPhone por defeito (Definições › Aparência = Sistema). O dono usa o escuro: fundos e ícone da app têm de ficar escuros nesse caso (o ícone escuro depende de Ecrã principal › Personalizar › Escuro ou Automático). [Decidido 21/10/2026]
 
 ## 2. Stack e requisitos técnicos ligados à UI
 
@@ -231,7 +237,29 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.11 Concluídos e Definições
 
-Sem mocks na v1. Seguem os mesmos padrões: fundo agrupado do sistema, `List` com estilo `.insetGrouped`, ícones das listas em círculo. [Proposta]
+- Concluídos: sem mock. Fundo agrupado do sistema, `List` `.insetGrouped`, ícone da lista em círculo, "Concluído hoje, 18:40", deslizar para Reabrir e Apagar.
+- **Definições (mock 9)** [Decidido 21/10/2026: gerir listas primeiro; menos controlos de horários]. `Form` agrupado, por esta ordem:
+  1. **Listas**: uma linha por lista (ícone em círculo de 30 pt, nome, número de ativos, pega para arrastar). Tocar abre Personalizar lista. Última linha "+ Nova lista" na cor de destaque. Ordenar arrastando, sem botão Editar.
+  2. **Calendário**: "Calendários" (valor: as fontes ligadas, por exemplo "Apple, Outlook") leva à escolha dos calendários; interruptor "Mostrar eventos no Início". Sem ligação: uma só linha "Ligar calendário".
+  3. **Notificações**: interruptor "Avisar antes de expirar" e "Hora dos avisos" (só a hora; nada de outros horários).
+  4. **Aparência**: controlo segmentado Sistema · Claro · Escuro.
+  5. **Avançado**: "Prazos" (valor resumido "3 · 5 · 15 dias"; abre um ecrã com as cinco durações) e "Importar e backup".
+- Ícones das linhas em círculos coloridos de 30 pt, como nos Ajustes do iOS.
+
+### 7.12 Calendário no Início (mocks 7 e 8)
+
+- Lugar: o fundo do Início, por baixo da grelha de listas e de "Expiram hoje". O conteúdo percorre por baixo da barra de separadores.
+- **Por ligar (mock 7)**: cartão branco de 18 pt de raio com o ícone `calendar` num círculo azul de 40 pt, o título "Junta o teu calendário", a frase "Vê os eventos de hoje por baixo das listas e cria pontos a partir deles.", três fichas (Apple, Google, Outlook, cada uma com um ponto da sua cor), o botão em cápsula "Ligar calendário" na cor de destaque e a nota "Lê só no iPhone: usa as contas Google e Outlook que já tens nos Ajustes." O cartão pode fechar-se ("Agora não") e volta a estar em Definições.
+- **Ligado (mock 8)**: cabeçalho "HOJE NO CALENDÁRIO" com "Ver semana" à direita; grupo branco com uma linha por evento (58 pt): hora de início e fim, barra vertical de 4 pt na cor do calendário, título (`.body` semibold) e local ou calendário (`.footnote`), ficha vermelha "AGORA" no evento a decorrer e um botão "+" (círculo de 30 pt na cor Fundo da lista de destino, alvo de 44 pt) para criar um ponto a partir do evento.
+- Sem eventos hoje: uma linha "Nada no calendário hoje".
+- Ícones: `calendar`, `plus`. Cores dos calendários: as que o iOS dá a cada calendário.
+
+### 7.13 Notas nos pontos e subtópicos (mocks 10 e 11)
+
+- **Detalhe (mock 10)**: secção "NOTA" logo a seguir ao título, num cartão branco de 18 pt com o texto em `.body`. Tocar edita no próprio cartão (campo de várias linhas). Sem nota, o cartão mostra "Acrescentar nota" em `.secondary`.
+- Nos subtópicos, a nota aparece numa segunda linha (`.footnote`, `.secondary`) com o ícone `note.text`, cortada a uma linha. Cada linha de subtópico tem uma seta e, ao tocar no texto, abre a folha do subtópico; o círculo continua a marcar feito/por fazer.
+- **Folha do subtópico (mock 11)**: `.sheet` com Cancelar · "Subtópico" · OK (cápsula na cor da lista); o círculo de feito e o título editável; secção "NOTA" com um campo grande de várias linhas; a ajuda "Escrever ou mudar a nota conta como ação: o item ganha mais 3 dias."
+- Na Lista, um item com nota mostra o ícone `note.text` nos metadados ("2/4 subtópicos · nota · 2 fotos").
 
 ## 8. Movimento e feedback
 
