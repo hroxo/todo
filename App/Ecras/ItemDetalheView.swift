@@ -5,9 +5,11 @@ import ToDoCore
 
 /// Detalhe de um item (mock "Detalhe do item"): anel grande e prazo, título, fotos,
 /// subtópicos e o botão Manter em gotas de vidro no fundo. Fixar, Concluir e "…" ficam num
-/// grupo de vidro no topo; a barra de separadores fica escondida.
+/// grupo de vidro no topo; a barra de separadores fica escondida. Com `navegacao`, os botões
+/// ˄ ˅ e o puxão nas pontas do scroll passam ao item anterior ou seguinte da lista.
 struct ItemDetalheView: View {
     let item: Item
+    var navegacao: NavegacaoDetalhe?
 
     @Environment(\.modelContext) private var contexto
     @Environment(\.dismiss) private var dismiss
@@ -25,6 +27,11 @@ struct ItemDetalheView: View {
     @State private var selecaoFotos: [PhotosPickerItem] = []
     @State private var fotoAberta: Foto?
     @State private var sucessos = 0
+    /// Quanto o scroll passou da ponta: positivo no fim (seguinte), negativo no topo (anterior).
+    @State private var puxao: CGFloat = 0
+
+    /// Puxão extra nas pontas para mudar de item.
+    private let limiarPuxao: CGFloat = 60
 
     private var tarefas: Tarefas { Tarefas(contexto: contexto) }
     private var cor: CorLista { item.listaEfetiva?.cor ?? .azul }
@@ -69,6 +76,35 @@ struct ItemDetalheView: View {
             .padding(.bottom, Espaco.fim)
         }
         .scrollDismissesKeyboard(.interactively)
+        .scrollBounceBehavior(.always)
+        .onScrollGeometryChange(for: CGFloat.self, of: Self.distanciaPuxao(em:)) { _, novo in
+            puxao = novo
+        }
+        .onScrollPhaseChange { antiga, nova in
+            // Só muda de item quando se solta o dedo depois de puxar.
+            if antiga == .interacting && nova != .interacting {
+                soltarPuxao()
+            }
+        }
+        .sensoryFeedback(.selection, trigger: abs(puxao) >= limiarPuxao) { _, passou in passou }
+        .overlay(alignment: .top) {
+            if let anterior = navegacao?.anterior, puxao < 0 {
+                indicadorPuxao("Anterior: \(anterior.titulo)", simbolo: "chevron.up", progresso: -puxao)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let seguinte = navegacao?.seguinte, puxao > 0 {
+                indicadorPuxao("Seguinte: \(seguinte.titulo)", simbolo: "chevron.down", progresso: puxao)
+            }
+        }
+        .accessibilityActions {
+            if let navegacao, let anterior = navegacao.anterior {
+                Button("Item anterior") { navegacao.ir(anterior, false) }
+            }
+            if let navegacao, let seguinte = navegacao.seguinte {
+                Button("Item seguinte") { navegacao.ir(seguinte, true) }
+            }
+        }
         .background(cor.fundo.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) {
             rodape
@@ -78,6 +114,27 @@ struct ItemDetalheView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
+            if let navegacao {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        if let anterior = navegacao.anterior { navegacao.ir(anterior, false) }
+                    } label: {
+                        Image(systemName: "chevron.up")
+                    }
+                    .disabled(navegacao.anterior == nil)
+                    .accessibilityLabel("Item anterior")
+
+                    Button {
+                        if let seguinte = navegacao.seguinte { navegacao.ir(seguinte, true) }
+                    } label: {
+                        Image(systemName: "chevron.down")
+                    }
+                    .disabled(navegacao.seguinte == nil)
+                    .accessibilityLabel("Item seguinte")
+                }
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            }
+
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if item.estado == .ativo {
                     Button {
@@ -332,6 +389,49 @@ struct ItemDetalheView: View {
         .frame(maxWidth: .infinity)
     }
 
+    // MARK: - Navegar entre itens (Melhoria 5)
+
+    /// Quanto o conteúdo passou da ponta. O `contentOffset` conta com as margens da área
+    /// segura: em repouso no topo vale `-contentInsets.top`.
+    private static func distanciaPuxao(em geometria: ScrollGeometry) -> CGFloat {
+        let topo = -geometria.contentInsets.top
+        let fundo = max(topo, geometria.contentSize.height - geometria.containerSize.height + geometria.contentInsets.bottom)
+        let y = geometria.contentOffset.y
+        if y > fundo { return y - fundo }
+        if y < topo { return y - topo }
+        return 0
+    }
+
+    private func soltarPuxao() {
+        guard let navegacao, abs(puxao) >= limiarPuxao else { return }
+        if puxao > 0, let seguinte = navegacao.seguinte {
+            navegacao.ir(seguinte, true)
+        } else if puxao < 0, let anterior = navegacao.anterior {
+            navegacao.ir(anterior, false)
+        }
+    }
+
+    /// "Seguinte: <título>" no fundo, ou "Anterior: <título>" no topo, enquanto se puxa.
+    private func indicadorPuxao(_ texto: String, simbolo: String, progresso: CGFloat) -> some View {
+        let pronto = progresso >= limiarPuxao
+        return HStack(spacing: Espaco.curto) {
+            Image(systemName: simbolo)
+                .fontWeight(.bold)
+            Text(texto)
+                .lineLimit(1)
+        }
+        .font(.footnote.weight(.semibold))
+        .foregroundStyle(pronto ? cor.texto : cor.tinta)
+        .padding(.horizontal, Espaco.bloco)
+        .frame(minHeight: 36)
+        .glassEffect(pronto ? .regular.tint(cor.base) : .regular, in: .capsule)
+        .opacity(min(1, progresso / limiarPuxao))
+        .padding(Espaco.curto)
+        .animation(.snappy, value: pronto)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
     // MARK: - Ações
 
     private func guardarTitulo() {
@@ -379,5 +479,59 @@ private struct LinhaSubtopico: View {
         }
         .padding(.horizontal, Espaco.bloco)
         .frame(minHeight: Espaco.linhaSubtopico)
+    }
+}
+
+/// Vizinhos do item na lista e como mudar para eles (Melhoria 5).
+struct NavegacaoDetalhe {
+    let anterior: Item?
+    let seguinte: Item?
+    /// O item para onde ir e se é o seguinte (verdadeiro) ou o anterior.
+    let ir: (Item, Bool) -> Void
+}
+
+/// O Detalhe com a navegação entre os itens da lista. Mostra um item de cada vez e troca-o
+/// no lugar, com um deslize vertical curto (só fade com "Reduzir movimento"); o "voltar"
+/// regressa sempre à lista.
+struct DetalheNavegavel: View {
+    @State private var atual: Item
+    @State private var paraSeguinte = true
+    @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
+
+    init(item: Item) {
+        _atual = State(initialValue: item)
+    }
+
+    var body: some View {
+        ZStack {
+            ItemDetalheView(item: atual, navegacao: navegacao)
+                .id(atual.id)
+                .transition(transicao)
+        }
+    }
+
+    private var navegacao: NavegacaoDetalhe? {
+        guard !atual.isDeleted, atual.modelContext != nil, let lista = atual.lista else { return nil }
+        let ordem = NavegacaoItens.ordem(lista)
+        guard ordem.contains(where: { $0.id == atual.id }) else { return nil }
+        return NavegacaoDetalhe(
+            anterior: NavegacaoItens.anterior(de: atual, em: ordem),
+            seguinte: NavegacaoItens.seguinte(de: atual, em: ordem),
+            ir: ir
+        )
+    }
+
+    private var transicao: AnyTransition {
+        guard !reduzirMovimento else { return .opacity }
+        let deslize: CGFloat = 48
+        return .asymmetric(
+            insertion: .offset(y: paraSeguinte ? deslize : -deslize).combined(with: .opacity),
+            removal: .offset(y: paraSeguinte ? -deslize : deslize).combined(with: .opacity)
+        )
+    }
+
+    private func ir(_ item: Item, seguinte: Bool) {
+        paraSeguinte = seguinte
+        withAnimation(.snappy) { atual = item }
     }
 }

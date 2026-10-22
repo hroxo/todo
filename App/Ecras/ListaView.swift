@@ -39,7 +39,7 @@ struct ListaView: View {
     private var conteudo: some View {
         let cor = lista.cor
         let agora = Date.now
-        let ativos = lista.itensAtivos
+        let ativos = NavegacaoItens.ordem(lista)
         let fixados = ativos.filter(\.fixado)
         let outros = ativos.filter { !$0.fixado }
 

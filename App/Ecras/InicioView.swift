@@ -85,7 +85,7 @@ struct InicioView: View {
                 }
             }
             .navigationDestination(for: Lista.self) { ListaView(lista: $0) }
-            .navigationDestination(for: Item.self) { ItemDetalheView(item: $0) }
+            .navigationDestination(for: Item.self) { DetalheNavegavel(item: $0) }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
             .onChange(of: estado.abrirPersonalizar) { _, abrir in
                 guard abrir, let lista = listas.first else { return }

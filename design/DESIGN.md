@@ -197,7 +197,7 @@ Regras:
 - Voltar ao centro antes de soltar cancela, e as bolhas recolhem para dentro da cápsula.
 - A linha de ajuda acima do botão muda com o estado: "Toque: +5 dias · Premir e arrastar para escolher" → "Arrasta para um dos lados" → "Solta para manter mais 5/15 dias".
 - Depois de confirmar: vibração `.success`, as bolhas recolhem e o anel do topo anima até ao novo valor.
-- **Fixar, Concluir e "…"** saem da barra de baixo e vão para um grupo de vidro no canto superior direito da barra de navegação. No Detalhe, a barra de separadores fica escondida (`.toolbar(.hidden, for: .tabBar)`); o botão Manter ocupa o fundo do ecrã sozinho.
+- **Fixar, Concluir e "…"** saem da barra de baixo e vão para um grupo de vidro no canto superior direito da barra de navegação. À esquerda desse grupo, num grupo de vidro próprio, ficam **˄ ˅** (`chevron.up` / `chevron.down`) para o item anterior e o seguinte da lista, como no Mail; desativados no primeiro e no último. [Decidido 22/10/2026] No Detalhe, a barra de separadores fica escondida (`.toolbar(.hidden, for: .tabBar)`); o botão Manter ocupa o fundo do ecrã sozinho.
 
 ### 7.6 Captura rápida [Decidido]
 
@@ -242,6 +242,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - O fundo é a cor Fundo da lista. O título e o "voltar" usam a cor Tinta.
 - Lista: cabeçalho com o círculo do ícone (56 pt) + nome + "N ativos · M expiram hoje"; depois as secções **Fixados** e **Ativos**.
 - "…" da Lista: Personalizar lista, **Exportar CSV** (`square.and.arrow.up`, folha de partilha com `ToDo-<lista>-<AAAA-MM-DD>.csv`) e Apagar lista. Em Definições › Avançado há "Exportar tudo (CSV)". Colunas: `lista;titulo;estado;criado_em;ultima_acao;expira_em;concluido_em;fixado;subtopicos;n_fotos`, separadas por `;` (o Excel em português usa `;`), UTF-8 com BOM, datas ISO 8601 e subtópicos "[x] …; [ ] …". As fotos não entram, só a contagem. [Decidido 22/10/2026 · `ExportadorCSV`]
+- **Navegar entre itens no Detalhe** (Melhoria 5): a ordem é a da Lista (Fixados e depois Ativos, `NavegacaoItens`). Botões ˄ ˅ (7.5) e **puxão elástico nas pontas**: com o scroll no fim, puxar mais ~60 pt para cima passa ao seguinte; no topo, puxar para baixo passa ao anterior. Durante o puxão aparece uma cápsula de vidro "Seguinte: <título>" (no fundo) ou "Anterior: <título>" (no topo), que se enche na cor da lista ao passar o limiar, com vibração `.selection`; muda ao soltar. O scroll normal não muda de item. A troca é um deslize vertical curto (48 pt + fade; só fade com "Reduzir movimento"). Ações de acessibilidade "Item anterior" e "Item seguinte". [Decidido: navegar · Proposta: forma do gesto]
 - Detalhe: grupo de vidro no topo direito (Fixar, Concluir, "…") · anel grande + "Expira em N dias" + "Última ação …" · título · Fotos · Subtópicos (com "+" no cabeçalho da secção) · botão Manter em gotas de vidro no fundo (7.5).
 
 ### 7.11 Concluídos e Definições
