@@ -249,7 +249,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.12 Calendário no Início (mocks 7 e 8)
 
-- Lugar: o fundo do Início, por baixo da grelha de listas e de "Expiram hoje". O conteúdo percorre por baixo da barra de separadores.
+- Lugar: logo a seguir à grelha de espaços; "Expiram hoje" fica no fundo do Início, por baixo do calendário. Quando há itens a expirar hoje, um aviso no topo ("N itens expiram hoje", `clock.badge.exclamationmark`) desce até essa secção. O conteúdo percorre por baixo da barra de separadores. [Decidido 22/10/2026]
 - **Por ligar (mock 7)**: cartão branco de 18 pt de raio com o ícone `calendar` num círculo azul de 40 pt, o título "Junta o teu calendário", a frase "Vê os eventos de hoje por baixo das listas e cria pontos a partir deles.", três fichas (Apple, Google, Outlook, cada uma com um ponto da sua cor), o botão em cápsula "Ligar calendário" na cor de destaque e a nota "Lê só no iPhone: usa as contas Google e Outlook que já tens nos Ajustes." O cartão pode fechar-se ("Agora não") e volta a estar em Definições.
 - **Ligado (mock 8)**: cabeçalho "HOJE NO CALENDÁRIO" com "Ver semana" à direita; grupo branco com uma linha por evento (58 pt): hora de início e fim, barra vertical de 4 pt na cor do calendário, título (`.body` semibold) e local ou calendário (`.footnote`), ficha vermelha "AGORA" no evento a decorrer e um botão "+" (círculo de 30 pt na cor Fundo da lista de destino, alvo de 44 pt) para criar um ponto a partir do evento.
 - Sem eventos hoje: uma linha "Nada no calendário hoje".

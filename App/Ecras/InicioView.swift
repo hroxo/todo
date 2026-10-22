@@ -2,8 +2,9 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Ecrã Início (mocks 1 e 11): data, aviso de Expirados, grelha de espaços (páginas de 4 com
-/// setas quando há mais de 4), os itens que expiram hoje e o calendário.
+/// Ecrã Início (mocks 1 e 11): data, avisos (Expirados e "expiram hoje"), grelha de espaços
+/// (páginas de 4 com setas quando há mais de 4), o calendário e, no fundo, os itens que
+/// expiram hoje.
 struct InicioView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
@@ -56,7 +57,17 @@ struct InicioView: View {
                         avisoExpirados
                     }
 
+                    if !hoje.isEmpty {
+                        avisoExpiramHoje(hoje.count, rolagem: rolagem)
+                    }
+
                     grelhaEspacos(agora: agora)
+
+                    if mostrarCalendario {
+                        SecaoCalendario()
+                            .padding(.top, 4)
+                            .id("calendario")
+                    }
 
                     if !hoje.isEmpty {
                         TituloSecao(texto: "Expiram hoje")
@@ -73,12 +84,7 @@ struct InicioView: View {
                             }
                         }
                         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
-                    }
-
-                    if mostrarCalendario {
-                        SecaoCalendario()
-                            .padding(.top, 4)
-                            .id("calendario")
+                        .id("expiramHoje")
                     }
                 }
                 .padding(.horizontal, 20)
@@ -261,6 +267,29 @@ struct InicioView: View {
             .background(CoresEstado.expiradosFundo, in: .rect(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    /// "Expiram hoje" está no fundo do Início; o aviso no topo leva até lá.
+    private func avisoExpiramHoje(_ total: Int, rolagem: ScrollViewProxy) -> some View {
+        Button {
+            withAnimation { rolagem.scrollTo("expiramHoje", anchor: .bottom) }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "clock.badge.exclamationmark")
+                    .foregroundStyle(CoresEstado.expira)
+                Text(total == 1 ? "1 item expira hoje" : "\(total) itens expiram hoje")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.footnote.weight(.bold))
+            }
+            .foregroundStyle(CoresEstado.expiraTinta)
+            .padding(.horizontal, 16)
+            .frame(minHeight: 48)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Desce até aos itens que expiram hoje")
     }
 
     private func linhaHoje(_ item: Item) -> some View {
