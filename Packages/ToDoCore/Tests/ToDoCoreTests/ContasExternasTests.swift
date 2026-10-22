@@ -153,7 +153,7 @@ final class APICalendarioTests: BaseTestes {
                                                         corHex: nil, fornecedor: .microsoft)
 
     func testCalendariosDaGoogle() throws {
-        let json = #"{"items":[{"id":"primary@gmail.com","summary":"Hugo","backgroundColor":"#4285F4"},{"id":"pt#holiday@group.v.calendar.google.com","summary":"Feriados","summaryOverride":"Feriados em Portugal"}]}"#
+        let json = ##"{"items":[{"id":"primary@gmail.com","summary":"Hugo","backgroundColor":"#4285F4"},{"id":"pt#holiday@group.v.calendar.google.com","summary":"Feriados","summaryOverride":"Feriados em Portugal"}]}"##
         let calendarios = try APICalendario.lerCalendarios(Data(json.utf8), fornecedor: .google)
         XCTAssertEqual(calendarios.map(\.id), ["google:primary@gmail.com", "google:pt#holiday@group.v.calendar.google.com"])
         XCTAssertEqual(calendarios.map(\.nome), ["Hugo", "Feriados em Portugal"])
@@ -161,7 +161,7 @@ final class APICalendarioTests: BaseTestes {
     }
 
     func testCalendariosDaMicrosoft() throws {
-        let json = #"{"value":[{"id":"AAA=","name":"Calendário","hexColor":""},{"id":"BBB=","name":"Equipa","hexColor":"#e3008c"}]}"#
+        let json = ##"{"value":[{"id":"AAA=","name":"Calendário","hexColor":""},{"id":"BBB=","name":"Equipa","hexColor":"#e3008c"}]}"##
         let calendarios = try APICalendario.lerCalendarios(Data(json.utf8), fornecedor: .microsoft)
         XCTAssertEqual(calendarios.map(\.nome), ["Calendário", "Equipa"])
         XCTAssertNil(calendarios[0].corHex)
