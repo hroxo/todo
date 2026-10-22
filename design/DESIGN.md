@@ -169,10 +169,13 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 - Progresso = tempo restante / duração atual do item (3 dias por defeito, ou mais depois de Manter). Começa no topo e corre no sentido dos ponteiros do relógio, com pontas arredondadas.
 - Cor: base da lista. **No último dia** (menos de 24 h): `EstadoExpira`, e o texto à direita passa a "Hoje" em `EstadoExpiraTinta`.
 - À direita da linha: "3 d", "2 d", "Hoje". Itens fixados mostram o ícone `pin.fill` em vez do anel e o texto "Não expira".
+- **Tocar no anel conclui o item** (na linha da Lista; também no `pin.fill` dos fixados). Alvo de 44 × 44 pt, que não abre o Detalhe. O anel enche-se até 100% na cor `EstadoConcluido`, aparece um visto e só depois a linha sai (`.snappy`), com vibração `.success`. Rótulo VoiceOver "Concluir", com o tempo restante como dica. [Decidido 22/10/2026]
 
 ### 7.4 Linha de item
 
-Anel · título (1 linha, com reticências) · metadados ("2/4 subtópicos · 2 fotos", com o ícone `photo` quando há fotos) · tempo restante. Toque abre o Detalhe. Swipe para a esquerda: Apagar. Swipe para a direita: Manter +5. [Proposta para os swipes]
+Anel · título (1 linha, com reticências) · metadados ("2/4 subtópicos · 2 fotos", com o ícone `photo` quando há fotos) · tempo restante. Toque no anel conclui (7.3); toque no resto abre o Detalhe. Swipe para a esquerda: Apagar. Swipe para a direita: Manter +5 e Concluir. [Proposta para os swipes]
+
+Depois de concluir na Lista (anel ou swipe), aparece no fundo, durante 4 s, um aviso de vidro em cápsula "✓ Concluído · Anular". Anular devolve o item à mesma secção, com o mesmo prazo e o mesmo anel (`Tarefas.anular`). [Proposta]
 
 ### 7.5 Botão Manter — "gotas de vidro" (Detalhe) [Decidido]
 

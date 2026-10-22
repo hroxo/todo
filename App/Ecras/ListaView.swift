@@ -3,8 +3,8 @@ import SwiftUI
 import ToDoCore
 
 /// Itens ativos de uma lista (mock "Lista"): cabeçalho com o ícone, secções Fixados e Ativos.
-/// Deslizar para a direita: Manter e Concluir. Para a esquerda: Apagar. Pressão longa: todas
-/// as ações.
+/// Tocar no anel conclui, com "Anular" durante 4 s. Deslizar para a direita: Manter e
+/// Concluir. Para a esquerda: Apagar. Pressão longa: todas as ações.
 struct ListaView: View {
     let lista: Lista
 
@@ -17,6 +17,14 @@ struct ListaView: View {
     @State private var personalizar = false
     @State private var apagarLista = false
     @State private var sucessos = 0
+    @State private var ultimoConcluido: UltimoConcluido?
+
+    /// O último item concluído, para o aviso "Concluído · Anular" (Melhoria 2).
+    private struct UltimoConcluido: Equatable {
+        let id = UUID()
+        let item: Item
+        let antes: AntesDeConcluir
+    }
 
     private var tarefas: Tarefas { Tarefas(contexto: contexto) }
 
@@ -94,6 +102,18 @@ struct ListaView: View {
                 .accessibilityLabel("Mais opções")
             }
         }
+        .overlay(alignment: .bottom) {
+            if let ultimoConcluido {
+                avisoAnular(ultimoConcluido)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .task(id: ultimoConcluido?.id) {
+            guard ultimoConcluido != nil else { return }
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            withAnimation(.snappy) { ultimoConcluido = nil }
+        }
         .tint(cor.tinta)
         .sensoryFeedback(.success, trigger: sucessos)
         .onAppear { estado.listaAtual = lista }
@@ -149,7 +169,9 @@ struct ListaView: View {
 
     private func linha(_ item: Item, cor: CorLista, agora: Date) -> some View {
         NavigationLink(value: item) {
-            LinhaItem(item: item, cor: cor, agora: agora)
+            LinhaItem(item: item, cor: cor, agora: agora) {
+                concluir(item)
+            }
         }
         .swipeActions(edge: .leading) {
             if !item.fixado {
@@ -163,8 +185,7 @@ struct ListaView: View {
                 .tint(cor.base)
             }
             Button {
-                withAnimation { tarefas.concluir(item) }
-                sucessos += 1
+                concluir(item)
             } label: {
                 Label("Concluir", systemImage: "checkmark.circle")
             }
@@ -181,6 +202,43 @@ struct ListaView: View {
         .contextMenu {
             MenuAcoesItem(item: item, listas: listas, aEditar: $aEditar, aApagar: $aApagar)
         }
+    }
+
+    private func concluir(_ item: Item) {
+        let antes = withAnimation(.snappy) { tarefas.concluir(item) }
+        sucessos += 1
+        estado.reagendarAvisos()
+        withAnimation(.snappy) { ultimoConcluido = UltimoConcluido(item: item, antes: antes) }
+    }
+
+    private func anular(_ ultimo: UltimoConcluido) {
+        withAnimation(.snappy) {
+            tarefas.anular(ultimo.item, para: ultimo.antes)
+            ultimoConcluido = nil
+        }
+        estado.reagendarAvisos()
+    }
+
+    /// Aviso no fundo durante 4 s: "Concluído" e o botão Anular.
+    private func avisoAnular(_ ultimo: UltimoConcluido) -> some View {
+        HStack(spacing: Espaco.grelha) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(CoresEstado.concluido)
+                .accessibilityHidden(true)
+            Text("Concluído")
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+            Spacer(minLength: Espaco.curto)
+            Button("Anular") { anular(ultimo) }
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(lista.cor.tinta)
+                .frame(minHeight: 44)
+        }
+        .padding(.horizontal, Espaco.margem)
+        .frame(minHeight: 52)
+        .glassEffect(.regular, in: .capsule)
+        .padding(.horizontal, Espaco.margem)
+        .padding(.bottom, Espaco.curto)
     }
 
     private var mensagemApagar: String {

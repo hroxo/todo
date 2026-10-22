@@ -18,6 +18,13 @@ public struct Aviso: Equatable, Sendable {
     public let data: Date
 }
 
+/// Estado de um item antes de ser concluído, para o poder anular.
+public struct AntesDeConcluir: Equatable, Sendable {
+    public let estado: EstadoItem
+    public let expiraEm: Date?
+    public let ultimaAcaoEm: Date
+}
+
 /// Regras de produto sobre listas e itens (especificação 4). A interface chama só isto;
 /// não altera os modelos diretamente. Não grava: o contexto da app grava sozinho.
 public final class Tarefas {
@@ -184,7 +191,10 @@ public final class Tarefas {
         item.expiraEm = daquiA(dias, desde: agora)
     }
 
-    public func concluir(_ item: Item) {
+    /// Conclui o item. Devolve o que é preciso para o `anular` logo a seguir.
+    @discardableResult
+    public func concluir(_ item: Item) -> AntesDeConcluir {
+        let antes = AntesDeConcluir(estado: item.estado, expiraEm: item.expiraEm, ultimaAcaoEm: item.ultimaAcaoEm)
         item.estado = .concluido
         item.concluidoEm = relogio.agora
         if item.ehSubtopico {
@@ -192,6 +202,18 @@ public final class Tarefas {
         } else {
             item.expiraEm = nil
         }
+        return antes
+    }
+
+    /// "Anular" depois de concluir (Melhoria 2): o item volta ao estado de antes, com o mesmo
+    /// prazo e o mesmo anel. Não conta como ação. Só vale para itens principais ainda
+    /// concluídos.
+    public func anular(_ item: Item, para antes: AntesDeConcluir) {
+        guard !item.ehSubtopico, item.estado == .concluido else { return }
+        item.estado = antes.estado
+        item.concluidoEm = nil
+        item.expiraEm = antes.expiraEm
+        item.ultimaAcaoEm = antes.ultimaAcaoEm
     }
 
     public func reabrir(_ item: Item) {

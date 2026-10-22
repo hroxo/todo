@@ -118,6 +118,56 @@ final class TarefasTests: BaseTestes {
         XCTAssertEqual(item.expiraEm, dias(3, desde: relogio.agora))
     }
 
+    // MARK: - Melhoria 2: concluir no anel e anular
+
+    func testAnularDevolveOMesmoPrazo() throws {
+        let lista = try tarefas.criarLista(nome: "Trabalho", cor: .azul)
+        let item = try tarefas.criarItem(titulo: "Enviar email", em: lista)
+        avancar(dias: 1)
+        tarefas.manter(item, longo: false)
+        let prazo = item.expiraEm
+        let ultimaAcao = item.ultimaAcaoEm
+        avancar(horas: 5)
+
+        let antes = tarefas.concluir(item)
+        XCTAssertEqual(item.estado, .concluido)
+        tarefas.anular(item, para: antes)
+
+        XCTAssertEqual(item.estado, .ativo)
+        XCTAssertNil(item.concluidoEm)
+        XCTAssertEqual(item.expiraEm, prazo)
+        XCTAssertEqual(item.ultimaAcaoEm, ultimaAcao)
+        XCTAssertEqual(lista.itensAtivos.map(\.id), [item.id])
+        XCTAssertEqual(Prazo(item: item, agora: relogio.agora)?.dias, 5)
+    }
+
+    func testAnularItemFixadoContinuaFixadoSemPrazo() throws {
+        let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
+        let item = try tarefas.criarItem(titulo: "Revisão semanal", em: lista)
+        tarefas.definirFixado(item, true)
+
+        let antes = tarefas.concluir(item)
+        tarefas.anular(item, para: antes)
+
+        XCTAssertEqual(item.estado, .ativo)
+        XCTAssertTrue(item.fixado)
+        XCTAssertNil(item.expiraEm)
+    }
+
+    func testAnularSoDepoisDeConcluir() throws {
+        let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
+        let item = try tarefas.criarItem(titulo: "Ligar à avó", em: lista)
+        let antes = tarefas.concluir(item)
+        tarefas.reabrir(item)
+        avancar(horas: 2)
+        tarefas.reabrir(item)
+        let prazo = item.expiraEm
+
+        // Já reaberto: anular não mexe no prazo novo.
+        tarefas.anular(item, para: antes)
+        XCTAssertEqual(item.expiraEm, prazo)
+    }
+
     func testFixarEDesafixar() throws {
         let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
         let item = try tarefas.criarItem(titulo: "Renovar seguro", em: lista)

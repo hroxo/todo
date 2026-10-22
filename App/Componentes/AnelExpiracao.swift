@@ -26,16 +26,27 @@ struct AnelExpiracao: View {
     }
 }
 
-/// O anel de um item, ou o alfinete quando está fixado.
+/// O anel de um item, ou o alfinete quando está fixado. Ao concluir na linha, o anel
+/// enche-se na cor de concluído, com um visto (Melhoria 2).
 struct IndicadorPrazo: View {
     let item: Item
     let cor: CorLista
     let agora: Date
     var tamanho: CGFloat = 34
     var espessura: CGFloat = 5
+    var concluido = false
 
     var body: some View {
-        if item.fixado {
+        if concluido {
+            ZStack {
+                AnelExpiracao(fracao: 1, cor: CoresEstado.concluido, tamanho: tamanho, espessura: espessura)
+                Image(systemName: "checkmark")
+                    .font(.system(size: tamanho * 0.4, weight: .heavy))
+                    .foregroundStyle(CoresEstado.concluido)
+                    .transition(.scale.combined(with: .opacity))
+            }
+            .accessibilityHidden(true)
+        } else if item.fixado {
             ZStack {
                 Circle().fill(cor.fundo)
                 Image(systemName: "pin.fill")
