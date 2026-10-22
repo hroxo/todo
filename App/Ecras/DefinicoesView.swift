@@ -5,7 +5,7 @@ import ToDoCore
 import UIKit
 
 /// Definições (especificação 4.8, mock 9): listas primeiro; depois calendário, notificações,
-/// aparência e, em Avançado, os prazos. Importar e backup chegam no M6.
+/// aparência e, em Avançado, os prazos e exportar tudo em CSV. Importar e backup chegam no M6.
 struct DefinicoesView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
@@ -111,6 +111,14 @@ struct DefinicoesView: View {
                             } icon: {
                                 IconeDefinicao(simbolo: "clock.fill", cor: .gray)
                             }
+                        }
+                    }
+                    BotaoExportarCSV(ficheiro: FicheiroCSV(listas: listas)) {
+                        Label {
+                            Text("Exportar tudo (CSV)")
+                                .foregroundStyle(Color.primary)
+                        } icon: {
+                            IconeDefinicao(simbolo: "square.and.arrow.up", cor: .blue)
                         }
                     }
                 }

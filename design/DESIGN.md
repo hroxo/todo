@@ -145,6 +145,7 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 | Subtópico | `checklist` |
 | Recuperar | `arrow.uturn.backward` |
 | Apagar | `trash` |
+| Exportar CSV | `square.and.arrow.up` |
 | Filtrar (Concluídos, Expirados) | `line.3.horizontal.decrease.circle` / `.fill` com filtro ativo |
 
 ## 7. Componentes
@@ -240,6 +241,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 - O fundo é a cor Fundo da lista. O título e o "voltar" usam a cor Tinta.
 - Lista: cabeçalho com o círculo do ícone (56 pt) + nome + "N ativos · M expiram hoje"; depois as secções **Fixados** e **Ativos**.
+- "…" da Lista: Personalizar lista, **Exportar CSV** (`square.and.arrow.up`, folha de partilha com `ToDo-<lista>-<AAAA-MM-DD>.csv`) e Apagar lista. Em Definições › Avançado há "Exportar tudo (CSV)". Colunas: `lista;titulo;estado;criado_em;ultima_acao;expira_em;concluido_em;fixado;subtopicos;n_fotos`, separadas por `;` (o Excel em português usa `;`), UTF-8 com BOM, datas ISO 8601 e subtópicos "[x] …; [ ] …". As fotos não entram, só a contagem. [Decidido 22/10/2026 · `ExportadorCSV`]
 - Detalhe: grupo de vidro no topo direito (Fixar, Concluir, "…") · anel grande + "Expira em N dias" + "Última ação …" · título · Fotos · Subtópicos (com "+" no cabeçalho da secção) · botão Manter em gotas de vidro no fundo (7.5).
 
 ### 7.11 Concluídos e Definições
