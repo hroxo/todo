@@ -84,11 +84,14 @@ A app segue o tema do sistema, e o ícone também tem versões escura e tingida.
 </table>
 
 E ainda:
+- **Concluir num toque**: toca no anel de um ponto e está feito, com **Anular** durante 4 segundos.
 - **Subtópicos**: quando os concluis todos, a app sugere concluir o ponto.
+- **Passar de ponto em ponto** no detalhe, com ˄ ˅ ou puxando nas pontas do ecrã.
 - **Descrição curta** e até **4 fotos** em cada ponto.
 - **Fixar** o que nunca deve expirar.
 - **Captura rápida**, com subtópicos, fotos e escolha do espaço.
-- **Concluídos** durante 7 dias, para reabrir se for preciso.
+- **Concluídos** durante 7 dias, para reabrir se for preciso, com **filtros** por espaço e por data (também em Expirados).
+- **Exportar CSV** de um espaço ou de tudo, pronto a abrir no Excel ou no Numbers.
 - **Notificações** 24 horas antes de um ponto expirar (nunca durante a noite).
 - Cada gesto tem uma alternativa por menu, e a app suporta Dynamic Type e VoiceOver.
 
