@@ -37,7 +37,7 @@ struct MenuAcoesItem: View {
                 }
             }
             Button {
-                withAnimation { tarefas.concluir(item) }
+                withAnimation { _ = tarefas.concluir(item) }
             } label: {
                 Label("Concluir", systemImage: "checkmark.circle")
             }
