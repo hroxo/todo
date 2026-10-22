@@ -24,7 +24,7 @@ struct CartaoLista: View {
                     trilho: cor.ficha
                 )
             }
-            Spacer(minLength: 12)
+            Spacer(minLength: Espaco.grelha)
             Text(lista.nome)
                 .font(.headline.bold())
                 .lineLimit(2)
@@ -32,7 +32,7 @@ struct CartaoLista: View {
                 .font(.footnote.weight(.semibold))
         }
         .foregroundStyle(cor.texto)
-        .padding(14)
+        .padding(Espaco.grelha)
         .frame(maxWidth: .infinity, minHeight: altura, alignment: .leading)
         .background(cor.base, in: .rect(cornerRadius: 22, style: .continuous))
         .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
@@ -47,7 +47,7 @@ struct CartaoNovaLista: View {
     var altura: CGFloat = 148
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Espaco.curto) {
             Image(systemName: "plus")
                 .font(.title2.weight(.semibold))
             Text("Nova lista")

@@ -5,10 +5,10 @@ import ToDoCore
 struct SeletorCor: View {
     @Binding var selecao: CorLista
 
-    private let colunas = Array(repeating: GridItem(.flexible(), spacing: 12), count: 6)
+    private let colunas = Array(repeating: GridItem(.flexible(), spacing: Espaco.grelha), count: 6)
 
     var body: some View {
-        LazyVGrid(columns: colunas, spacing: 14) {
+        LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
             ForEach(CorLista.allCases, id: \.self) { cor in
                 let escolhida = cor == selecao
                 Button {
@@ -17,7 +17,7 @@ struct SeletorCor: View {
                     Circle()
                         .fill(cor.base)
                         .frame(width: 40, height: 40)
-                        .padding(4)
+                        .padding(Espaco.fino)
                         .overlay(Circle().stroke(cor.base, lineWidth: escolhida ? 2.5 : 0))
                         .frame(width: 48, height: 48)
                 }
@@ -37,10 +37,10 @@ struct SeletorIcone: View {
     @Binding var icone: String
     @Binding var emoji: String?
 
-    private let colunas = Array(repeating: GridItem(.flexible(), spacing: 10), count: 6)
+    private let colunas = Array(repeating: GridItem(.flexible(), spacing: Espaco.curto), count: 6)
 
     var body: some View {
-        LazyVGrid(columns: colunas, spacing: 12) {
+        LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
             if emojis {
                 ForEach(IconesLista.emojis, id: \.self) { opcao in
                     botao(escolhido: emoji == opcao, rotulo: opcao) {

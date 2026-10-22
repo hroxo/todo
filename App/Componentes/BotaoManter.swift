@@ -36,14 +36,15 @@ struct BotaoManter: View {
     private let limiar: CGFloat = 40
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Espaco.grelha) {
             Text(ajuda)
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(cor.tinta)
                 .contentTransition(.opacity)
 
+            // Distância de fusão das gotas (DESIGN.md 7.5), não é um espaçamento.
             GlassEffectContainer(spacing: 20) {
-                HStack(spacing: 12) {
+                HStack(spacing: Espaco.grelha) {
                     if fase != .parado {
                         bolha(longo: false)
                     }
@@ -113,7 +114,7 @@ struct BotaoManter: View {
         .glassEffect(ativa ? .regular.tint(cor.base).interactive() : .regular.interactive(), in: .circle)
         .glassEffectID(longo ? "longo" : "curto", in: espaco)
         // A bolha do lado oposto afasta-se para se soltar da cápsula.
-        .padding(longo ? .leading : .trailing, inativa ? 16 : 0)
+        .padding(longo ? .leading : .trailing, inativa ? Espaco.bloco : 0)
     }
 
     private var gesto: some Gesture {

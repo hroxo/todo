@@ -31,7 +31,8 @@ struct InicioView: View {
         }
     }
 
-    private let colunas = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+    private let colunas = [GridItem(.flexible(), spacing: Espaco.grelha), GridItem(.flexible(), spacing: Espaco.grelha)]
+    private let tamanhoIconeHoje: CGFloat = 28
 
     var body: some View {
         let agora = Date.now
@@ -42,17 +43,7 @@ struct InicioView: View {
 
         NavigationStack(path: $estadoLigado.caminho) {
             ScrollViewReader { rolagem in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(Formatos.cabecalho(agora).uppercased())
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text("Listas")
-                            .font(.largeTitle.weight(.heavy))
-                            .accessibilityAddTraits(.isHeader)
-                    }
-
+                EcraBase(titulo: "Listas", sobretitulo: Formatos.cabecalho(agora)) {
                     if !expirados.isEmpty {
                         avisoExpirados
                     }
@@ -65,40 +56,34 @@ struct InicioView: View {
 
                     if mostrarCalendario {
                         SecaoCalendario()
-                            .padding(.top, 4)
                             .id("calendario")
                     }
 
                     if !hoje.isEmpty {
-                        TituloSecao(texto: "Expiram hoje")
-                            .padding(.top, 4)
-                        VStack(spacing: 0) {
-                            ForEach(hoje) { item in
-                                NavigationLink(value: item) {
-                                    linhaHoje(item)
-                                }
-                                .buttonStyle(.plain)
-                                if item != hoje.last {
-                                    Divider().padding(.leading, 56)
+                        VStack(alignment: .leading, spacing: Espaco.curto) {
+                            TituloSecao(texto: "Expiram hoje")
+                            VStack(spacing: 0) {
+                                ForEach(hoje) { item in
+                                    NavigationLink(value: item) {
+                                        linhaHoje(item)
+                                    }
+                                    .buttonStyle(.plain)
+                                    if item != hoje.last {
+                                        Divider().padding(.leading, Espaco.bloco + tamanhoIconeHoje + Espaco.grelha)
+                                    }
                                 }
                             }
+                            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
                         }
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
                         .id("expiramHoje")
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+                .onChange(of: estado.rolarParaCalendario) { _, rolar in
+                    guard rolar else { return }
+                    estado.rolarParaCalendario = false
+                    withAnimation { rolagem.scrollTo("calendario", anchor: .bottom) }
+                }
             }
-            .onChange(of: estado.rolarParaCalendario) { _, rolar in
-                guard rolar else { return }
-                estado.rolarParaCalendario = false
-                withAnimation { rolagem.scrollTo("calendario", anchor: .bottom) }
-            }
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Listas")
-            .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Lista.self) { ListaView(lista: $0) }
             .navigationDestination(for: Item.self) { ItemDetalheView(item: $0) }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
@@ -134,23 +119,24 @@ struct InicioView: View {
     private func grelhaEspacos(agora: Date) -> some View {
         let paginas = Espacos.paginas(celulas(), espacos: listas.count)
         if paginas.count <= 1 {
-            LazyVGrid(columns: colunas, spacing: 12) {
+            LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
                 ForEach(paginas.first ?? []) { celula($0, agora: agora, altura: 148) }
             }
         } else {
-            VStack(spacing: 10) {
+            VStack(spacing: Espaco.curto) {
                 TabView(selection: $pagina) {
                     ForEach(paginas.indices, id: \.self) { indice in
-                        LazyVGrid(columns: colunas, spacing: 12) {
+                        LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
                             ForEach(paginas[indice]) { celula($0, agora: agora, altura: 128) }
                         }
-                        .padding(.vertical, 8)
+                        // Espaço para a sombra dos cartões, que a TabView cortaria.
+                        .padding(.vertical, Espaco.curto)
                         .frame(maxHeight: .infinity, alignment: .top)
                         .tag(indice)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(height: 128 * 2 + 12 + 16)
+                .frame(height: 128 * 2 + Espaco.grelha + 2 * Espaco.curto)
 
                 controlosPagina(total: paginas.count)
 
@@ -214,8 +200,8 @@ struct InicioView: View {
 
             Spacer()
 
-            VStack(spacing: 4) {
-                HStack(spacing: 6) {
+            VStack(spacing: Espaco.fino) {
+                HStack(spacing: Espaco.curto) {
                     ForEach(0..<total, id: \.self) { indice in
                         Circle()
                             .fill(indice == pagina ? Color.primary : Color(.systemGray3))
@@ -250,7 +236,7 @@ struct InicioView: View {
         Button {
             estado.separador = .expirados
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: Espaco.grelha) {
                 Image(systemName: "hourglass")
                     .foregroundStyle(CoresEstado.expira)
                 Text(expirados.count == 1 ? "1 item em Expirados" : "\(expirados.count) itens em Expirados")
@@ -262,7 +248,7 @@ struct InicioView: View {
                     .font(.footnote.weight(.bold))
             }
             .foregroundStyle(CoresEstado.expiraTinta)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Espaco.bloco)
             .frame(minHeight: 48)
             .background(CoresEstado.expiradosFundo, in: .rect(cornerRadius: 16, style: .continuous))
         }
@@ -274,7 +260,7 @@ struct InicioView: View {
         Button {
             withAnimation { rolagem.scrollTo("expiramHoje", anchor: .bottom) }
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: Espaco.grelha) {
                 Image(systemName: "clock.badge.exclamationmark")
                     .foregroundStyle(CoresEstado.expira)
                 Text(total == 1 ? "1 item expira hoje" : "\(total) itens expiram hoje")
@@ -284,7 +270,7 @@ struct InicioView: View {
                     .font(.footnote.weight(.bold))
             }
             .foregroundStyle(CoresEstado.expiraTinta)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Espaco.bloco)
             .frame(minHeight: 48)
             .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16, style: .continuous))
         }
@@ -293,9 +279,9 @@ struct InicioView: View {
     }
 
     private func linhaHoje(_ item: Item) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Espaco.grelha) {
             if let lista = item.lista {
-                IconeListaView(lista: lista, tamanho: 28)
+                IconeListaView(lista: lista, tamanho: tamanhoIconeHoje)
             }
             Text(item.titulo)
                 .font(.body.weight(.medium))
@@ -305,7 +291,7 @@ struct InicioView: View {
                 .font(.footnote.weight(.bold))
                 .foregroundStyle(CoresEstado.expiraTinta)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, Espaco.bloco)
         .frame(minHeight: 56)
         .contentShape(Rectangle())
     }

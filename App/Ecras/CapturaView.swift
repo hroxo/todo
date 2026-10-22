@@ -38,8 +38,8 @@ struct CapturaView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: Espaco.bloco) {
+                    VStack(alignment: .leading, spacing: Espaco.curto) {
                         TituloSecao(texto: "O que tens na cabeça?")
                         TextField("Escreve aqui", text: $texto, axis: .vertical)
                             .font(.title2.weight(.semibold))
@@ -49,7 +49,7 @@ struct CapturaView: View {
                     }
 
                     if !subtopicos.isEmpty {
-                        VStack(spacing: 10) {
+                        VStack(spacing: Espaco.curto) {
                             ForEach(subtopicos.indices, id: \.self) { indice in
                                 linhaSubtopico(indice)
                             }
@@ -57,14 +57,14 @@ struct CapturaView: View {
                     }
 
                     if !fotos.isEmpty {
-                        HStack(spacing: 10) {
+                        HStack(spacing: Espaco.curto) {
                             ForEach(fotos.indices, id: \.self) { indice in
                                 miniatura(indice)
                             }
                         }
                     }
 
-                    FluxoLayout(espaco: 8) {
+                    FluxoLayout(espaco: Espaco.curto) {
                         ForEach(listas) { opcao in
                             ficha(opcao)
                         }
@@ -78,7 +78,7 @@ struct CapturaView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 }
-                .padding(20)
+                .padding(Espaco.margem)
             }
             .navigationTitle("Nova nota")
             .navigationBarTitleDisplayMode(.inline)
@@ -146,13 +146,13 @@ struct CapturaView: View {
         return Button {
             listaId = opcao.id
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Espaco.curto) {
                 IconeListaView(lista: opcao, tamanho: 28, fundo: escolhida ? opcao.cor.ficha : nil)
                 Text(opcao.nome)
                     .font(.subheadline.bold())
             }
-            .padding(.leading, 6)
-            .padding(.trailing, 14)
+            .padding(.leading, Espaco.curto)
+            .padding(.trailing, Espaco.grelha)
             .frame(minHeight: 40)
             .foregroundStyle(escolhida ? opcao.cor.texto : Color.primary)
             .background(escolhida ? opcao.cor.base : Color(.secondarySystemFill), in: .capsule)
@@ -163,7 +163,7 @@ struct CapturaView: View {
     }
 
     private func linhaSubtopico(_ indice: Int) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Espaco.grelha) {
             Image(systemName: "circle")
                 .foregroundStyle(cor.base)
             TextField("Subtópico", text: $subtopicos[indice])

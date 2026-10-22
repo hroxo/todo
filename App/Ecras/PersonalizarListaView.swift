@@ -33,7 +33,7 @@ struct PersonalizarListaView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 22) {
+                VStack(spacing: Espaco.margem) {
                     IconeListaView(cor: cor, icone: icone, emoji: emoji, tamanho: 92)
                         .shadow(color: cor.base.opacity(0.35), radius: 14, y: 8)
                         .animation(.snappy, value: cor)
@@ -41,12 +41,12 @@ struct PersonalizarListaView: View {
                     TextField("Nome da lista", text: $nome)
                         .font(.title2.bold())
                         .multilineTextAlignment(.center)
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 16)
+                        .padding(.vertical, Espaco.grelha)
+                        .padding(.horizontal, Espaco.bloco)
                         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14, style: .continuous))
 
                     SeletorCor(selecao: $cor)
-                        .padding(14)
+                        .padding(Espaco.grelha)
                         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
 
                     Picker("Tipo de ícone", selection: $separadorEmoji) {
@@ -56,10 +56,10 @@ struct PersonalizarListaView: View {
                     .pickerStyle(.segmented)
 
                     SeletorIcone(cor: cor, emojis: separadorEmoji, icone: $icone, emoji: $emoji)
-                        .padding(14)
+                        .padding(Espaco.grelha)
                         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
                 }
-                .padding(20)
+                .padding(Espaco.margem)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(titulo)

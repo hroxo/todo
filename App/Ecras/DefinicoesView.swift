@@ -20,13 +20,13 @@ struct DefinicoesView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            EcraBaseLista(titulo: "Definições") {
                 Section {
                     ForEach(listas) { lista in
                         Button {
                             formulario = .editar(lista)
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack(spacing: Espaco.grelha) {
                                 IconeListaView(lista: lista, tamanho: 30)
                                 Text(lista.nome)
                                     .foregroundStyle(Color.primary)
@@ -121,7 +121,6 @@ struct DefinicoesView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
-            .navigationTitle("Definições")
             .onChange(of: definicoes) { _, novas in
                 novas.guardar()
                 estado.reagendarAvisos()
@@ -234,7 +233,7 @@ struct CalendariosView: View {
                         NavigationLink {
                             EscolherEspacoView(calendario: item)
                         } label: {
-                            HStack(spacing: 10) {
+                            HStack(spacing: Espaco.curto) {
                                 Circle()
                                     .fill(Color(cgColor: item.cgColor))
                                     .frame(width: 12, height: 12)
@@ -263,7 +262,7 @@ struct CalendariosView: View {
     @ViewBuilder
     private func rotuloEspaco(_ item: EKCalendar) -> some View {
         if let id = calendario.espaco(de: item.calendarIdentifier), let lista = listas.first(where: { $0.id == id }) {
-            HStack(spacing: 6) {
+            HStack(spacing: Espaco.curto) {
                 Circle().fill(lista.cor.base).frame(width: 10, height: 10)
                 Text(lista.nome)
             }
@@ -291,7 +290,7 @@ struct EscolherEspacoView: View {
                     Button {
                         escolher(lista.id)
                     } label: {
-                        HStack(spacing: 12) {
+                        HStack(spacing: Espaco.grelha) {
                             IconeListaView(lista: lista, tamanho: 30)
                             Text(lista.nome)
                                 .foregroundStyle(Color.primary)
@@ -308,7 +307,7 @@ struct EscolherEspacoView: View {
                 Button {
                     escolher(nil)
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: Espaco.grelha) {
                         Circle()
                             .strokeBorder(Color(.systemGray3), style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
                             .frame(width: 30, height: 30)

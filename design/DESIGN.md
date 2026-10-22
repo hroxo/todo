@@ -105,6 +105,7 @@ Listas iniciais: **Trabalho** = Azul + `briefcase.fill`, **Pessoal** = Roxo + `p
 - Raios: cartões de lista 22 pt, grupos de linhas 18 pt, linhas soltas e miniaturas 14 pt, botões em cápsula = metade da altura. Usar `.rect(cornerRadius:, style: .continuous)`.
 - Alvos de toque: mínimo 44×44 pt em tudo o que é tocável.
 - Altura das linhas de item: 62 pt. Linhas de subtópico: 46 pt.
+- **Nenhum ecrã define margens à mão; usa `Espaco` e `EcraBase`.** [Decidido 22/10/2026] `Espaco` (`App/Componentes/EcraBase.swift`) tem `margem` 20, `bloco` 16, `grelha` 12, `linhaItem` 62, `linhaSubtopico` 46 e, dentro dos componentes, `curto` 8, `fino` 4, `minimo` 2 e `fim` 24 (depois do último bloco). Os quatro separadores usam o mesmo cabeçalho do Início (linha pequena em maiúsculas + título `.largeTitle` `.heavy`): `EcraBase` sobre `ScrollView` (Listas, Expirados) ou `EcraBaseLista` sobre `List` agrupada (Concluídos, Definições). A linha pequena é a data no Início e fica reservada nos outros, para o título ficar sempre à mesma altura.
 
 ## 6. Ícones (SF Symbols)
 
@@ -226,8 +227,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.9 Expirados
 
-- Fundo `EstadoExpiradosFundo`. Cabeçalho com o ícone `hourglass` num círculo laranja e o texto "Ficam aqui 14 dias antes de serem apagados".
-- Cartão por item: ícone da lista, título, "Lista · apagado em N dias", botão **Recuperar** (cápsula laranja clara) e botão Apagar (círculo cinzento).
+- Fundo `EstadoExpiradosFundo`. Título "Expirados" como nos outros separadores (`EcraBase`) e, por baixo, o ícone `hourglass` num círculo laranja de 40 pt com o texto "Ficam aqui 14 dias antes de serem apagados".
+- Cartão por item: em cima, ícone da lista, título e "Lista · apagado em N dias"; em baixo, o botão **Recuperar** (cápsula laranja clara, a toda a largura, numa só linha) e o botão Apagar (círculo cinzento). [22/10/2026: o "Recuperar" cortava-se ao lado da linha do prazo]
 - No Início há um aviso permanente "N itens em Expirados" que leva a este ecrã, sempre que N > 0.
 
 ### 7.10 Ecrãs Lista e Detalhe

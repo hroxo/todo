@@ -40,7 +40,7 @@ struct ListaView: View {
                 cabecalho(ativos: ativos.count, hoje: lista.expiramHoje(agora: agora).count)
             }
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: Espaco.fino, trailing: 0))
 
             if !fixados.isEmpty {
                 Section {
@@ -121,10 +121,10 @@ struct ListaView: View {
     }
 
     private func cabecalho(ativos: Int, hoje: Int) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Espaco.grelha) {
             IconeListaView(lista: lista, tamanho: 56)
                 .shadow(color: lista.cor.base.opacity(0.35), radius: 8, y: 6)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Espaco.minimo) {
                 Text(lista.nome)
                     .font(.largeTitle.weight(.heavy))
                     .foregroundStyle(lista.cor.tinta)
@@ -135,7 +135,7 @@ struct ListaView: View {
                     .foregroundStyle(lista.cor.tinta.opacity(0.8))
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, Espaco.fino)
     }
 
     private func resumo(ativos: Int, hoje: Int) -> String {

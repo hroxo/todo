@@ -20,7 +20,7 @@ struct ConcluidosView: View {
         let itens = concluidos.sorted { ($0.concluidoEm ?? .distantPast) > ($1.concluidoEm ?? .distantPast) }
 
         NavigationStack {
-            List {
+            EcraBaseLista(titulo: "Concluídos") {
                 Section {
                     ForEach(itens) { item in
                         linha(item, agora: agora)
@@ -59,7 +59,6 @@ struct ConcluidosView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
             .overlay {
                 if itens.isEmpty {
                     ContentUnavailableView(
@@ -69,18 +68,17 @@ struct ConcluidosView: View {
                     )
                 }
             }
-            .navigationTitle("Concluídos")
             .sensoryFeedback(.success, trigger: reabertos)
             .acoesDeItem(aEditar: $aEditar, aApagar: $aApagar)
         }
     }
 
     private func linha(_ item: Item, agora: Date) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Espaco.grelha) {
             if let lista = item.lista {
                 IconeListaView(lista: lista, tamanho: 30)
             }
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Espaco.minimo) {
                 Text(item.titulo)
                     .font(.body.weight(.semibold))
                     .lineLimit(2)

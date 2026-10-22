@@ -93,7 +93,7 @@ struct BotaoBiblioteca: View {
     var tamanho: CGFloat = 76
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Espaco.fino) {
             Image(systemName: "plus")
                 .font(.title3.weight(.semibold))
             Text("Biblioteca")

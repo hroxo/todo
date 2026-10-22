@@ -12,7 +12,7 @@ struct CampoNovo: View {
     @FocusState private var focado: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Espaco.grelha) {
             // Tocar no + também guarda, além do botão do teclado.
             Button(action: submeter) {
                 Image(systemName: "plus.circle.fill")

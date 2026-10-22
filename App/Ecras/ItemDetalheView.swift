@@ -42,35 +42,38 @@ struct ItemDetalheView: View {
         let agora = Date.now
 
         return ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: Espaco.bloco) {
                 cabecalho(agora: agora)
 
-                TextField("Título", text: $titulo, axis: .vertical)
-                    .font(.title2.bold())
-                    .focused($tituloFocado)
-                    .submitLabel(.done)
-                    .onChange(of: titulo) { _, novo in
-                        // Num campo de várias linhas, o Enter termina a edição.
-                        if novo.contains("\n") {
-                            titulo = novo.replacingOccurrences(of: "\n", with: "")
-                            tituloFocado = false
+                // A descrição fica colada ao título.
+                VStack(alignment: .leading, spacing: Espaco.fino) {
+                    TextField("Título", text: $titulo, axis: .vertical)
+                        .font(.title2.bold())
+                        .focused($tituloFocado)
+                        .submitLabel(.done)
+                        .onChange(of: titulo) { _, novo in
+                            // Num campo de várias linhas, o Enter termina a edição.
+                            if novo.contains("\n") {
+                                titulo = novo.replacingOccurrences(of: "\n", with: "")
+                                tituloFocado = false
+                            }
                         }
-                    }
 
-                descricao
+                    descricao
+                }
 
                 secaoFotos
                 secaoSubtopicos
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
+            .padding(.horizontal, Espaco.margem)
+            .padding(.bottom, Espaco.fim)
         }
         .scrollDismissesKeyboard(.interactively)
         .background(cor.fundo.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) {
             rodape
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+                .padding(.horizontal, Espaco.bloco)
+                .padding(.bottom, Espaco.curto)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
@@ -147,7 +150,7 @@ struct ItemDetalheView: View {
 
     @ViewBuilder
     private func cabecalho(agora: Date) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Espaco.grelha) {
             if item.estado == .concluido {
                 circuloEstado("checkmark", fundo: CoresEstado.concluido)
                 textosCabecalho("Concluído", cor: CoresEstado.concluido)
@@ -183,7 +186,7 @@ struct ItemDetalheView: View {
     }
 
     private func textosCabecalho(_ texto: String, cor: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Espaco.minimo) {
             Text(texto)
                 .font(.title.weight(.heavy))
                 .foregroundStyle(cor)
@@ -205,14 +208,13 @@ struct ItemDetalheView: View {
                     nota = String(novo.prefix(Tarefas.maxDescricao))
                 }
             }
-            .padding(.top, -10)
     }
 
     private var secaoFotos: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Espaco.curto) {
             TituloSecao(texto: "Fotos", cor: cor.tinta)
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: Espaco.curto) {
                     ForEach(item.fotosOrdenadas) { foto in
                         Button {
                             fotoAberta = foto
@@ -246,7 +248,7 @@ struct ItemDetalheView: View {
     private var secaoSubtopicos: some View {
         let subs = item.subtopicosOrdenados
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: Espaco.curto) {
             HStack {
                 TituloSecao(
                     texto: subs.isEmpty ? "Subtópicos" : "Subtópicos · \(item.subtopicosFeitos) de \(subs.count)",
@@ -274,14 +276,14 @@ struct ItemDetalheView: View {
                                 Button { aEditar = sub } label: { Label("Editar", systemImage: "pencil") }
                                 Button(role: .destructive) { aApagar = sub } label: { Label("Apagar", systemImage: "trash") }
                             }
-                        Divider().padding(.leading, 52)
+                        Divider().padding(.leading, LinhaSubtopico.recuoDivisor)
                     }
                     if novoSubtopico {
                         CampoNovo(placeholder: "Novo subtópico", cor: cor.base, focarAoAparecer: true) { texto in
                             withAnimation { _ = try? tarefas.adicionarSubtopico(titulo: texto, a: item) }
                         }
-                        .padding(.horizontal, 16)
-                        .frame(minHeight: 46)
+                        .padding(.horizontal, Espaco.bloco)
+                        .frame(minHeight: Espaco.linhaSubtopico)
                     }
                 }
                 .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
@@ -362,17 +364,20 @@ private struct LinhaSubtopico: View {
     let cor: Color
     let aoAlternar: () -> Void
 
+    /// O divisor começa no texto: margem, o círculo (`.title2`, cerca de 24 pt) e o espaço.
+    static let recuoDivisor = Espaco.bloco + 24 + Espaco.grelha
+
     private var feito: Bool { sub.estado == .concluido }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Espaco.grelha) {
             CirculoConcluir(feito: feito, cor: cor, acao: aoAlternar)
             Text(sub.titulo)
                 .strikethrough(feito)
                 .foregroundStyle(feito ? .secondary : .primary)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 46)
+        .padding(.horizontal, Espaco.bloco)
+        .frame(minHeight: Espaco.linhaSubtopico)
     }
 }

@@ -10,14 +10,14 @@ struct LinhaItem: View {
     private var prazo: Prazo? { Prazo(item: item, agora: agora) }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Espaco.grelha) {
             IndicadorPrazo(item: item, cor: cor, agora: agora)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Espaco.minimo) {
                 Text(item.titulo)
                     .font(.body.weight(.semibold))
                     .lineLimit(1)
-                HStack(spacing: 4) {
+                HStack(spacing: Espaco.fino) {
                     if !item.fotos.isEmpty {
                         Image(systemName: "photo")
                     }
@@ -28,7 +28,7 @@ struct LinhaItem: View {
                 .lineLimit(1)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: Espaco.curto)
 
             if item.fixado {
                 Text("Não expira")
@@ -40,7 +40,7 @@ struct LinhaItem: View {
                     .foregroundStyle(prazo.ultimoDia ? CoresEstado.expiraTinta : cor.tinta)
             }
         }
-        .frame(minHeight: 62)
+        .frame(minHeight: Espaco.linhaItem)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(rotuloAcessivel)
     }

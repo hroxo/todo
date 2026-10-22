@@ -19,64 +19,53 @@ struct ExpiradosView: View {
         let itens = expirados.sorted { ($0.expiradoEm ?? .distantPast) > ($1.expiradoEm ?? .distantPast) }
 
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            Circle().fill(CoresEstado.expira)
-                            Image(systemName: "hourglass")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                        .frame(width: 56, height: 56)
+            EcraBase(titulo: "Expirados", fundo: CoresEstado.expiradosFundo) {
+                HStack(spacing: Espaco.grelha) {
+                    Image(systemName: "hourglass")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(CoresEstado.expira))
                         .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Expirados")
-                                .font(.largeTitle.weight(.heavy))
-                                .accessibilityAddTraits(.isHeader)
-                            Text("Ficam aqui \(tarefas.definicoes.diasRetencaoExpirados) dias antes de serem apagados")
-                                .font(.footnote)
-                                .foregroundStyle(CoresEstado.expiraTinta)
-                        }
-                    }
-
-                    if itens.isEmpty {
-                        ContentUnavailableView(
-                            "Nada expirou",
-                            systemImage: "hourglass",
-                            description: Text("Os itens sem ações durante \(tarefas.definicoes.diasExpiracao) dias aparecem aqui.")
-                        )
-                        .padding(.top, 40)
-                    } else {
-                        ForEach(itens) { cartao($0) }
-                    }
+                    Text("Ficam aqui \(tarefas.definicoes.diasRetencaoExpirados) dias antes de serem apagados")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(CoresEstado.expiraTinta)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+
+                if itens.isEmpty {
+                    ContentUnavailableView(
+                        "Nada expirou",
+                        systemImage: "hourglass",
+                        description: Text("Os itens sem ações durante \(tarefas.definicoes.diasExpiracao) dias aparecem aqui.")
+                    )
+                    .padding(.top, Espaco.margem)
+                } else {
+                    ForEach(itens) { cartao($0) }
+                }
             }
-            .background(CoresEstado.expiradosFundo.ignoresSafeArea())
-            .navigationTitle("Expirados")
-            .toolbarVisibility(.hidden, for: .navigationBar)
             .sensoryFeedback(.success, trigger: recuperados)
             .acoesDeItem(aEditar: $aEditar, aApagar: $aApagar)
         }
     }
 
+    /// Título e "Lista · apagado em N dias" em cima; Recuperar (a toda a largura, para nunca
+    /// cortar) e Apagar em baixo.
     private func cartao(_ item: Item) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: Espaco.grelha) {
+            HStack(spacing: Espaco.grelha) {
                 if let lista = item.lista {
                     IconeListaView(lista: lista, tamanho: 30)
                 }
-                Text(item.titulo)
-                    .font(.body.weight(.semibold))
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: Espaco.minimo) {
+                    Text(item.titulo)
+                        .font(.body.weight(.semibold))
+                        .lineLimit(2)
+                    Text(meta(item))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
-            HStack(spacing: 10) {
-                Text(meta(item))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 4)
+            HStack(spacing: Espaco.grelha) {
                 Button {
                     withAnimation { tarefas.recuperar(item) }
                     recuperados += 1
@@ -84,8 +73,8 @@ struct ExpiradosView: View {
                 } label: {
                     Label("Recuperar", systemImage: "arrow.uturn.backward")
                         .font(.subheadline.weight(.bold))
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 44)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                         .foregroundStyle(CoresEstado.expiraTinta)
                         .background(CoresEstado.expira.opacity(0.18), in: .capsule)
                 }
@@ -103,7 +92,7 @@ struct ExpiradosView: View {
                 .accessibilityLabel("Apagar")
             }
         }
-        .padding(16)
+        .padding(Espaco.bloco)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
     }
 

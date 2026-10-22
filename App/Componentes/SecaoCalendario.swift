@@ -17,6 +17,9 @@ struct SecaoCalendario: View {
     @State private var confirmacao: String?
     @State private var criados = 0
 
+    /// Coluna das horas de cada evento.
+    private let larguraHora: CGFloat = 48
+
     var body: some View {
         Group {
             switch calendario.acesso {
@@ -31,10 +34,10 @@ struct SecaoCalendario: View {
     // MARK: - Por ligar
 
     private var cartaoLigar: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: Espaco.grelha) {
+            HStack(alignment: .top, spacing: Espaco.grelha) {
                 circuloCalendario
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Espaco.minimo) {
                     Text("Junta o teu calendário")
                         .font(.headline)
                     Text("Vê os eventos de hoje por baixo das listas e cria pontos a partir deles.")
@@ -51,12 +54,13 @@ struct SecaoCalendario: View {
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
-                .padding(.top, -10)
-                .padding(.trailing, -10)
+                // O alvo de 44 pt sai um pouco do canto, para o xis ficar alinhado com o texto.
+                .padding(.top, -Espaco.grelha)
+                .padding(.trailing, -Espaco.grelha)
                 .accessibilityLabel("Agora não")
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: Espaco.curto) {
                 ficha("Apple", cor: .red)
                 ficha("Google", cor: .green)
                 ficha("Outlook", cor: .blue)
@@ -78,15 +82,15 @@ struct SecaoCalendario: View {
                 .frame(maxWidth: .infinity)
                 .multilineTextAlignment(.center)
         }
-        .padding(16)
+        .padding(Espaco.bloco)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
     }
 
     private var cartaoRecusado: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: Espaco.grelha) {
+            HStack(spacing: Espaco.grelha) {
                 circuloCalendario
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Espaco.minimo) {
                     Text("Sem acesso ao calendário")
                         .font(.headline)
                     Text("Para ver os eventos aqui, dá acesso total em Ajustes › ToDo › Calendários.")
@@ -107,7 +111,7 @@ struct SecaoCalendario: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .padding(16)
+        .padding(Espaco.bloco)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
     }
 
@@ -121,12 +125,12 @@ struct SecaoCalendario: View {
     }
 
     private func ficha(_ nome: String, cor: Color) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: Espaco.curto) {
             Circle().fill(cor).frame(width: 9, height: 9)
             Text(nome)
                 .font(.footnote.weight(.semibold))
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, Espaco.curto)
         .frame(minHeight: 30)
         .background(Color(.tertiarySystemFill), in: .capsule)
     }
@@ -135,7 +139,7 @@ struct SecaoCalendario: View {
 
     private var hoje: some View {
         TimelineView(.periodic(from: .now, by: 60)) { contexto in
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Espaco.curto) {
                 HStack {
                     TituloSecao(texto: "Hoje no calendário")
                     Spacer()
@@ -159,13 +163,13 @@ struct SecaoCalendario: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, Espaco.bloco)
+                            .padding(.vertical, Espaco.curto)
                     }
                     ForEach(calendario.eventos) { evento in
                         linha(evento, agora: contexto.date)
                         if evento != calendario.eventos.last {
-                            Divider().padding(.leading, 76)
+                            Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
                         }
                     }
                 }
@@ -175,7 +179,7 @@ struct SecaoCalendario: View {
     }
 
     private func linha(_ evento: EventoHoje, agora: Date) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Espaco.grelha) {
             VStack(alignment: .leading, spacing: 0) {
                 if evento.diaInteiro {
                     Text("Todo o dia")
@@ -189,15 +193,15 @@ struct SecaoCalendario: View {
                 }
             }
             .monospacedDigit()
-            .frame(width: 48, alignment: .leading)
+            .frame(width: larguraHora, alignment: .leading)
 
             RoundedRectangle(cornerRadius: 2)
                 .fill(evento.cor)
                 .frame(width: 4)
-                .padding(.vertical, 10)
+                .padding(.vertical, Espaco.curto)
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: Espaco.minimo) {
+                HStack(spacing: Espaco.curto) {
                     Text(evento.titulo)
                         .font(.body.weight(.semibold))
                         .lineLimit(1)
@@ -205,13 +209,13 @@ struct SecaoCalendario: View {
                         Text("AGORA")
                             .font(.caption2.weight(.heavy))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Espaco.curto)
+                            .padding(.vertical, Espaco.minimo)
                             .background(Color.red, in: .rect(cornerRadius: 6))
                     }
                 }
                 if let espaco = espaco(de: evento) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: Espaco.curto) {
                         IconeListaView(lista: espaco, tamanho: 18)
                         Text(espaco.nome)
                             .fontWeight(.semibold)
@@ -232,9 +236,9 @@ struct SecaoCalendario: View {
                 botaoCriar(evento, em: espaco)
             }
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 4)
-        .frame(minHeight: 62)
+        .padding(.leading, Espaco.bloco)
+        .padding(.trailing, Espaco.fino)
+        .frame(minHeight: Espaco.linhaItem)
         .accessibilityElement(children: .contain)
     }
 
