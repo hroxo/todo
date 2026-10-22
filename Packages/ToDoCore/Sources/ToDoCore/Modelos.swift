@@ -118,6 +118,10 @@ public final class Item {
     public var ordem: Int
     /// Descrição curta do item principal (especificação 4.6). Vazia nos subtópicos.
     public var nota: String?
+    /// Evento do calendário de onde veio o item: identificador externo do evento e início
+    /// da ocorrência (cada ocorrência de um evento recorrente conta à parte).
+    public var eventoId: String?
+    public var eventoInicio: Date?
 
     public var lista: Lista?
     public var pai: Item?

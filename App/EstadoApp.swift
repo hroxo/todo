@@ -17,6 +17,8 @@ final class EstadoApp {
     var abrirPersonalizar = false
     /// Só para o modo de demonstração: desce até ao calendário no Início.
     var rolarParaCalendario = false
+    /// Só para o modo de demonstração: abre um evento do calendário.
+    var abrirEventoDemo = false
     /// A lista que está aberta, para a captura rápida a pré-selecionar.
     var listaAtual: Lista?
     /// Filtros de Concluídos e Expirados: independentes e só enquanto a app está aberta.

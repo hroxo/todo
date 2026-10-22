@@ -4,27 +4,51 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
+/// Um participante de um convite (Melhoria 6.2).
+struct Participante: Hashable {
+    let nome: String
+    let resposta: RespostaConvite
+}
+
 /// Um evento de hoje, já pronto para a interface.
 struct EventoHoje: Identifiable, Equatable {
     let id: String
+    /// Identificador externo do evento (o mesmo em todos os dispositivos), para o "+" só
+    /// funcionar uma vez por ocorrência (Melhoria 6.4).
+    let eventoId: String
     let titulo: String
     let inicio: Date
     let fim: Date
     let diaInteiro: Bool
-    /// Local e calendário ("Sala 3 · Trabalho").
+    /// Local ("Sala 3"), ou vazio.
     let detalhe: String
     let cor: Color
     let calendarioId: String
+    let calendarioNome: String
+    var organizador: String?
+    var participantes: [Participante] = []
+    /// Notas do evento: é aqui que costuma estar o texto do convite.
+    var notas: String = ""
+    var link: URL?
 
     func aDecorrer(em agora: Date) -> Bool {
         !diaInteiro && inicio <= agora && agora < fim
     }
 }
 
+/// Onde aparecem os eventos de um calendário no Início.
+enum DestinoCalendario: Equatable {
+    case espaco(UUID)
+    /// Aparecem, com "Sem espaço" (Melhoria 6.1).
+    case semEspaco
+    /// Não aparecem.
+    case oculto
+}
+
 /// Leitura do calendário pelo EventKit (especificação 4.7): com uma só permissão, vê os
 /// calendários de todas as contas do iPhone (iCloud, Google, Outlook). Só lê; nada sai do
-/// telemóvel. Cada calendário fica associado a um espaço (lista) ou a nenhum; só os eventos
-/// de calendários com espaço aparecem no Início.
+/// telemóvel. Cada calendário fica associado a um espaço (lista), sem espaço ou escondido;
+/// os eventos sem espaço também aparecem no Início (Melhoria 6.1).
 @MainActor
 @Observable
 final class Calendario {
@@ -35,8 +59,10 @@ final class Calendario {
     private(set) var acesso: Acesso = .porPedir
     private(set) var eventos: [EventoHoje] = []
     private(set) var calendarios: [EKCalendar] = []
-    /// Identificador do calendário → identificador do espaço (UUID da lista, em texto).
+    /// Identificador do calendário → identificador do espaço (UUID da lista, em texto), ou
+    /// `oculto`. Sem entrada: sem espaço.
     private(set) var espacos: [String: String]
+    @ObservationIgnored private let marcaOculto = "oculto"
     /// Calendários já vistos: a associação automática por nome só se faz aos novos.
     @ObservationIgnored private var conhecidos: Set<String>
 
@@ -93,7 +119,7 @@ final class Calendario {
             ($0.source.title, $0.title) < ($1.source.title, $1.title)
         }
         associarNovos(calendarios.map { ($0.calendarIdentifier, $0.title) })
-        let visiveis = calendarios.filter { espaco(de: $0.calendarIdentifier) != nil }
+        let visiveis = calendarios.filter { destino(de: $0.calendarIdentifier) != .oculto }
         guard !visiveis.isEmpty else {
             eventos = []
             return
@@ -103,20 +129,47 @@ final class Calendario {
         let pedido = loja.predicateForEvents(withStart: inicioDoDia, end: fimDoDia, calendars: visiveis)
         eventos = loja.events(matching: pedido)
             .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
-            .map { evento in
-                let titulo = evento.title ?? ""
-                let detalhe = evento.location?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                return EventoHoje(
-                    id: (evento.eventIdentifier ?? UUID().uuidString) + "-\(evento.startDate.timeIntervalSince1970)",
-                    titulo: titulo.isEmpty ? "Sem título" : titulo,
-                    inicio: evento.startDate,
-                    fim: evento.endDate,
-                    diaInteiro: evento.isAllDay,
-                    detalhe: detalhe,
-                    cor: Color(cgColor: evento.calendar.cgColor),
-                    calendarioId: evento.calendar.calendarIdentifier
-                )
-            }
+            .map(Self.converter)
+    }
+
+    private static func converter(_ evento: EKEvent) -> EventoHoje {
+        let titulo = evento.title ?? ""
+        let local = evento.location?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let notas = evento.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let eventoId = evento.calendarItemExternalIdentifier ?? evento.calendarItemIdentifier
+        return EventoHoje(
+            id: eventoId + "-\(evento.startDate.timeIntervalSince1970)",
+            eventoId: eventoId,
+            titulo: titulo.isEmpty ? "Sem título" : titulo,
+            inicio: evento.startDate,
+            fim: evento.endDate,
+            diaInteiro: evento.isAllDay,
+            detalhe: local,
+            cor: Color(cgColor: evento.calendar.cgColor),
+            calendarioId: evento.calendar.calendarIdentifier,
+            calendarioNome: evento.calendar.title,
+            organizador: evento.organizer.map(nomeParticipante),
+            // Em algumas contas os participantes vêm vazios: a vista esconde a secção.
+            participantes: (evento.attendees ?? []).map { Participante(nome: nomeParticipante($0), resposta: resposta(de: $0)) },
+            notas: notas,
+            link: LigacaoReuniao.encontrar(url: evento.url, local: local, notas: notas)
+        )
+    }
+
+    private static func nomeParticipante(_ participante: EKParticipant) -> String {
+        if let nome = participante.name, !nome.isEmpty { return nome }
+        // Sem nome, o endereço vem como "mailto:ana@exemplo.pt".
+        let endereco = participante.url.absoluteString
+        return endereco.hasPrefix("mailto:") ? String(endereco.dropFirst(7)) : endereco
+    }
+
+    private static func resposta(de participante: EKParticipant) -> RespostaConvite {
+        switch participante.participantStatus {
+        case .accepted: .aceite
+        case .declined: .recusado
+        case .tentative: .talvez
+        default: .pendente
+        }
     }
 
     /// O espaço de um calendário, se ainda existir.
@@ -125,15 +178,32 @@ final class Calendario {
         return idsDosEspacos().contains(id) ? id : nil
     }
 
-    /// Associa um calendário a um espaço, ou a nenhum (`nil`).
-    func definir(_ calendarioId: String, espaco: UUID?) {
-        espacos[calendarioId] = espaco?.uuidString
+    func destino(de calendarioId: String) -> DestinoCalendario {
+        if espacos[calendarioId] == marcaOculto { return .oculto }
+        return espaco(de: calendarioId).map(DestinoCalendario.espaco) ?? .semEspaco
+    }
+
+    /// Associa um calendário a um espaço, deixa-o sem espaço ou esconde-o.
+    func definir(_ calendarioId: String, destino: DestinoCalendario) {
+        switch destino {
+        case .espaco(let id): espacos[calendarioId] = id.uuidString
+        case .semEspaco: espacos[calendarioId] = nil
+        case .oculto: espacos[calendarioId] = marcaOculto
+        }
         if !Demo.ativo { UserDefaults.standard.set(espacos, forKey: chaveEspacos) }
+        if Demo.ativo { return }
         atualizar()
     }
 
+    /// Nome de um calendário, para as Definições e a vista de um evento.
+    func nome(de calendarioId: String) -> String {
+        calendarios.first { $0.calendarIdentifier == calendarioId }?.title
+            ?? eventos.first { $0.calendarioId == calendarioId }?.calendarioNome
+            ?? ""
+    }
+
     /// Calendários vistos pela primeira vez: os que têm o nome de um espaço ficam nele; os
-    /// outros ficam em "Nenhum" (especificação 4.7).
+    /// outros ficam sem espaço (especificação 4.7).
     private func associarNovos(_ lista: [(id: String, titulo: String)]) {
         let novos = lista.filter { !conhecidos.contains($0.id) }
         guard !novos.isEmpty else { return }
@@ -173,17 +243,29 @@ final class Calendario {
             Calendar.current.date(bySettingHour: hora, minute: minuto, second: 0, of: hoje)!
         }
         // Os calendários de exemplo têm o nome dos espaços, para a associação por nome.
-        eventos = [
-            EventoHoje(id: "1", titulo: "Treino de força", inicio: as_(7, 30), fim: as_(8, 30),
-                       diaInteiro: false, detalhe: "", cor: .red, calendarioId: "Ginásio"),
-            EventoHoje(id: "2", titulo: "Daily da equipa", inicio: agora.addingTimeInterval(-600),
-                       fim: agora.addingTimeInterval(1200), diaInteiro: false, detalhe: "Teams", cor: .blue,
-                       calendarioId: "Trabalho"),
-            EventoHoje(id: "3", titulo: "Revisão do roadmap Q1", inicio: as_(14, 30), fim: as_(15, 30),
-                       diaInteiro: false, detalhe: "Sala 3", cor: .blue, calendarioId: "Trabalho"),
-            EventoHoje(id: "4", titulo: "Jantar com a Ana", inicio: as_(21, 0), fim: as_(22, 30),
-                       diaInteiro: false, detalhe: "", cor: .green, calendarioId: "Pessoal"),
+        func evento(_ id: String, _ titulo: String, _ inicio: Date, _ fim: Date, _ local: String, _ cor: Color, _ calendario: String) -> EventoHoje {
+            EventoHoje(id: id, eventoId: "demo-\(id)", titulo: titulo, inicio: inicio, fim: fim, diaInteiro: false,
+                       detalhe: local, cor: cor, calendarioId: calendario, calendarioNome: calendario)
+        }
+        var convite = evento("5", "Alinhamento com a agência", as_(16, 0), as_(16, 45), "", .purple, "Convites")
+        convite.organizador = "Marta Silva"
+        convite.participantes = [
+            Participante(nome: "Marta Silva", resposta: .aceite),
+            Participante(nome: "Hugo Roxo", resposta: .pendente),
+            Participante(nome: "Rui Costa", resposta: .talvez),
+            Participante(nome: "Inês Lopes", resposta: .recusado),
         ]
+        convite.notas = "Olá a todos,\nVamos rever a proposta da campanha de novembro e fechar o calendário de entregas.\n\nReunião do Microsoft Teams\nhttps://teams.microsoft.com/l/meetup-join/exemplo"
+        convite.link = LigacaoReuniao.encontrar(url: nil, local: nil, notas: convite.notas)
+        // Os calendários de exemplo têm o nome dos espaços, para a associação por nome; o de
+        // "Convites" fica sem espaço.
+        eventos = [
+            evento("1", "Treino de força", as_(7, 30), as_(8, 30), "", .red, "Ginásio"),
+            evento("2", "Daily da equipa", agora.addingTimeInterval(-600), agora.addingTimeInterval(1200), "Teams", .blue, "Trabalho"),
+            evento("3", "Revisão do roadmap Q1", as_(14, 30), as_(15, 30), "Sala 3", .blue, "Trabalho"),
+            convite,
+            evento("4", "Jantar com a Ana", as_(21, 0), as_(22, 30), "", .green, "Pessoal"),
+        ].sorted { $0.inicio < $1.inicio }
         associarNovos(eventos.map { ($0.calendarioId, $0.calendarioId) })
     }
 }

@@ -129,6 +129,9 @@ enum Demo {
             estado.abrirPersonalizar = true
         case "calendario":
             estado.rolarParaCalendario = true
+        case "evento":
+            estado.rolarParaCalendario = true
+            estado.abrirEventoDemo = true
         case "expirados":
             estado.separador = .expirados
         case "expirados-filtro":

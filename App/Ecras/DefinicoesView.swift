@@ -235,13 +235,13 @@ struct CalendariosView: View {
         List {
             Section {
             } footer: {
-                Text("Escolhe em que espaço aparece cada calendário. \"Nenhum\" esconde-o do Início.")
+                Text("Escolhe em que espaço aparece cada calendário. Os eventos sem espaço também aparecem no Início; \"Não mostrar\" esconde-os.")
             }
             ForEach(contas.keys.sorted(), id: \.self) { conta in
                 Section(conta) {
                     ForEach(contas[conta] ?? [], id: \.calendarIdentifier) { item in
                         NavigationLink {
-                            EscolherEspacoView(calendario: item)
+                            EscolherEspacoView(calendarioId: item.calendarIdentifier, nome: item.title)
                         } label: {
                             HStack(spacing: Espaco.curto) {
                                 Circle()
@@ -250,7 +250,7 @@ struct CalendariosView: View {
                                 Text(item.title)
                                     .lineLimit(1)
                                 Spacer()
-                                rotuloEspaco(item)
+                                RotuloDestino(destino: calendario.destino(de: item.calendarIdentifier), listas: listas)
                             }
                         }
                     }
@@ -268,85 +268,101 @@ struct CalendariosView: View {
             }
         }
     }
+}
 
-    @ViewBuilder
-    private func rotuloEspaco(_ item: EKCalendar) -> some View {
-        if let id = calendario.espaco(de: item.calendarIdentifier), let lista = listas.first(where: { $0.id == id }) {
-            HStack(spacing: Espaco.curto) {
-                Circle().fill(lista.cor.base).frame(width: 10, height: 10)
-                Text(lista.nome)
+/// "Trabalho" com o ponto da cor do espaço, "Sem espaço" ou "Não mostrar".
+struct RotuloDestino: View {
+    let destino: DestinoCalendario
+    let listas: [Lista]
+
+    var body: some View {
+        Group {
+            switch destino {
+            case .espaco(let id):
+                if let lista = listas.first(where: { $0.id == id }) {
+                    HStack(spacing: Espaco.curto) {
+                        Circle().fill(lista.cor.base).frame(width: 10, height: 10)
+                        Text(lista.nome)
+                    }
+                }
+            case .semEspaco:
+                Text("Sem espaço")
+            case .oculto:
+                Text("Não mostrar")
             }
-            .foregroundStyle(.secondary)
-        } else {
-            Text("Nenhum")
-                .foregroundStyle(.secondary)
         }
+        .foregroundStyle(.secondary)
     }
 }
 
-/// Escolher o espaço de um calendário (mock 14).
+/// Escolher o espaço de um calendário (mock 14): um espaço, sem espaço (os eventos aparecem
+/// na mesma, com "Sem espaço") ou não mostrar.
 struct EscolherEspacoView: View {
-    let calendario: EKCalendar
+    let calendarioId: String
+    let nome: String
 
     @Environment(Calendario.self) private var leitor
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Lista.ordem) private var listas: [Lista]
 
     var body: some View {
-        let atual = leitor.espaco(de: calendario.calendarIdentifier)
+        let atual = leitor.destino(de: calendarioId)
         List {
             Section {
                 ForEach(listas) { lista in
-                    Button {
-                        escolher(lista.id)
-                    } label: {
-                        HStack(spacing: Espaco.grelha) {
-                            IconeListaView(lista: lista, tamanho: 30)
-                            Text(lista.nome)
-                                .foregroundStyle(Color.primary)
-                            Spacer()
-                            if atual == lista.id {
-                                Image(systemName: "checkmark")
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                        }
-                    }
-                    .accessibilityAddTraits(atual == lista.id ? .isSelected : [])
-                }
-                Button {
-                    escolher(nil)
-                } label: {
-                    HStack(spacing: Espaco.grelha) {
-                        Circle()
-                            .strokeBorder(Color(.systemGray3), style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
-                            .frame(width: 30, height: 30)
-                        Text("Nenhum")
+                    linha(.espaco(lista.id), atual: atual) {
+                        IconeListaView(lista: lista, tamanho: 30)
+                        Text(lista.nome)
                             .foregroundStyle(Color.primary)
-                        Spacer()
-                        if atual == nil {
-                            Image(systemName: "checkmark")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color.accentColor)
-                        } else {
-                            Text("Não aparece no Início")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
                     }
                 }
             } header: {
                 Text("Mostrar no espaço")
             }
+            Section {
+                linha(.semEspaco, atual: atual) {
+                    Circle()
+                        .strokeBorder(Color(.systemGray3), style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
+                        .frame(width: 30, height: 30)
+                    Text("Sem espaço")
+                        .foregroundStyle(Color.primary)
+                }
+                linha(.oculto, atual: atual) {
+                    Image(systemName: "eye.slash")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 30, height: 30)
+                    Text("Não mostrar no Início")
+                        .foregroundStyle(Color.primary)
+                }
+            } footer: {
+                Text("Sem espaço, os eventos aparecem no Início com \"Sem espaço\" e escolhes a lista ao criar o ponto.")
+            }
         }
-        .navigationTitle(calendario.title)
+        .navigationTitle(nome)
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.selection, trigger: atual)
     }
 
-    private func escolher(_ espaco: UUID?) {
-        leitor.definir(calendario.calendarIdentifier, espaco: espaco)
-        dismiss()
+    private func linha<Rotulo: View>(
+        _ destino: DestinoCalendario,
+        atual: DestinoCalendario,
+        @ViewBuilder rotulo: () -> Rotulo
+    ) -> some View {
+        Button {
+            leitor.definir(calendarioId, destino: destino)
+            dismiss()
+        } label: {
+            HStack(spacing: Espaco.grelha) {
+                rotulo()
+                Spacer()
+                if atual == destino {
+                    Image(systemName: "checkmark")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+        .accessibilityAddTraits(atual == destino ? .isSelected : [])
     }
 }
 

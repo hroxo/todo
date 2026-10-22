@@ -125,7 +125,8 @@ public final class Tarefas {
     }
 
     /// Ponto criado a partir de um evento do calendário (especificação 4.7): ativo, com o
-    /// título do evento e a hora (e o local) na descrição.
+    /// título do evento e a hora (e o local) na descrição. Guarda o evento de origem
+    /// (Melhoria 6.4) para o "+" só funcionar uma vez por evento.
     @discardableResult
     public func criarPontoDeEvento(
         titulo: String,
@@ -133,15 +134,39 @@ public final class Tarefas {
         fim: Date,
         diaInteiro: Bool,
         detalhe: String?,
+        eventoId: String? = nil,
         em lista: Lista
     ) throws -> Item {
         let item = try criarItem(titulo: titulo, em: lista)
+        if let eventoId {
+            item.eventoId = eventoId
+            item.eventoInicio = inicio
+        }
         var partes = ["Calendário: " + (diaInteiro ? "todo o dia" : Formatos.intervalo(inicio, fim, calendario: calendario))]
         if let detalhe, !detalhe.isEmpty {
             partes.append(detalhe)
         }
         definirNota(item, partes.joined(separator: " · "))
         return item
+    }
+
+    /// O ponto que já foi criado a partir desta ocorrência de um evento, se ainda contar
+    /// (Melhoria 6.4): ativo ou concluído. Se foi apagado ou expirou, o evento pode voltar a
+    /// ser adicionado.
+    public func pontoDeEvento(id eventoId: String, inicio: Date) throws -> Item? {
+        let ativo = EstadoItem.ativo.rawValue
+        let concluido = EstadoItem.concluido.rawValue
+        let pedido = FetchDescriptor<Item>(predicate: #Predicate {
+            $0.eventoId == eventoId && ($0.estadoRaw == ativo || $0.estadoRaw == concluido)
+        })
+        return Self.pontoDeEvento(em: try contexto.fetch(pedido), id: eventoId, inicio: inicio)
+    }
+
+    /// A mesma regra sobre itens já carregados (a interface usa-a com uma `@Query`).
+    public static func pontoDeEvento(em itens: [Item], id eventoId: String, inicio: Date) -> Item? {
+        itens.first {
+            $0.eventoId == eventoId && $0.eventoInicio == inicio && ($0.estado == .ativo || $0.estado == .concluido)
+        }
     }
 
     @discardableResult
