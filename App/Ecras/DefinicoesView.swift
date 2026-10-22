@@ -195,10 +195,24 @@ struct DefinicoesView: View {
                     }
                 }
             }
+            NavigationLink {
+                ContasView()
+            } label: {
+                LabeledContent {
+                    Text(calendario.contas.contas.keys.map(\.nome).sorted().joined(separator: ", "))
+                        .lineLimit(1)
+                } label: {
+                    Label {
+                        Text("Contas Google e Outlook")
+                    } icon: {
+                        IconeDefinicao(simbolo: "person.crop.circle.badge.checkmark", cor: .blue)
+                    }
+                }
+            }
         } header: {
             Text("Calendário")
         } footer: {
-            Text("Lê os calendários das contas do iPhone (iCloud, Google, Outlook). Para juntar uma conta: Ajustes › Calendário › Contas.")
+            Text("Lê os calendários das contas do iPhone (iCloud, Google, Outlook). Para juntar uma conta: Ajustes › Calendário › Contas. Ou liga a conta Google ou Outlook aqui, para ver os convites com mais detalhe.")
         }
     }
 
@@ -232,6 +246,7 @@ struct CalendariosView: View {
 
     var body: some View {
         let contas = Dictionary(grouping: calendario.calendarios, by: { $0.source.title })
+        let ligadas = Dictionary(grouping: calendario.contas.calendarios, by: \.fornecedor)
         List {
             Section {
             } footer: {
@@ -256,10 +271,32 @@ struct CalendariosView: View {
                     }
                 }
             }
+            // Contas ligadas diretamente (Melhoria 7).
+            ForEach(Fornecedor.allCases, id: \.self) { fornecedor in
+                if let lista = ligadas[fornecedor], !lista.isEmpty {
+                    Section(cabecalho(fornecedor)) {
+                        ForEach(lista, id: \.id) { item in
+                            NavigationLink {
+                                EscolherEspacoView(calendarioId: item.id, nome: item.nome)
+                            } label: {
+                                HStack(spacing: Espaco.curto) {
+                                    Circle()
+                                        .fill(item.corHex.flatMap(Color.init(hex:)) ?? .accentColor)
+                                        .frame(width: 12, height: 12)
+                                    Text(item.nome)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    RotuloDestino(destino: calendario.destino(de: item.id), listas: listas)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         .navigationTitle("Calendários")
         .overlay {
-            if calendario.calendarios.isEmpty {
+            if calendario.calendarios.isEmpty && calendario.contas.calendarios.isEmpty {
                 ContentUnavailableView(
                     "Sem calendários",
                     systemImage: "calendar",
@@ -267,6 +304,92 @@ struct CalendariosView: View {
                 )
             }
         }
+    }
+}
+
+extension CalendariosView {
+    /// "Google · hugo@gmail.com (ligada aqui)".
+    fileprivate func cabecalho(_ fornecedor: Fornecedor) -> String {
+        let email = calendario.contas.contas[fornecedor]?.email.map { " · \($0)" } ?? ""
+        return "\(fornecedor.nome)\(email) (ligada aqui)"
+    }
+}
+
+/// Contas Google e Outlook ligadas diretamente (Melhoria 7): ligar abre a página de início de
+/// sessão do fornecedor; a app só lê o calendário.
+struct ContasView: View {
+    @Environment(Calendario.self) private var calendario
+    @State private var aDesligar: Fornecedor?
+
+    var body: some View {
+        let contas = calendario.contas
+        List {
+            Section {
+                ForEach(Fornecedor.allCases, id: \.self) { fornecedor in
+                    linha(fornecedor, contas: contas)
+                }
+            } footer: {
+                Text("A app pede só leitura do calendário. Os tokens ficam no Keychain do iPhone e não entram no backup. Ao ligar, a app passa a usar a internet para ler os eventos destas contas.")
+            }
+
+            if let erro = contas.erro {
+                Section {
+                    Label(erro, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(CoresEstado.expiraTinta)
+                }
+            }
+        }
+        .navigationTitle("Contas")
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "Desligar a conta \(aDesligar?.nome ?? "")?",
+            isPresented: Binding(presente: $aDesligar),
+            titleVisibility: .visible,
+            presenting: aDesligar
+        ) { fornecedor in
+            Button("Desligar", role: .destructive) {
+                withAnimation { contas.desligar(fornecedor) }
+            }
+        } message: { _ in
+            Text("Os eventos desta conta deixam de aparecer. Os pontos já criados ficam.")
+        }
+    }
+
+    @ViewBuilder
+    private func linha(_ fornecedor: Fornecedor, contas: ContasCalendario) -> some View {
+        HStack(spacing: Espaco.grelha) {
+            IconeDefinicao(simbolo: fornecedor == .google ? "g.circle.fill" : "envelope.fill",
+                           cor: fornecedor == .google ? .green : .blue)
+            VStack(alignment: .leading, spacing: Espaco.minimo) {
+                Text(fornecedor.nome)
+                if let conta = contas.contas[fornecedor] {
+                    Text(conta.email ?? "Ligada")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } else if ContasCalendario.configuracao(fornecedor) == nil {
+                    Text("Por configurar")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            if contas.aLigar == fornecedor {
+                ProgressView()
+            } else if contas.contas[fornecedor] != nil {
+                Button("Desligar", role: .destructive) { aDesligar = fornecedor }
+                    .buttonStyle(.borderless)
+            } else if ContasCalendario.configuracao(fornecedor) != nil {
+                Button("Ligar") {
+                    Task {
+                        await contas.ligar(fornecedor)
+                        calendario.atualizar()
+                    }
+                }
+                .buttonStyle(.borderless)
+                .fontWeight(.semibold)
+            }
+        }
+        .frame(minHeight: 44)
     }
 }
 

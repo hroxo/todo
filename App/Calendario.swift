@@ -57,8 +57,11 @@ final class Calendario {
     }
 
     private(set) var acesso: Acesso = .porPedir
-    private(set) var eventos: [EventoHoje] = []
+    /// Eventos de hoje do EventKit.
+    private(set) var locais: [EventoHoje] = []
     private(set) var calendarios: [EKCalendar] = []
+    /// Contas Google e Outlook ligadas diretamente (Melhoria 7).
+    let contas = ContasCalendario()
     /// Identificador do calendário → identificador do espaço (UUID da lista, em texto), ou
     /// `oculto`. Sem entrada: sem espaço.
     private(set) var espacos: [String: String]
@@ -71,6 +74,25 @@ final class Calendario {
     @ObservationIgnored private var observador: NSObjectProtocol?
     @ObservationIgnored private let chaveEspacos = "calendariosEspacos"
     @ObservationIgnored private let chaveConhecidos = "calendariosConhecidos"
+
+    /// Eventos de hoje do iPhone e das contas ligadas, sem os repetidos (fica a versão da
+    /// conta ligada, que tem mais detalhes) nem os dos calendários escondidos.
+    var eventos: [EventoHoje] {
+        let externos = contas.eventos.filter { destino(de: $0.calendarioId) != .oculto }
+        let juntos = JuntarEventos.juntar(
+            locais: locais,
+            externos: externos,
+            chaveLocal: { ($0.eventoId, $0.inicio) },
+            chaveExterno: { ($0.id, $0.inicio) }
+        )
+        return (juntos.locais + juntos.externos.map(converterExterno))
+            .sorted { ($0.diaInteiro ? 0 : 1, $0.inicio) < ($1.diaInteiro ? 0 : 1, $1.inicio) }
+    }
+
+    /// Mostra os eventos se o EventKit tiver acesso ou houver uma conta ligada.
+    var mostraEventos: Bool {
+        acesso == .autorizado || contas.temContas
+    }
 
     init(contentor: ModelContainer) {
         self.contentor = contentor
@@ -94,7 +116,8 @@ final class Calendario {
 
     /// Fontes ligadas, para as Definições ("Gmail, iCloud").
     var fontes: String {
-        Set(calendarios.map(\.source.title)).sorted().joined(separator: ", ")
+        let ligadas = contas.contas.keys.map(\.nome)
+        return Set(calendarios.map(\.source.title) + ligadas).sorted().joined(separator: ", ")
     }
 
     func pedirAcesso() async {
@@ -110,9 +133,10 @@ final class Calendario {
     func atualizar() {
         guard !Demo.ativo else { return }
         lerAcesso()
+        atualizarContas()
         guard acesso == .autorizado else {
             calendarios = []
-            eventos = []
+            locais = []
             return
         }
         calendarios = loja.calendars(for: .event).sorted {
@@ -121,15 +145,47 @@ final class Calendario {
         associarNovos(calendarios.map { ($0.calendarIdentifier, $0.title) })
         let visiveis = calendarios.filter { destino(de: $0.calendarIdentifier) != .oculto }
         guard !visiveis.isEmpty else {
-            eventos = []
+            locais = []
             return
         }
         let inicioDoDia = Calendar.current.startOfDay(for: .now)
         let fimDoDia = Calendar.current.date(byAdding: .day, value: 1, to: inicioDoDia)!
         let pedido = loja.predicateForEvents(withStart: inicioDoDia, end: fimDoDia, calendars: visiveis)
-        eventos = loja.events(matching: pedido)
+        locais = loja.events(matching: pedido)
             .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
             .map(Self.converter)
+    }
+
+    /// Lê as contas ligadas em segundo plano; os calendários novos ficam associados por nome.
+    func atualizarContas() {
+        guard contas.temContas else { return }
+        let ocultos = Set(espacos.filter { $0.value == marcaOculto }.keys)
+        Task {
+            await contas.atualizar(ocultos: ocultos)
+            associarNovos(contas.calendarios.map { ($0.id, $0.nome) })
+        }
+    }
+
+    private func converterExterno(_ evento: EventoExterno) -> EventoHoje {
+        let calendario = contas.calendarios.first { $0.id == evento.calendarioId }
+        let cor = calendario?.corHex.flatMap(Color.init(hex:))
+            ?? (calendario?.fornecedor == .microsoft ? Color.blue : Color.green)
+        return EventoHoje(
+            id: evento.id + "-\(evento.inicio.timeIntervalSince1970)",
+            eventoId: evento.id,
+            titulo: evento.titulo,
+            inicio: evento.inicio,
+            fim: evento.fim,
+            diaInteiro: evento.diaInteiro,
+            detalhe: evento.local,
+            cor: cor,
+            calendarioId: evento.calendarioId,
+            calendarioNome: calendario?.nome ?? "",
+            organizador: evento.organizador,
+            participantes: evento.participantes.map { Participante(nome: $0.nome, resposta: $0.resposta) },
+            notas: evento.notas,
+            link: evento.link
+        )
     }
 
     private static func converter(_ evento: EKEvent) -> EventoHoje {
@@ -198,6 +254,7 @@ final class Calendario {
     /// Nome de um calendário, para as Definições e a vista de um evento.
     func nome(de calendarioId: String) -> String {
         calendarios.first { $0.calendarIdentifier == calendarioId }?.title
+            ?? contas.calendarios.first { $0.id == calendarioId }?.nome
             ?? eventos.first { $0.calendarioId == calendarioId }?.calendarioNome
             ?? ""
     }
@@ -259,13 +316,13 @@ final class Calendario {
         convite.link = LigacaoReuniao.encontrar(url: nil, local: nil, notas: convite.notas)
         // Os calendários de exemplo têm o nome dos espaços, para a associação por nome; o de
         // "Convites" fica sem espaço.
-        eventos = [
+        locais = [
             evento("1", "Treino de força", as_(7, 30), as_(8, 30), "", .red, "Ginásio"),
             evento("2", "Daily da equipa", agora.addingTimeInterval(-600), agora.addingTimeInterval(1200), "Teams", .blue, "Trabalho"),
             evento("3", "Revisão do roadmap Q1", as_(14, 30), as_(15, 30), "Sala 3", .blue, "Trabalho"),
             convite,
             evento("4", "Jantar com a Ana", as_(21, 0), as_(22, 30), "", .green, "Pessoal"),
         ].sorted { $0.inicio < $1.inicio }
-        associarNovos(eventos.map { ($0.calendarioId, $0.calendarioId) })
+        associarNovos(locais.map { ($0.calendarioId, $0.calendarioId) })
     }
 }

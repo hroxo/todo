@@ -30,7 +30,7 @@ O **ToDo** inverte isto: **cada ponto tem 3 dias de vida.** Se lhe tocas (editas
 - 🧹 **Dinâmica, não arquivo**: a lista ativa só tem o que ainda importa.
 - 🛟 **Nada se perde por engano**: o que expira é recuperável.
 - ⚡ **Registar em segundos**: escrever e guardar, com o teclado já aberto.
-- 🔒 **Tudo no teu iPhone**: sem contas, sem servidor, sem rede, sem custos.
+- 🔒 **Tudo no teu iPhone**: sem servidor e sem custos. Ligar uma conta Google ou Outlook é opcional e só lê o calendário.
 - ✨ **Simples e bonita**: nativa, com o liquid glass do iOS 26 e cores com significado.
 
 ## Funcionalidades
@@ -58,7 +58,7 @@ Um toque dá **+5 dias**. Prime e arrasta: a gota de vidro divide-se em **+5** e
 <td valign="top">
 
 ### 📅 O teu dia ao lado das listas
-Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone) e vê os eventos de hoje no fundo do Início, cada um no seu espaço. Um **+** transforma um evento num ponto.
+Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone, ou uma conta Google ou Outlook ligada na app) e vê os eventos de hoje no Início, cada um no seu espaço ou sem espaço. Toca num evento para ver os participantes, as notas do convite e o link da reunião. Um **+** transforma um evento num ponto, uma vez só.
 
 </td>
 <td align="center"><img src="docs/media/fluxo-calendario.gif" width="240" alt="Cartão para ligar o calendário e, depois, os eventos de hoje por espaço"></td>

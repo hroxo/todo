@@ -28,10 +28,12 @@ struct SecaoCalendario: View {
 
     var body: some View {
         Group {
-            switch calendario.acesso {
-            case .porPedir: cartaoLigar
-            case .recusado: cartaoRecusado
-            case .autorizado: hoje
+            if calendario.mostraEventos {
+                hoje
+            } else if calendario.acesso == .recusado {
+                cartaoRecusado
+            } else {
+                cartaoLigar
             }
         }
         .sensoryFeedback(.success, trigger: criados)

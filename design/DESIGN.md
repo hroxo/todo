@@ -275,6 +275,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **O "+" só funciona uma vez por evento** (Melhoria 6.4): o ponto guarda o identificador externo do evento e o início da ocorrência (cada ocorrência de um evento recorrente conta à parte). Depois de adicionado, o "+" passa a ✓ num círculo da cor da lista; tocar no ✓ (ou tentar outra vez) mostra "Já está em <lista>" com "Abrir". Se o ponto for apagado ou expirar, o evento pode voltar a ser adicionado; se for concluído, não.
 - **Definições › Calendários (mock 13)**: calendários agrupados por conta; cada linha mostra o ponto de cor do calendário, o nome e, à direita, o espaço escolhido (ponto da cor do espaço + nome, ou "Nenhum"). Tocar abre a escolha do espaço (mock 14): lista dos espaços com visto no escolhido e, numa secção à parte, "Sem espaço" e "Não mostrar no Início".
 
+### 7.12c Contas Google e Outlook (Melhoria 7) [Decidido 22/10/2026: ler Google e Outlook diretamente; sem Sign in with Apple]
+
+- Definições › Calendário › **Contas Google e Outlook** (ícone `person.crop.circle.badge.checkmark` em azul): uma linha por fornecedor (Google `g.circle.fill` verde, Outlook `envelope.fill` azul) com o email da conta ligada e "Desligar" (com confirmação), ou "Ligar" (abre a página de início de sessão do fornecedor, `ASWebAuthenticationSession`), ou "Por configurar" se a app ainda não estiver registada (`docs/CONTAS.md`). Erros por baixo, com `exclamationmark.triangle.fill`.
+- Os calendários das contas ligadas aparecem em Definições › Calendários numa secção "Google · email (ligada aqui)", com o mesmo espaço / sem espaço / não mostrar.
+- No Início, os eventos das contas ligadas juntam-se aos do iPhone; o mesmo evento (mesmo iCalUID e início) aparece uma vez, na versão da conta ligada.
+- Só leitura (`calendar.readonly`, `Calendars.Read`). Tokens no Keychain, nunca no backup.
+
 ### 7.13 Descrição curta e Concluir (mock 10) [Decidido 21/10/2026]
 
 - **Descrição**: logo abaixo do título do Detalhe, sem cabeçalho nem cartão, em `.body` `.secondary`, no máximo 3 linhas (200 caracteres). Edita-se no lugar; vazia mostra "Acrescentar descrição".
