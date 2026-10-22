@@ -91,7 +91,9 @@ struct ListaView: View {
                     } label: {
                         Label("Personalizar lista", systemImage: "paintbrush")
                     }
-                    BotaoExportarCSV(ficheiro: FicheiroCSV(listas: listas, lista: lista)) {
+                    Button {
+                        PartilhaCSV.partilhar(listas: listas, lista: lista)
+                    } label: {
                         Label("Exportar CSV", systemImage: "square.and.arrow.up")
                     }
                     Button(role: .destructive) {

@@ -113,7 +113,9 @@ struct DefinicoesView: View {
                             }
                         }
                     }
-                    BotaoExportarCSV(ficheiro: FicheiroCSV(listas: listas)) {
+                    Button {
+                        PartilhaCSV.partilhar(listas: listas)
+                    } label: {
                         Label {
                             Text("Exportar tudo (CSV)")
                                 .foregroundStyle(Color.primary)
