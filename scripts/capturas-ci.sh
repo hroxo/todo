@@ -75,6 +75,7 @@ ECRAS=(
   "10-definicoes|definicoes|"
   "11-calendario|calendario|"
   "12-calendario-ligar|calendario|-calendario ligar"
+  "13-expirados-filtro|expirados-filtro|"
 )
 
 primeira=1

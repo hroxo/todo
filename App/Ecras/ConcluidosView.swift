@@ -2,12 +2,14 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Concluídos (DESIGN.md 7.11): itens concluídos nos últimos dias, com Reabrir.
+/// Concluídos (DESIGN.md 7.11): itens concluídos nos últimos dias, com Reabrir. Filtra por
+/// lista e pela data de conclusão (Melhoria 3).
 struct ConcluidosView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "concluido" && $0.pai == nil })
     private var concluidos: [Item]
+    @Query(sort: \Lista.ordem) private var listas: [Lista]
 
     @State private var aEditar: Item?
     @State private var aApagar: Item?
@@ -17,10 +19,23 @@ struct ConcluidosView: View {
 
     var body: some View {
         let agora = Date.now
-        let itens = concluidos.sorted { ($0.concluidoEm ?? .distantPast) > ($1.concluidoEm ?? .distantPast) }
+        @Bindable var estado = estado
+        let filtro = estado.filtroConcluidos
+        let todos = concluidos.sorted { ($0.concluidoEm ?? .distantPast) > ($1.concluidoEm ?? .distantPast) }
+        let itens = filtro.aplicar(todos, agora: agora)
 
         NavigationStack {
             EcraBaseLista(titulo: "Concluídos") {
+                BotaoFiltro(filtro: $estado.filtroConcluidos, listas: listas, tituloData: "Data de conclusão")
+            } conteudo: {
+                if filtro.ativo {
+                    Section {
+                        FichaFiltro(texto: filtro.rotulo(listas: listas)) { limparFiltros() }
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                }
+
                 Section {
                     ForEach(itens) { item in
                         linha(item, agora: agora)
@@ -60,7 +75,9 @@ struct ConcluidosView: View {
                 }
             }
             .overlay {
-                if itens.isEmpty {
+                if itens.isEmpty && filtro.ativo && !todos.isEmpty {
+                    VazioComFiltros { limparFiltros() }
+                } else if itens.isEmpty {
                     ContentUnavailableView(
                         "Nada concluído",
                         systemImage: "checkmark.circle",
@@ -94,6 +111,10 @@ struct ConcluidosView: View {
                 .accessibilityHidden(true)
         }
         .frame(minHeight: 52)
+    }
+
+    private func limparFiltros() {
+        withAnimation(.snappy) { estado.filtroConcluidos = FiltroItens() }
     }
 
     private func reabrir(_ item: Item) {

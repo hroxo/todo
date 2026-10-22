@@ -36,7 +36,7 @@ struct CabecalhoEcra<Acessorio: View>: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(sobretitulo == nil)
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
                 Text(titulo)
                     .font(.largeTitle.weight(.heavy))
                     .accessibilityAddTraits(.isHeader)

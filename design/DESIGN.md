@@ -145,6 +145,7 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 | Subtópico | `checklist` |
 | Recuperar | `arrow.uturn.backward` |
 | Apagar | `trash` |
+| Filtrar (Concluídos, Expirados) | `line.3.horizontal.decrease.circle` / `.fill` com filtro ativo |
 
 ## 7. Componentes
 
@@ -233,6 +234,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Fundo `EstadoExpiradosFundo`. Título "Expirados" como nos outros separadores (`EcraBase`) e, por baixo, o ícone `hourglass` num círculo laranja de 40 pt com o texto "Ficam aqui 14 dias antes de serem apagados".
 - Cartão por item: em cima, ícone da lista, título e "Lista · apagado em N dias"; em baixo, o botão **Recuperar** (cápsula laranja clara, a toda a largura, numa só linha) e o botão Apagar (círculo cinzento). [22/10/2026: o "Recuperar" cortava-se ao lado da linha do prazo]
 - No Início há um aviso permanente "N itens em Expirados" que leva a este ecrã, sempre que N > 0.
+- **Filtros** [Decidido 22/10/2026]: botão `line.3.horizontal.decrease.circle` à direita do título (a barra de navegação está escondida nos separadores), com um menu de duas secções: **Lista** (Todas ou uma lista, com o ícone na cor da lista) e **Data de expiração** (Hoje, Últimos 7 dias, Últimos 30 dias, Tudo). Com um filtro ativo, o ícone passa a `.fill` e aparece por baixo do título uma ficha "Trabalho · Últimos 7 dias" com ✕ para limpar. Sem resultados: "Nada com estes filtros" + "Limpar filtros". Os filtros de cada ecrã são independentes e duram enquanto a app está aberta. A regra está em `FiltroItens` (núcleo): os dias contam desde a meia-noite, no fuso do iPhone.
 
 ### 7.10 Ecrãs Lista e Detalhe
 
@@ -242,7 +244,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.11 Concluídos e Definições
 
-- Concluídos: sem mock. Fundo agrupado do sistema, `List` `.insetGrouped`, ícone da lista em círculo, "Concluído hoje, 18:40", deslizar para Reabrir e Apagar.
+- Concluídos: sem mock. Fundo agrupado do sistema, `List` `.insetGrouped` (`EcraBaseLista`), ícone da lista em círculo, "Concluído hoje, 18:40", deslizar para Reabrir e Apagar. Filtros como em Expirados (7.9), com **Data de conclusão**.
 - **Definições (mock 9)** [Decidido 21/10/2026: gerir listas primeiro; menos controlos de horários]. `Form` agrupado, por esta ordem:
   1. **Listas**: uma linha por lista (ícone em círculo de 30 pt, nome, número de ativos, pega para arrastar). Tocar abre Personalizar lista. Última linha "+ Nova lista" na cor de destaque. Ordenar arrastando, sem botão Editar.
   2. **Calendário**: "Calendários" (valor: as fontes ligadas, por exemplo "Apple, Outlook") leva à escolha dos calendários; interruptor "Mostrar eventos no Início". Sem ligação: uma só linha "Ligar calendário".

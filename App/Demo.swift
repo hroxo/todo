@@ -131,6 +131,9 @@ enum Demo {
             estado.rolarParaCalendario = true
         case "expirados":
             estado.separador = .expirados
+        case "expirados-filtro":
+            estado.filtroExpirados = FiltroItens(listaId: listas.dropFirst().first?.id, periodo: .ultimos7)
+            estado.separador = .expirados
         case "concluidos":
             estado.separador = .concluidos
         case "definicoes":

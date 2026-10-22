@@ -3,11 +3,12 @@ import SwiftUI
 import ToDoCore
 
 /// Expirados (mock "Expirados", DESIGN.md 7.9): o que perdeu o prazo fica aqui 14 dias,
-/// com Recuperar e Apagar.
+/// com Recuperar e Apagar. Filtra por lista e pela data de expiração (Melhoria 3).
 struct ExpiradosView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
+    @Query(sort: \Lista.ordem) private var listas: [Lista]
 
     @State private var aEditar: Item?
     @State private var aApagar: Item?
@@ -16,10 +17,20 @@ struct ExpiradosView: View {
     private var tarefas: Tarefas { Tarefas(contexto: contexto) }
 
     var body: some View {
-        let itens = expirados.sorted { ($0.expiradoEm ?? .distantPast) > ($1.expiradoEm ?? .distantPast) }
+        @Bindable var estado = estado
+        let filtro = estado.filtroExpirados
+        let todos = expirados.sorted { ($0.expiradoEm ?? .distantPast) > ($1.expiradoEm ?? .distantPast) }
+        let itens = filtro.aplicar(todos, agora: .now)
 
         NavigationStack {
             EcraBase(titulo: "Expirados", fundo: CoresEstado.expiradosFundo) {
+                BotaoFiltro(filtro: $estado.filtroExpirados, listas: listas, tituloData: "Data de expiração")
+                    .tint(CoresEstado.expiraTinta)
+            } conteudo: {
+                if filtro.ativo {
+                    FichaFiltro(texto: filtro.rotulo(listas: listas)) { limparFiltros() }
+                }
+
                 HStack(spacing: Espaco.grelha) {
                     Image(systemName: "hourglass")
                         .font(.system(size: 18, weight: .bold))
@@ -32,7 +43,10 @@ struct ExpiradosView: View {
                         .foregroundStyle(CoresEstado.expiraTinta)
                 }
 
-                if itens.isEmpty {
+                if itens.isEmpty && filtro.ativo && !todos.isEmpty {
+                    VazioComFiltros { limparFiltros() }
+                        .padding(.top, Espaco.margem)
+                } else if itens.isEmpty {
                     ContentUnavailableView(
                         "Nada expirou",
                         systemImage: "hourglass",
@@ -94,6 +108,10 @@ struct ExpiradosView: View {
         }
         .padding(Espaco.bloco)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+    }
+
+    private func limparFiltros() {
+        withAnimation(.snappy) { estado.filtroExpirados = FiltroItens() }
     }
 
     private func meta(_ item: Item) -> String {

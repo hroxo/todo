@@ -19,6 +19,9 @@ final class EstadoApp {
     var rolarParaCalendario = false
     /// A lista que está aberta, para a captura rápida a pré-selecionar.
     var listaAtual: Lista?
+    /// Filtros de Concluídos e Expirados: independentes e só enquanto a app está aberta.
+    var filtroConcluidos = FiltroItens()
+    var filtroExpirados = FiltroItens()
 
     @ObservationIgnored let notificacoes: Notificacoes
 
