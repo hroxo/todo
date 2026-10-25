@@ -11,10 +11,14 @@ struct CartaoLista: View {
     var body: some View {
         let cor = lista.cor
         let ativos = lista.itensAtivos.count
+        let aExpirar = !lista.expiramHoje(agora: agora).isEmpty
 
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top) {
                 IconeListaView(lista: lista, tamanho: 40, fundo: cor.ficha)
+                    .overlay(alignment: .bottomTrailing) {
+                        if aExpirar { sinalExpira }
+                    }
                 Spacer()
                 AnelExpiracao(
                     fracao: lista.frescura(agora: agora),
@@ -37,8 +41,20 @@ struct CartaoLista: View {
         .background(cor.base, in: .rect(cornerRadius: 22, style: .continuous))
         .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(lista.nome), \(ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos")")
+        .accessibilityLabel(
+            "\(lista.nome), \(ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos")"
+                + (aExpirar ? ", com itens a expirar hoje" : "")
+        )
         .accessibilityAddTraits(.isButton)
+    }
+
+    /// Sinal discreto no canto do círculo do ícone: há itens a expirar hoje.
+    private var sinalExpira: some View {
+        Image(systemName: "exclamationmark.triangle.fill")
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(CoresEstado.expira)
+            .frame(width: 16, height: 16)
+            .background(.white, in: .circle)
     }
 }
 

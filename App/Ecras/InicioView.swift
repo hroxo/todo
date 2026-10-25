@@ -44,12 +44,14 @@ struct InicioView: View {
         NavigationStack(path: $estadoLigado.caminho) {
             ScrollViewReader { rolagem in
                 EcraBase(titulo: "Listas", sobretitulo: Formatos.cabecalho(agora)) {
-                    if !expirados.isEmpty {
-                        avisoExpirados
-                    }
+                    if !estado.avisosDispensados {
+                        if !expirados.isEmpty {
+                            avisoExpirados
+                        }
 
-                    if !hoje.isEmpty {
-                        avisoExpiramHoje(hoje.count, rolagem: rolagem)
+                        if !hoje.isEmpty {
+                            avisoExpiramHoje(hoje.count, rolagem: rolagem)
+                        }
                     }
 
                     grelhaEspacos(agora: agora)
@@ -83,6 +85,8 @@ struct InicioView: View {
                     estado.rolarParaCalendario = false
                     withAnimation { rolagem.scrollTo("calendario", anchor: .bottom) }
                 }
+                // Ao sair do Início (outra página ou uma lista), os avisos do topo saem.
+                .onDisappear { estado.avisosDispensados = true }
             }
             .navigationDestination(for: Lista.self) { ListaView(lista: $0) }
             .navigationDestination(for: Item.self) { DetalheNavegavel(item: $0) }
@@ -234,6 +238,7 @@ struct InicioView: View {
 
     private var avisoExpirados: some View {
         Button {
+            dispensarAvisos()
             estado.separador = .expirados
         } label: {
             HStack(spacing: Espaco.grelha) {
@@ -258,7 +263,10 @@ struct InicioView: View {
     /// "Expiram hoje" está no fundo do Início; o aviso no topo leva até lá.
     private func avisoExpiramHoje(_ total: Int, rolagem: ScrollViewProxy) -> some View {
         Button {
-            withAnimation { rolagem.scrollTo("expiramHoje", anchor: .bottom) }
+            withAnimation {
+                rolagem.scrollTo("expiramHoje", anchor: .bottom)
+                estado.avisosDispensados = true
+            }
         } label: {
             HStack(spacing: Espaco.grelha) {
                 Image(systemName: "clock.badge.exclamationmark")
@@ -294,6 +302,10 @@ struct InicioView: View {
         .padding(.horizontal, Espaco.bloco)
         .frame(minHeight: 56)
         .contentShape(Rectangle())
+    }
+
+    private func dispensarAvisos() {
+        withAnimation { estado.avisosDispensados = true }
     }
 
     private func mensagemApagar(_ lista: Lista) -> String {

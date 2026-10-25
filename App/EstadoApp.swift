@@ -19,6 +19,10 @@ final class EstadoApp {
     var rolarParaCalendario = false
     /// Só para o modo de demonstração: abre um evento do calendário.
     var abrirEventoDemo = false
+    /// Os avisos do topo do Início (Expirados e "expiram hoje") só aparecem na primeira vez que
+    /// se abre o Início; saem ao trocar de página, ao tocar neles ou ao entrar numa lista.
+    /// Voltam quando a app regressa do segundo plano.
+    var avisosDispensados = false
     /// A lista que está aberta, para a captura rápida a pré-selecionar.
     var listaAtual: Lista?
     /// Filtros de Concluídos e Expirados: independentes e só enquanto a app está aberta.

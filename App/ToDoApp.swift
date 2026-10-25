@@ -38,9 +38,10 @@ struct ToDoApp: App {
                 }
         }
         .modelContainer(Self.contentor)
-        .onChange(of: fase) { _, nova in
+        .onChange(of: fase) { anterior, nova in
             switch nova {
             case .active:
+                if anterior == .background { estado.avisosDispensados = false }
                 manutencao()
                 calendario.atualizar()
             case .background where !Demo.ativo: Self.notificacoes.reagendar()
