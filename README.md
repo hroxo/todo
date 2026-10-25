@@ -15,7 +15,9 @@ A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas p
 [![Última versão](https://img.shields.io/badge/download-ToDo.ipa-0071E3)](https://github.com/hroxo/todo/releases/tag/ultima)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-34C759)](LICENSE)
 
-<img src="docs/media/principal.png" width="820" alt="Três ecrãs da app em modo escuro: Início com os espaços, uma lista com anéis de prazo e o detalhe de um ponto com o botão Manter">
+<a href="docs/media/ToDo-promo.mp4"><img src="docs/media/principal.png" width="820" alt="Três ecrãs da app em modo escuro: Início com os espaços, uma lista com anéis de prazo e o detalhe de um ponto com o botão Manter"></a>
+
+### ▶️ [Ver o vídeo de demonstração](docs/media/ToDo-promo.mp4)
 
 </div>
 
@@ -121,11 +123,78 @@ Todas as durações podem ser mudadas em Definições › Avançado › Prazos.
 
 A app é para uso pessoal e não está na App Store. Cada versão é compilada pelo CI e publicada como `.ipa`.
 
-1. **[Descarregar `ToDo.ipa`](https://github.com/hroxo/todo/releases/download/ultima/ToDo.ipa)** (última compilação).
-2. Instalar com um Apple ID gratuito, usando o [iloader](https://github.com/nab138/iloader) (Linux, macOS, Windows) por cabo, ou o SideStore.
-3. No iPhone, ativar o **Modo de Programador** e confiar no programador em Ajustes › Geral › VPN e Gestão de Dispositivos.
+**Precisas de:** um iPhone com iOS 26 ou superior, um cabo USB, um computador (Windows, Linux ou macOS) e um Apple ID gratuito. Recomenda-se um Apple ID só para isto, mas não é obrigatório.
 
-> Com um Apple ID gratuito, a assinatura dura 7 dias: volta a instalar uma vez por semana. Os dados mantêm-se.
+1. **[Descarrega `ToDo.ipa`](https://github.com/hroxo/todo/releases/download/ultima/ToDo.ipa)** (última compilação).
+2. Segue os passos do teu sistema, abaixo.
+3. Faz os [passos no iPhone](#passos-no-iphone) e abre a app.
+
+Em todos os sistemas usamos o [iloader](https://github.com/nab138/iloader), que assina a `.ipa` com o teu Apple ID e a instala por cabo.
+
+<details>
+<summary><b>🪟 Windows</b></summary>
+
+1. Instala o **iTunes** (do [site da Apple](https://www.apple.com/itunes/) ou da Microsoft Store) ou a app **Dispositivos Apple**. Fornece os controladores USB para o PC reconhecer o iPhone.
+2. Descarrega o instalador do iloader (`.exe` ou `.msi`) em [Releases](https://github.com/nab138/iloader/releases) e instala-o.
+3. Liga o iPhone ao PC por cabo, desbloqueia-o e toca em **Confiar neste computador**.
+4. Abre o iloader e inicia sessão com o teu Apple ID. Se tiveres verificação em dois passos, introduz o código.
+5. Escolhe o iPhone, usa a opção de instalar uma `.ipa` e seleciona o `ToDo.ipa` descarregado.
+
+</details>
+
+<details>
+<summary><b>🍎 macOS</b></summary>
+
+1. Descarrega o iloader (`.dmg`) em [Releases](https://github.com/nab138/iloader/releases): escolhe `aarch64` para Macs com chip Apple (M1 ou posterior) e `x64` para Macs Intel. Arrasta-o para Aplicações.
+2. Se o macOS bloquear a abertura, vai a Definições do Sistema › Privacidade e Segurança e escolhe **Abrir mesmo assim**.
+3. Liga o iPhone por cabo, desbloqueia-o e toca em **Confiar neste computador**. Não precisas de instalar mais nada.
+4. Abre o iloader, inicia sessão com o teu Apple ID e escolhe o iPhone.
+5. Usa a opção de instalar uma `.ipa` e seleciona o `ToDo.ipa`.
+
+> Se tiveres o Xcode, também podes instalar a `.ipa` com o Apple Configurator, mas ele só aceita `.ipa` assinadas. Por isso o iloader é o caminho mais simples.
+
+</details>
+
+<details>
+<summary><b>🐧 Linux</b></summary>
+
+1. Instala o `usbmuxd`, que fala com o iPhone por USB (costuma já vir instalado):
+   ```bash
+   sudo apt install usbmuxd          # Debian / Ubuntu
+   sudo dnf install usbmuxd          # Fedora
+   sudo pacman -S usbmuxd            # Arch
+   ```
+2. Descarrega o iloader em [Releases](https://github.com/nab138/iloader/releases) no formato da tua distribuição (`.AppImage`, `.deb` ou `.rpm`).
+3. Se usares AppImage, torna-o executável e corre-o:
+   ```bash
+   chmod +x iloader*.AppImage
+   ./iloader*.AppImage
+   ```
+4. Liga o iPhone por cabo, desbloqueia-o e toca em **Confiar neste computador**.
+5. No iloader, inicia sessão com o teu Apple ID, escolhe o iPhone, instala uma `.ipa` e seleciona o `ToDo.ipa`.
+
+</details>
+
+### Passos no iPhone
+
+1. **Modo de Programador:** em Ajustes › Privacidade e Segurança › **Modo de Programador**, ativa e reinicia o iPhone. A opção só aparece depois de uma primeira instalação.
+2. **Confiar no programador:** em Ajustes › Geral › VPN e Gestão de Dispositivos, toca no teu Apple ID e em **Confiar**.
+3. Abre o **ToDo** e permite as notificações.
+
+### Atualizar e renovar
+
+> Com um Apple ID gratuito, a assinatura dura **7 dias**. Passado esse prazo a app deixa de abrir: volta a instalar a `.ipa` com o iloader (a mesma ou uma nova). Os dados mantêm-se. Também há um limite de 3 apps instaladas assim ao mesmo tempo.
+
+Para não dependeres do computador todas as semanas, podes instalar o [SideStore](https://sidestore.io), que renova a assinatura no próprio iPhone, e depois instalar o `ToDo.ipa` por lá.
+
+### Problemas comuns
+
+| Sintoma | O que fazer |
+|---|---|
+| O iloader não encontra o iPhone | Desbloqueia o telemóvel, confia no computador, experimenta outro cabo ou porta. No Windows, confirma que o iTunes ou os Dispositivos Apple estão instalados. No Linux, confirma que o `usbmuxd` está a correr. |
+| «Programador não fidedigno» ao abrir | Faz o passo 2 de [Passos no iPhone](#passos-no-iphone). |
+| A opção Modo de Programador não existe | Instala primeiro uma app com o iloader; a opção aparece a seguir. |
+| A app deixou de abrir | A assinatura expirou: reinstala. |
 
 ## Arquitetura
 
