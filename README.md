@@ -214,7 +214,7 @@ ToDo
 
 ## Desenvolvimento
 
-Não é preciso Xcode local: **o CI é o compilador.**
+**O CI é o compilador** do `.ipa`. Para iterar a interface, o Mac Intel com o Xcode 26.3 compila e corre a app no simulador iOS 26 (ver `docs/PROGRESSO.md`).
 
 ```mermaid
 flowchart LR

@@ -17,7 +17,7 @@ Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJD
 ## 1. Princípios visuais
 
 1. **Nativo primeiro.** SwiftUI e componentes do sistema (TabView, NavigationStack, sheet, PhotosPicker, SF Symbols). Não desenhar à mão o que o iOS já dá. [Decidido]
-2. **Liquid glass do sistema.** A barra de separadores, as barras de ferramentas e os botões flutuantes usam o material de vidro nativo do iOS 26+, nunca uma imitação com blur. [Decidido]
+2. **Liquid glass do sistema, com moderação.** O vidro nativo do iOS 26+ (nunca uma imitação com blur) só aparece em dois sítios: na **barra de navegação de baixo** (separadores) e nos **botões dos cantos do ecrã** (toolbar, "+", fechar, grupos de ações no topo). Cartões, linhas, cápsulas dentro do conteúdo e fundos ficam **sem vidro**: superfícies sólidas na cor da lista. O botão Manter (7.5) é a única exceção, por ser o gesto-assinatura. [Decidido 27/10/2026]
 3. **Cor com significado.** Cada lista tem uma cor e um ícone. A cor pinta o cartão da lista, o fundo dos ecrãs dessa lista e o anel de cada item. [Decidido]
 4. **O anel conta o tempo.** Cada item mostra um anel que se esvazia nos 3 dias. No último dia fica laranja. É o elemento-assinatura da app. [Decidido]
 5. **Nada sai do ecrã.** Todo o conteúdo cabe na largura e altura disponíveis, respeita as safe areas e nunca fica por baixo da barra de separadores sem poder ser percorrido. [Decidido]
@@ -195,6 +195,7 @@ Estados (ver o quadro "Botão Manter — 4 estados" nos mocks):
 Regras:
 - Implementação: as três formas dentro de um `GlassEffectContainer(spacing: 20)`, cada uma com `.glassEffect(.regular.interactive())` e `glassEffectID(_:in:)` num `@Namespace`, para o sistema desenhar a separação e a fusão. A cor do estado ativo usa `.glassEffect(.regular.tint(cor).interactive())`. Gestos: `LongPressGesture(minimumDuration: 0.3).sequenced(before: DragGesture(minimumDistance: 0))`.
 - **Física de água** (Melhoria 9, `AguaManter`): o movimento não usa animações de duração fixa, mas molas amortecidas calculadas a cada fotograma. A cápsula segue o dedo com inércia e ressalto; as bolhas nascem de dentro dela e seguem-na com atraso (o pescoço estica); cada gota estica na direção em que se mexe sem mudar de volume e treme como geleia ao nascer, ao passar o limiar e ao confirmar. Lá dentro há líquido na cor da lista: em Premido sobra um pouco no fundo da cápsula, ao arrastar passa para a bolha escolhida (cheia no limiar) e, ao soltar, volta a encher a cápsula; a superfície inclina-se com a aceleração e ondula. O texto muda para a cor Texto onde fica debaixo do líquido. Com "Reduzir movimento": sem ressalto, sem ondas nem inclinação. [Proposta]
+- **Mais líquido no arrasto para +15** [Decidido 27/10/2026, por fazer]: hoje o gesto ainda não parece líquido o suficiente. Ao premir e arrastar para a direita, a gota tem de esticar e acompanhar o dedo sem atraso visível, o pescoço tem de afinar continuamente até rebentar ao passar o limiar, e a bolha +15 tem de absorver o líquido com mola e fundir-se no lado escolhido, com háptica nesse instante. Afinar em `App/Componentes/BotaoManter.swift` e `AguaManter.swift`, testando no simulador local com um arrasto gravado (`touch_path`).
 - Voltar ao centro antes de soltar cancela, e as bolhas recolhem para dentro da cápsula.
 - A linha de ajuda acima do botão muda com o estado: "Toque: +5 dias · Premir e arrastar para escolher" → "Arrasta para um dos lados" → "Solta para manter mais 5/15 dias".
 - Depois de confirmar: vibração `.success`, as bolhas recolhem e o anel do topo anima até ao novo valor.
@@ -289,6 +290,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Subtópicos**: ficam como estão (círculo + texto); sem descrição, sem fotos. O + à esquerda do campo de novo subtópico também guarda.
 - **Concluir**: o visto verde fica no grupo de vidro do topo e há também "Concluir" no menu "…".
 - Na Lista, um ponto com descrição mostra "descrição" nos metadados ("2/4 subtópicos · descrição · 2 fotos").
+
+### 7.14 Widgets [Decidido 27/10/2026: entram no âmbito · Proposta: tamanhos]
+
+- Estilo: **simples, claros, limpos e informativos.** Pouca informação, boa hierarquia de texto (título, contagem grande e arredondada, uma linha de prazo), sem decoração nem vidro. A cor da lista e o anel (7.3) são os únicos elementos gráficos.
+- Pequeno: os próximos itens a expirar, com anel. Médio: uma lista escolhida (configurável), com 3 a 4 itens e a contagem. Ecrã bloqueado: circular (anel + itens que expiram hoje) e retangular (próximo item).
+- Botões interativos: Concluir e Manter +5.
+- Técnica: extensão WidgetKit e App Group `group.com.hugo.todo` para partilhar a base de dados. Validar primeiro com um widget mínimo que o sideload gratuito aceita a extensão e o App Group.
 
 ## 8. Movimento e feedback
 
