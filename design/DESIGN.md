@@ -266,6 +266,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.12 Calendário no Início (mocks 7 e 8)
 
+**Revisão de 28/10/2026 [Decidido]:**
+- **Recolher o que passou:** os eventos que já acabaram ficam recolhidos numa linha "2 já passaram", que abre com um toque e mostra-os esbatidos. O cabeçalho diz "3 por vir".
+- **O que está a decorrer:** a barra na cor do evento fica mais grossa e pulsa devagar (fica parada com "Reduzir movimento"), com um fundo suave na mesma cor. Por baixo do título aparece "A decorrer · até 15:18 · local". Substitui a etiqueta vermelha "AGORA", que cortava o título.
+- **O que vem a seguir:** os eventos das próximas 3 horas mostram "daqui a 20 min" ou "daqui a 1 h".
+- **O "+" e o ✓:** o "+" passa a ser um ícone leve, sem círculo, na cor do destino. O ✓ de "já adicionado" fica na cor da lista.
+
+
 - Lugar: logo a seguir à grelha de espaços; "Expiram hoje" fica no fundo do Início, por baixo do calendário. Quando há itens a expirar hoje, um aviso no topo ("N itens expiram hoje", `clock.badge.exclamationmark`) desce até essa secção. O conteúdo percorre por baixo da barra de separadores. [Decidido 22/10/2026]
 - **Por ligar (mock 7)**: cartão branco de 18 pt de raio com o ícone `calendar` num círculo azul de 40 pt, o título "Junta o teu calendário", a frase "Vê os eventos de hoje por baixo das listas e cria pontos a partir deles.", três fichas (Apple, Google, Outlook, cada uma com um ponto da sua cor), o botão em cápsula "Ligar calendário" na cor de destaque e a nota "Lê só no iPhone: usa as contas Google e Outlook que já tens nos Ajustes." O cartão pode fechar-se ("Agora não") e volta a estar em Definições.
 - **Ligado (mock 8)**: cabeçalho "HOJE NO CALENDÁRIO" com "Ver semana" à direita; grupo branco com uma linha por evento (58 pt): hora de início e fim, barra vertical de 4 pt na cor do calendário, título (`.body` semibold) e local ou calendário (`.footnote`), ficha vermelha "AGORA" no evento a decorrer e um botão "+" (círculo de 30 pt na cor Fundo da lista de destino, alvo de 44 pt) para criar um ponto a partir do evento.
@@ -336,6 +343,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - A foto do Apple ID não está acessível às apps. A cara é uma foto escolhida na app (PhotosPicker) ou as iniciais na cor da pessoa.
 - A captura numa lista de compras escolhe a loja e aceita vários artigos seguidos.
 - No menu "…": "Partilhar por AirDrop" envia um ficheiro `.todolista`. Abri-lo no outro iPhone cria a lista ou junta as duas cópias (por id, ganha a alteração mais recente). O tempo real vem depois, com o serviço escolhido.
+
+### 7.18 Ecrãs vazios com a Ampulheta [Decidido 28/10/2026]
+
+- Os ecrãs vazios usam a mesma mascote do widget (`EstadoVazio`), que flutua devagar como quem respira (fica parada com "Reduzir movimento"):
+  - **Expirados vazio:** a celebrar, "Nada expirou. Estás em dia.";
+  - **Concluídos vazio:** a ver a areia cair, "Ainda nada concluído";
+  - **Lista vazia:** a acenar, "Nada por fazer", e, se a lista não for permanente, quando sai do Início.
 
 ### 7.17 Listas que desaparecem e listas permanentes [Decidido 28/10/2026 · Proposta: detalhes]
 

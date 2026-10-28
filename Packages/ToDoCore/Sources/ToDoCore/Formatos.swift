@@ -20,6 +20,11 @@ public enum Formatos {
         return String(format: "%02d/%02d", c.day!, c.month!)
     }
 
+    /// "1 dia" ou "5 dias".
+    public static func dias(_ n: Int) -> String {
+        n == 1 ? "1 dia" : "\(n) dias"
+    }
+
     /// "14:30".
     public static func hora(_ data: Date, calendario: Calendar = .current) -> String {
         let c = calendario.dateComponents([.hour, .minute], from: data)

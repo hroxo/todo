@@ -78,10 +78,10 @@ struct ConcluidosView: View {
                 if itens.isEmpty && filtro.ativo && !todos.isEmpty {
                     VazioComFiltros { limparFiltros() }
                 } else if itens.isEmpty {
-                    ContentUnavailableView(
-                        "Nada concluído",
-                        systemImage: "checkmark.circle",
-                        description: Text("O que concluíres fica aqui \(tarefas.definicoes.diasRetencaoConcluidos) dias.")
+                    EstadoVazio(
+                        pose: .areia,
+                        titulo: "Ainda nada concluído",
+                        texto: "O que concluíres fica aqui \(Formatos.dias(tarefas.definicoes.diasRetencaoConcluidos))."
                     )
                 }
             }

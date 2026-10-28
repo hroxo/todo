@@ -46,6 +46,11 @@ final class CalendarioTests: BaseTestes {
         )
     }
 
+    func testDiasNoSingularENoPlural() {
+        XCTAssertEqual(Formatos.dias(1), "1 dia")
+        XCTAssertEqual(Formatos.dias(14), "14 dias")
+    }
+
     // MARK: - Melhoria 6.4: o "+" só funciona uma vez por evento
 
     private func ponto(_ id: String, inicio: Date, em lista: Lista) throws -> Item {

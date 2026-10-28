@@ -47,12 +47,12 @@ struct ExpiradosView: View {
                     VazioComFiltros { limparFiltros() }
                         .padding(.top, Espaco.margem)
                 } else if itens.isEmpty {
-                    ContentUnavailableView(
-                        "Nada expirou",
-                        systemImage: "hourglass",
-                        description: Text("Os itens sem ações durante \(tarefas.definicoes.diasExpiracao) dias aparecem aqui.")
+                    EstadoVazio(
+                        pose: .celebrar,
+                        titulo: "Nada expirou",
+                        texto: "Estás em dia. O que ficar \(Formatos.dias(tarefas.definicoes.diasExpiracao)) sem ações aparece aqui.",
+                        cor: CoresEstado.expiraTinta
                     )
-                    .padding(.top, Espaco.margem)
                 } else {
                     ForEach(itens) { cartao($0) }
                 }

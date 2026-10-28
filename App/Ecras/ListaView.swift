@@ -73,11 +73,7 @@ struct ListaView: View {
         .background(cor.fundo.ignoresSafeArea())
         .overlay {
             if ativos.isEmpty {
-                ContentUnavailableView(
-                    "Nada por fazer",
-                    systemImage: "checkmark.circle",
-                    description: Text(descricaoVazia)
-                )
+                EstadoVazio(pose: .acenar, titulo: "Nada por fazer", texto: descricaoVazia, cor: lista.cor.tinta)
             }
         }
         .navigationTitle(lista.nome)

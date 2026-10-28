@@ -22,6 +22,7 @@ struct SecaoCalendario: View {
     @State private var criados = 0
     @State private var aberto: EventoHoje?
     @State private var jaAdicionado: Item?
+    @State private var mostrarPassados = false
 
     /// Coluna das horas de cada evento.
     private let larguraHora: CGFloat = 48
@@ -170,16 +171,22 @@ struct SecaoCalendario: View {
 
     // MARK: - Ligado
 
+    /// Os eventos que já acabaram ficam recolhidos numa linha ("2 já passaram"), que se abre
+    /// com um toque; os outros mostram-se sempre (DESIGN.md 7.12).
     private var hoje: some View {
         TimelineView(.periodic(from: .now, by: 60)) { contexto in
+            let agora = contexto.date
+            let passados = calendario.eventos.filter { !$0.diaInteiro && $0.fim <= agora }
+            let porVir = calendario.eventos.filter { $0.diaInteiro || $0.fim > agora }
             VStack(alignment: .leading, spacing: Espaco.curto) {
                 HStack {
                     TituloSecao(texto: "Hoje no calendário")
                     Spacer()
                     if !calendario.eventos.isEmpty {
-                        Text(calendario.eventos.count == 1 ? "1 evento" : "\(calendario.eventos.count) eventos")
+                        Text(porVir.isEmpty ? "Todos passaram" : (porVir.count == 1 ? "1 por vir" : "\(porVir.count) por vir"))
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
                     }
                 }
 
@@ -199,46 +206,85 @@ struct SecaoCalendario: View {
                             .padding(.horizontal, Espaco.bloco)
                             .padding(.vertical, Espaco.curto)
                     }
-                    ForEach(calendario.eventos) { evento in
-                        linha(evento, agora: contexto.date)
-                        if evento != calendario.eventos.last {
+                    if !passados.isEmpty {
+                        linhaPassados(passados.count)
+                        if mostrarPassados {
+                            ForEach(passados) { evento in
+                                Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
+                                linha(evento, agora: agora)
+                                    .opacity(0.45)
+                            }
+                        }
+                        if !porVir.isEmpty {
+                            Divider()
+                        }
+                    }
+                    ForEach(porVir) { evento in
+                        linha(evento, agora: agora)
+                        if evento != porVir.last {
                             Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
                         }
                     }
                 }
                 .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                .clipShape(.rect(cornerRadius: 18, style: .continuous))
             }
         }
     }
 
+    private func linhaPassados(_ total: Int) -> some View {
+        Button {
+            withAnimation(.snappy) { mostrarPassados.toggle() }
+        } label: {
+            HStack(spacing: Espaco.curto) {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .rotationEffect(.degrees(mostrarPassados ? 90 : 0))
+                Text(total == 1 ? "1 já passou" : "\(total) já passaram")
+                    .font(.footnote.weight(.semibold))
+                Spacer()
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, Espaco.bloco)
+            .frame(minHeight: 40)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(mostrarPassados ? "Esconde os eventos que já passaram" : "Mostra os eventos que já passaram")
+    }
+
     private func linha(_ evento: EventoHoje, agora: Date) -> some View {
-        HStack(spacing: Espaco.grelha) {
+        let decorrer = evento.aDecorrer(em: agora)
+        return HStack(spacing: Espaco.grelha) {
             Button {
                 aberto = evento
             } label: {
                 HStack(spacing: Espaco.grelha) {
                     horas(evento)
 
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(evento.cor)
-                        .frame(width: 4)
+                    BarraEvento(cor: evento.cor, viva: decorrer)
                         .padding(.vertical, Espaco.curto)
 
                     VStack(alignment: .leading, spacing: Espaco.minimo) {
-                        HStack(spacing: Espaco.curto) {
-                            Text(evento.titulo)
-                                .font(.body.weight(.semibold))
+                        Text(evento.titulo)
+                            .font(.body.weight(.semibold))
+                            .lineLimit(1)
+                        if decorrer {
+                            // No lugar da antiga etiqueta "AGORA", que cortava o título.
+                            Text(["A decorrer · até \(Formatos.hora(evento.fim))", evento.detalhe]
+                                .filter { !$0.isEmpty }
+                                .joined(separator: " · "))
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(evento.cor)
                                 .lineLimit(1)
-                            if evento.aDecorrer(em: agora) {
-                                Text("AGORA")
-                                    .font(.caption2.weight(.heavy))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, Espaco.curto)
-                                    .padding(.vertical, Espaco.minimo)
-                                    .background(Color.red, in: .rect(cornerRadius: 6))
-                            }
+                        } else {
+                            EspacoDoEvento(
+                                espaco: espaco(de: evento),
+                                local: [evento.detalhe, Self.daquiA(evento, agora: agora)]
+                                    .filter { !$0.isEmpty }
+                                    .joined(separator: " · ")
+                            )
                         }
-                        EspacoDoEvento(espaco: espaco(de: evento), local: evento.detalhe)
                     }
 
                     Spacer(minLength: 0)
@@ -253,7 +299,15 @@ struct SecaoCalendario: View {
         .padding(.leading, Espaco.bloco)
         .padding(.trailing, Espaco.fino)
         .frame(minHeight: Espaco.linhaItem)
+        .background(decorrer ? evento.cor.opacity(0.08) : .clear)
         .accessibilityElement(children: .contain)
+    }
+
+    /// "daqui a 20 min" ou "daqui a 1 h", para os eventos das próximas 3 horas.
+    private static func daquiA(_ evento: EventoHoje, agora: Date) -> String {
+        let minutos = Int(evento.inicio.timeIntervalSince(agora) / 60)
+        guard !evento.diaInteiro, minutos > 0, minutos < 180 else { return "" }
+        return minutos < 60 ? "daqui a \(minutos) min" : "daqui a \(minutos / 60) h"
     }
 
     private func horas(_ evento: EventoHoje) -> some View {
@@ -273,7 +327,7 @@ struct SecaoCalendario: View {
         .frame(width: larguraHora, alignment: .leading)
     }
 
-    /// Por adicionar: "+" na cor do destino (toque: cria no espaço do evento ou, sem espaço,
+    /// Por adicionar: "+" leve, sem círculo, na cor do destino (toque: cria no espaço do evento ou, sem espaço,
     /// na última lista usada; pressão longa: escolher outra). Já adicionado: ✓ na cor da
     /// lista, que diz onde está (Melhoria 6.4).
     @ViewBuilder
@@ -283,10 +337,8 @@ struct SecaoCalendario: View {
                 jaAdicionado = existente
             } label: {
                 Image(systemName: "checkmark")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(lista.cor.texto)
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(lista.cor.base))
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(lista.cor.tinta)
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
@@ -298,10 +350,8 @@ struct SecaoCalendario: View {
                 }
             } label: {
                 Image(systemName: "plus")
-                    .font(.subheadline.weight(.bold))
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(destino.cor.tinta)
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(destino.cor.fundo))
                     .frame(width: 44, height: 44)
             } primaryAction: {
                 criar(evento, em: destino)
@@ -390,5 +440,25 @@ struct EspacoDoEvento: View {
         }
         .font(.footnote)
         .lineLimit(1)
+    }
+}
+
+/// A barra colorida de um evento. A decorrer, fica mais grossa e pulsa devagar (com
+/// "Reduzir movimento", fica parada).
+private struct BarraEvento: View {
+    let cor: Color
+    let viva: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 3)
+            .fill(cor)
+            .frame(width: viva ? 5 : 4)
+            .phaseAnimator(viva && !reduzirMovimento ? [false, true] : [false]) { barra, aceso in
+                barra.shadow(color: cor.opacity(aceso ? 0.7 : 0.15), radius: aceso ? 5 : 1)
+            } animation: { _ in
+                .easeInOut(duration: 1.4)
+            }
     }
 }
