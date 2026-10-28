@@ -151,9 +151,14 @@ struct BotaoManter: View {
         let mola = longo ? agua.longo : agua.curto
         let liquido = longo ? agua.liquidoLongo : agua.liquidoCurto
         // O tamanho segue o dedo com inércia: a gota escolhida incha, a outra encolhe.
-        let direcao: CGFloat = longo ? 1 : -1
-        let tamanho = max(40, 60 + 12 * agua.progresso.x * direcao)
-        let escala = deformacao(velocidade: mola.v - agua.capsula.v, puxao: 0, pulso: liquido.pulso.x)
+        let puxado = agua.progresso.x * (longo ? 1 : -1)
+        let tamanho = max(36, 60 + (puxado > 0 ? 22 : 26) * puxado)
+        // A escolhida estica na direção da cápsula, como uma gota a ser sugada.
+        let escala = deformacao(
+            velocidade: mola.v - agua.capsula.v,
+            puxao: max(0, puxado) * 0.1,
+            pulso: liquido.pulso.x
+        )
         return comLiquido(liquido, fora: Color.primary) {
             VStack(spacing: 0) {
                 Text("+\(longo ? diasLongo : diasCurto)")
@@ -196,20 +201,21 @@ struct BotaoManter: View {
     private var gesto: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { valor in
+                let dx = valor.translation.width
                 if !tocando {
                     tocando = true
                     temporizador = Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(300))
                         guard !Task.isCancelled, tocando, fase == .parado else { return }
-                        fase = .premido
-                        premidos += 1
-                        agua.nascer()
-                        agua.definir(dedo: 0, aberto: true, limiar: limiar)
+                        abrir()
                     }
                 }
+                // Arrastar logo, sem esperar pelo toque longo, também abre: o gesto não se perde.
+                if fase == .parado && abs(dx) > 10 {
+                    abrir()
+                }
                 guard fase != .parado else { return }
-                let dx = valor.translation.width
-                agua.definir(dedo: max(-alcance, min(alcance, dx)), aberto: true, limiar: limiar)
+                agua.definir(dedo: elastico(dx), aberto: true, limiar: limiar)
                 let nova: Fase = dx < -limiar ? .esquerda : (dx > limiar ? .direita : .premido)
                 if nova != fase {
                     if nova != .premido {
@@ -239,6 +245,23 @@ struct BotaoManter: View {
                     confirmar(longo: true)
                 }
             }
+    }
+
+    private func abrir() {
+        temporizador?.cancel()
+        fase = .premido
+        premidos += 1
+        agua.nascer()
+        agua.definir(dedo: 0, aberto: true, limiar: limiar)
+    }
+
+    /// Segue o dedo até ao alcance e depois resiste, como um elástico, em vez de parar a seco.
+    private func elastico(_ dx: CGFloat) -> CGFloat {
+        let distancia = abs(dx)
+        guard distancia > alcance else { return dx }
+        let excesso = distancia - alcance
+        let resistido = alcance + 40 * (1 - 1 / (1 + excesso / 60))
+        return dx < 0 ? -resistido : resistido
     }
 
     private func confirmar(longo: Bool) {

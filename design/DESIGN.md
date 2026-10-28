@@ -195,7 +195,12 @@ Estados (ver o quadro "Botão Manter — 4 estados" nos mocks):
 Regras:
 - Implementação: as três formas dentro de um `GlassEffectContainer(spacing: 20)`, cada uma com `.glassEffect(.regular.interactive())` e `glassEffectID(_:in:)` num `@Namespace`, para o sistema desenhar a separação e a fusão. A cor do estado ativo usa `.glassEffect(.regular.tint(cor).interactive())`. Gestos: `LongPressGesture(minimumDuration: 0.3).sequenced(before: DragGesture(minimumDistance: 0))`.
 - **Física de água** (Melhoria 9, `AguaManter`): o movimento não usa animações de duração fixa, mas molas amortecidas calculadas a cada fotograma. A cápsula segue o dedo com inércia e ressalto; as bolhas nascem de dentro dela e seguem-na com atraso (o pescoço estica); cada gota estica na direção em que se mexe sem mudar de volume e treme como geleia ao nascer, ao passar o limiar e ao confirmar. Lá dentro há líquido na cor da lista: em Premido sobra um pouco no fundo da cápsula, ao arrastar passa para a bolha escolhida (cheia no limiar) e, ao soltar, volta a encher a cápsula; a superfície inclina-se com a aceleração e ondula. O texto muda para a cor Texto onde fica debaixo do líquido. Com "Reduzir movimento": sem ressalto, sem ondas nem inclinação. [Proposta]
-- **Mais líquido no arrasto para +15** [Decidido 27/10/2026, por fazer]: hoje o gesto ainda não parece líquido o suficiente. Ao premir e arrastar para a direita, a gota tem de esticar e acompanhar o dedo sem atraso visível, o pescoço tem de afinar continuamente até rebentar ao passar o limiar, e a bolha +15 tem de absorver o líquido com mola e fundir-se no lado escolhido, com háptica nesse instante. Afinar em `App/Componentes/BotaoManter.swift` e `AguaManter.swift`, testando no simulador local com um arrasto gravado (`touch_path`).
+- **Mais líquido no arrasto para +15** [Decidido 27/10/2026 · Melhoria 10]:
+  - Arrastar logo abre as gotas, sem esperar pelo toque longo (antes, o gesto perdia-se).
+  - A cápsula acompanha mais o dedo (40 pt).
+  - A bolha escolhida incha até 82 pt, estica na direção da cápsula e encosta-se a ela.
+  - A outra encolhe até 36 pt e afasta-se até se soltar.
+  - Depois do alcance (80 pt), o dedo encontra uma resistência elástica em vez de parar a seco.
 - Voltar ao centro antes de soltar cancela, e as bolhas recolhem para dentro da cápsula.
 - A linha de ajuda acima do botão muda com o estado: "Toque: +5 dias · Premir e arrastar para escolher" → "Arrasta para um dos lados" → "Solta para manter mais 5/15 dias".
 - Depois de confirmar: vibração `.success`, as bolhas recolhem e o anel do topo anima até ao novo valor.

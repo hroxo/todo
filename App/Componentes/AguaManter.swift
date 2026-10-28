@@ -172,7 +172,7 @@ final class AguaManter {
     private func atualizarAlvos() {
         let p = aberto ? tanh(dedo / 60) : 0
         progresso.alvo = p
-        capsula.alvo = p * 28
+        capsula.alvo = p * 40
         let esquerda = aberto ? suave(-dedo / limiar) : 0
         let direita = aberto ? suave(dedo / limiar) : 0
         liquidoCurto.nivel.alvo = esquerda
@@ -183,8 +183,8 @@ final class AguaManter {
 
     /// Onde cada bolha quer estar em relação à cápsula: a escolhida aproxima-se e funde-se,
     /// a outra afasta-se até se soltar.
-    private var relativoCurto: CGFloat { progresso.x < 0 ? -6 * progresso.x : -16 * progresso.x }
-    private var relativoLongo: CGFloat { progresso.x > 0 ? -6 * progresso.x : -16 * progresso.x }
+    private var relativoCurto: CGFloat { progresso.x < 0 ? -16 * progresso.x : -26 * progresso.x }
+    private var relativoLongo: CGFloat { progresso.x > 0 ? -16 * progresso.x : -26 * progresso.x }
 
     private func arrancar() {
         guard ligacao == nil else { return }
