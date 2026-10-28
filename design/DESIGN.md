@@ -303,6 +303,22 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Botões interativos: Concluir e Manter +5.
 - Técnica: extensão WidgetKit e App Group `group.com.hugo.todo` para partilhar a base de dados. Validar primeiro com um widget mínimo que o sideload gratuito aceita a extensão e o App Group.
 
+### 7.15 Listas de compras partilhadas [Decidido 28/10/2026 · Proposta: forma]
+
+- Tipo de lista **Compras**: secções por loja (Continente, IKEA…) com "3 de 8". Tocar risca o artigo. Não tem anel nem prazo, porque os artigos não expiram.
+- No topo, as fichas de quem partilha: "Ana · Continente", e "Tu · IKEA" com um seletor de loja. É a presença por loja, sem mapa.
+- A captura numa lista de compras escolhe a loja e aceita vários artigos seguidos.
+- No menu "…": "Partilhar por AirDrop" envia um ficheiro `.todolista`. Abri-lo no outro iPhone cria a lista ou junta as duas cópias (por id, ganha a alteração mais recente). O tempo real vem depois, com o serviço escolhido.
+
+### 7.16 Inteligência no iPhone [Decidido 28/10/2026 · Proposta: forma]
+
+- Usa só o modelo da Apple no próprio iPhone (Foundation Models); nada sai do telemóvel.
+- Nas Definições, a secção **Inteligência** tem um interruptor geral e um por função, e explica que tudo fica no iPhone.
+- **Notificações:** título = item, subtítulo = lista, corpo = uma linha com contexto ("2 subtópicos por fazer · sem mexer desde segunda"). Sem modelo, usa-se um texto fixo.
+- **Captura:** por baixo do campo aparece uma sugestão discreta ("Ideias?", "Dividir em 3 subtópicos?") que se aceita com um toque. Nunca muda nada sozinha.
+- **Triagem do dia:** um cartão "Para hoje" no Início, com até 3 sugestões, cada uma com uma razão curta e o botão de ação (Manter, Concluir).
+- Visual: um pequeno símbolo `sparkles` marca o que foi sugerido pela IA. Não há outra decoração.
+
 ## 8. Movimento e feedback
 
 - Usar as animações por defeito do SwiftUI (`.snappy`, `.smooth`). Nada de animações longas.
