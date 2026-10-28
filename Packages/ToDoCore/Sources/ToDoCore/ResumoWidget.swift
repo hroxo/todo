@@ -12,6 +12,8 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
     public var totalAtivos: Int
     public var expiramHoje: Int
     public var geradoEm: Date
+    /// O tema da Ampulheta; nil em resumos gravados antes de haver temas.
+    public var tema: TemaMascote?
 
     public struct Ponto: Codable, Equatable, Sendable, Identifiable {
         public var id: UUID
@@ -37,12 +39,13 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
         }
     }
 
-    public init(frase: String, pontos: [Ponto], totalAtivos: Int, expiramHoje: Int, geradoEm: Date) {
+    public init(frase: String, pontos: [Ponto], totalAtivos: Int, expiramHoje: Int, geradoEm: Date, tema: TemaMascote? = nil) {
         self.frase = frase
         self.pontos = pontos
         self.totalAtivos = totalAtivos
         self.expiramHoje = expiramHoje
         self.geradoEm = geradoEm
+        self.tema = tema
     }
 
     /// Sem modelo do iPhone: "2 pontos expiram hoje", "Nada urgente hoje" ou "Tudo em dia".
@@ -143,7 +146,8 @@ extension Tarefas {
             pontos: pontos,
             totalAtivos: ativos.count,
             expiramHoje: hoje,
-            geradoEm: agora
+            geradoEm: agora,
+            tema: try temaMascote()
         )
     }
 

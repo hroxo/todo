@@ -25,7 +25,7 @@ struct VistaPontos: View {
         if let pontos = resumo?.pontos, !pontos.isEmpty {
             comPontos
         } else {
-            VistaVazia(pose: Self.pose(resumo, data), semDados: resumo == nil)
+            VistaVazia(pose: Self.pose(resumo, data), tema: resumo?.tema ?? .geral, semDados: resumo == nil)
         }
     }
 
@@ -106,24 +106,43 @@ struct VistaPontos: View {
 /// o "+ Nova nota" no canto. Sem dados da app (sem App Group), convida a abri-la.
 struct VistaVazia: View {
     let pose: PoseMascote
+    var tema: TemaMascote = .geral
     var semDados = false
+
+    /// Azul escuro nos cenários claros; no tema, a cor mais escura do cenário.
+    private var corTexto: Color {
+        if pose.cenarioEscuro { return .white }
+        guard pose.doTema(tema) else { return Color(red: 0.05, green: 0.27, blue: 0.49) }
+        switch tema.cenario {
+        case .trabalho: return Color(red: 0.24, green: 0.2, blue: 0.54)
+        case .pessoal: return Color(red: 0.09, green: 0.2, blue: 0.02)
+        default: return Color(red: 0.02, green: 0.17, blue: 0.33)
+        }
+    }
 
     var body: some View {
         let claro = pose.cenarioEscuro
+        let naJanela = pose.doTema(tema) && tema == .viagem
         HStack(spacing: 14) {
-            Ampulheta(pose: pose)
-                .frame(width: pose == .dormir ? 118 : 92, height: 118)
-                .id(pose)
+            if naJanela {
+                // A janela do avião está no cenário, à esquerda: a Ampulheta senta-se ao lado.
+                Color.clear.frame(width: 112)
+            }
+            Ampulheta(pose: pose, tema: tema)
+                .frame(width: pose == .dormir ? 118 : (naJanela ? 70 : 92), height: 118)
+                .id("\(pose)-\(tema)")
                 .transition(.scale(scale: 0.7).combined(with: .opacity))
             VStack(alignment: .leading, spacing: 3) {
-                Text(pose.titulo)
+                Text(pose.titulo(tema))
                     .font(.system(.title3, design: .rounded).weight(.bold))
-                Text(semDados && pose != .dormir ? "Toca para abrir a ToDo." : pose.subtitulo)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(semDados && pose != .dormir ? "Toca para abrir a ToDo." : pose.subtitulo(tema))
                     .font(.system(.subheadline, design: .rounded).weight(.medium))
                     .opacity(0.8)
                     .lineLimit(2)
             }
-            .foregroundStyle(claro ? Color.white : Color(red: 0.05, green: 0.27, blue: 0.49))
+            .foregroundStyle(corTexto)
             .contentTransition(.opacity)
             // Espaço para o "+ Nova nota" no canto, para o texto nunca lhe tocar.
             .padding(.bottom, 28)
@@ -133,7 +152,7 @@ struct VistaVazia: View {
             Link(destination: urlCaptura) {
                 Label("Nova nota", systemImage: "plus")
                     .font(.system(.caption, design: .rounded).weight(.bold))
-                    .foregroundStyle(claro ? Color.white : Color(red: 0.05, green: 0.27, blue: 0.49))
+                    .foregroundStyle(corTexto)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(.white.opacity(claro ? 0.18 : 0.85)))
@@ -157,7 +176,7 @@ struct FundoPontos: View {
                 endPoint: .bottomTrailing
             )
         } else {
-            CenarioMascote(pose: VistaPontos.pose(resumo, data))
+            CenarioMascote(pose: VistaPontos.pose(resumo, data), tema: resumo?.tema ?? .geral)
         }
     }
 }

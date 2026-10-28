@@ -1,4 +1,5 @@
 import SwiftUI
+import ToDoCore
 
 /// A Ampulheta, a mascote da app (DESIGN.md 7.14). Aparece no widget quando não há nada a
 /// pedir atenção e muda de pose ao longo do dia (o WidgetKit anima a passagem). A areia conta
@@ -45,11 +46,54 @@ enum PoseMascote: String, CaseIterable {
 
     /// Texto claro nos cenários escuros (festa e noite).
     var cenarioEscuro: Bool { self == .celebrar || self == .dormir }
+
+    /// Com um tema (trabalho, vida pessoal, viagem), as poses de dia mudam de cenário, de
+    /// objetos e de frase; celebrar e dormir são iguais em todos os temas.
+    func doTema(_ tema: TemaMascote) -> Bool {
+        (self == .acenar || self == .areia) && tema.cenario != .geral
+    }
+
+    func titulo(_ tema: TemaMascote) -> String {
+        guard doTema(tema) else { return titulo }
+        switch (tema.cenario, self) {
+        case (.trabalho, .areia): return "Foco no trabalho."
+        case (.pessoal, .areia): return "Tempo para ti."
+        case (.viagem, _): return "Boa viagem!"
+        default: return titulo
+        }
+    }
+
+    func subtitulo(_ tema: TemaMascote) -> String {
+        guard doTema(tema) else { return subtitulo }
+        switch (tema, self) {
+        case (.trabalho, .acenar): return "Nada urgente no trabalho."
+        case (.trabalho, _): return "Nada urgente por agora."
+        case (.desporto, .acenar): return "Dia para te mexeres."
+        case (.pessoal, .acenar), (.desporto, _): return "Tempo para ti hoje."
+        case (.pessoal, _): return "Nada pendente em casa."
+        case (.viagem, .acenar): return "Tudo pronto."
+        case (.viagem, _): return "Aproveita a vista."
+        default: return subtitulo
+        }
+    }
+}
+
+extension TemaMascote {
+    /// O cenário que se desenha: o desporto usa, por agora, o da vida pessoal.
+    var cenario: TemaMascote { self == .desporto ? .pessoal : self }
 }
 
 /// A Ampulheta numa pose. Desenhada num espaço de 100 × 120 (deitada, 120 × 100).
 struct Ampulheta: View {
     let pose: PoseMascote
+    var tema: TemaMascote = .geral
+
+    /// No trabalho e na vida pessoal, de dia, segura um objeto à frente: o portátil e o café,
+    /// ou um livro.
+    private var objeto: TemaMascote? {
+        guard pose.doTema(tema), tema.cenario == .trabalho || tema.cenario == .pessoal else { return nil }
+        return tema.cenario
+    }
 
     private static let madeira = Color(red: 0.88, green: 0.54, blue: 0.31)
     private static let madeiraClara = Color(red: 0.94, green: 0.65, blue: 0.42)
@@ -79,6 +123,9 @@ struct Ampulheta: View {
             } else {
                 desenharCorpo(em: &contexto)
                 desenharRosto(em: &contexto)
+                if let objeto {
+                    desenharObjeto(objeto, em: &contexto)
+                }
             }
         }
         .aspectRatio(deitada ? 1.2 : 100.0 / 120, contentMode: .fit)
@@ -144,6 +191,13 @@ struct Ampulheta: View {
                 p.move(to: de)
                 p.addQuadCurve(to: ate, control: controlo)
             }
+        }
+        if objeto != nil {
+            // Os dois braços à frente, a segurar o objeto.
+            return [
+                braco(CGPoint(x: 30, y: 44), CGPoint(x: 20, y: 62), CGPoint(x: 34, y: 74)),
+                braco(CGPoint(x: 70, y: 44), CGPoint(x: 80, y: 62), CGPoint(x: 66, y: 74)),
+            ]
         }
         switch pose {
         case .acenar:
@@ -261,6 +315,53 @@ struct Ampulheta: View {
         c.stroke(sorriso, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2, lineCap: .round))
     }
 
+    /// O portátil e a chávena de café (trabalho), ou um livro aberto (vida pessoal).
+    private func desenharObjeto(_ objeto: TemaMascote, em c: inout GraphicsContext) {
+        func cor(_ r: Double, _ g: Double, _ b: Double) -> Color { Color(red: r, green: g, blue: b) }
+        if objeto == .trabalho {
+            let ecra = Path { p in
+                p.move(to: CGPoint(x: 12, y: 82))
+                p.addLine(to: CGPoint(x: 26, y: 68))
+                p.addLine(to: CGPoint(x: 76, y: 68))
+                p.addLine(to: CGPoint(x: 62, y: 82))
+                p.closeSubpath()
+            }
+            c.fill(ecra, with: .color(cor(0.37, 0.42, 0.48)))
+            c.fill(Path(ellipseIn: CGRect(x: 41.6, y: 72.6, width: 4.8, height: 4.8)), with: .color(cor(0.87, 0.89, 0.92)))
+            c.fill(Path(roundedRect: CGRect(x: 4, y: 82, width: 74, height: 6), cornerRadius: 3), with: .color(cor(0.53, 0.58, 0.64)))
+            c.fill(Path(roundedRect: CGRect(x: 80, y: 71, width: 14, height: 17), cornerRadius: 3), with: .color(.white))
+            var asa = Path()
+            asa.move(to: CGPoint(x: 94, y: 75))
+            asa.addQuadCurve(to: CGPoint(x: 94, y: 84), control: CGPoint(x: 100, y: 79.5))
+            c.stroke(asa, with: .color(.white), lineWidth: 2.5)
+            var vapor = Path()
+            for x in [84.0, 90.0] {
+                vapor.move(to: CGPoint(x: x, y: 66))
+                vapor.addQuadCurve(to: CGPoint(x: x, y: 56), control: CGPoint(x: x + 2.5, y: 61))
+            }
+            c.stroke(vapor, with: .color(cor(0.6, 0.65, 0.71)), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+        } else {
+            let livro = Path { p in
+                p.move(to: CGPoint(x: 20, y: 72))
+                p.addLine(to: CGPoint(x: 49, y: 66))
+                p.addLine(to: CGPoint(x: 78, y: 72))
+                p.addLine(to: CGPoint(x: 78, y: 94))
+                p.addLine(to: CGPoint(x: 49, y: 88))
+                p.addLine(to: CGPoint(x: 20, y: 94))
+                p.closeSubpath()
+            }
+            c.fill(livro, with: .color(cor(0.85, 0.35, 0.19)))
+            var linhas = Path()
+            linhas.move(to: CGPoint(x: 49, y: 66))
+            linhas.addLine(to: CGPoint(x: 49, y: 88))
+            for (x0, x1, y0) in [(24.0, 46.0, 75.0), (24.0, 46.0, 80.0), (52.0, 74.0, 70.0), (52.0, 74.0, 75.0)] {
+                linhas.move(to: CGPoint(x: x0, y: y0))
+                linhas.addLine(to: CGPoint(x: x1, y: x0 < 49 ? y0 - 4.5 : y0 + 4.5))
+            }
+            c.stroke(linhas, with: .color(.white.opacity(0.75)), lineWidth: 1.1)
+        }
+    }
+
     /// Olhos fechados com pestanas, no bolbo da esquerda da ampulheta deitada.
     private func desenharRostoDeitado(em c: inout GraphicsContext) {
         bochechas(em: &c, centros: [CGPoint(x: 23, y: 57), CGPoint(x: 51, y: 57)])
@@ -296,8 +397,17 @@ struct Ampulheta: View {
 /// confettis, noite com lua e estrelas.
 struct CenarioMascote: View {
     let pose: PoseMascote
+    var tema: TemaMascote = .geral
 
     var body: some View {
+        if pose.doTema(tema) {
+            CenarioTema(tema: tema.cenario)
+        } else {
+            cenarioDoDia
+        }
+    }
+
+    private var cenarioDoDia: some View {
         Canvas { c, t in
             let caixa = CGRect(origin: .zero, size: t)
             func cor(_ r: Double, _ g: Double, _ b: Double) -> Color { Color(red: r, green: g, blue: b) }
@@ -344,6 +454,74 @@ struct CenarioMascote: View {
                 for (x, y, r) in [(0.5, 0.14, 1.6), (0.63, 0.29, 1.2), (0.72, 0.11, 1.8), (0.93, 0.6, 1.3), (0.41, 0.86, 1.2), (0.08, 0.11, 1.4)] {
                     c.fill(Path(ellipseIn: CGRect(x: t.width * x - r, y: t.height * y - r, width: r * 2, height: r * 2)), with: .color(.white))
                 }
+            }
+        }
+    }
+}
+
+/// Os cenários dos temas, de dia (DESIGN.md 7.14): um escritório claro com janela e
+/// secretária; um parque com sol, relva e uma árvore; a cabine de um avião com a janela à
+/// esquerda (a Ampulheta senta-se ao lado).
+private struct CenarioTema: View {
+    let tema: TemaMascote
+
+    var body: some View {
+        Canvas { c, t in
+            func cor(_ r: Double, _ g: Double, _ b: Double) -> Color { Color(red: r, green: g, blue: b) }
+            func gradiente(_ de: Color, _ ate: Color, vertical: Bool = false) {
+                c.fill(Path(CGRect(origin: .zero, size: t)), with: .linearGradient(
+                    Gradient(colors: [de, ate]),
+                    startPoint: .zero,
+                    endPoint: vertical ? CGPoint(x: 0, y: t.height) : CGPoint(x: t.width, y: t.height)
+                ))
+            }
+            switch tema {
+            case .trabalho:
+                gradiente(cor(0.91, 0.89, 0.97), cor(0.81, 0.85, 0.95))
+                let janela = CGRect(x: t.width * 0.6, y: 16, width: 64, height: 48)
+                c.fill(Path(roundedRect: janela, cornerRadius: 6), with: .color(.white.opacity(0.7)))
+                var caixilho = Path()
+                caixilho.move(to: CGPoint(x: janela.midX, y: janela.minY))
+                caixilho.addLine(to: CGPoint(x: janela.midX, y: janela.maxY))
+                caixilho.move(to: CGPoint(x: janela.minX, y: janela.midY))
+                caixilho.addLine(to: CGPoint(x: janela.maxX, y: janela.midY))
+                c.stroke(caixilho, with: .color(cor(0.81, 0.85, 0.95)), lineWidth: 3)
+                c.fill(Path(CGRect(x: 0, y: t.height - 36, width: t.width, height: 36)), with: .color(cor(0.73, 0.54, 0.37).opacity(0.35)))
+            case .pessoal:
+                gradiente(cor(0.81, 0.94, 0.98), cor(0.91, 0.97, 0.93), vertical: true)
+                c.fill(Path(ellipseIn: CGRect(x: t.width - 62, y: 6, width: 44, height: 44)), with: .color(cor(1, 0.82, 0.48)))
+                let relva = Path { p in
+                    p.move(to: CGPoint(x: 0, y: t.height - 36))
+                    p.addQuadCurve(to: CGPoint(x: t.width * 0.53, y: t.height - 38), control: CGPoint(x: t.width * 0.26, y: t.height - 54))
+                    p.addQuadCurve(to: CGPoint(x: t.width, y: t.height - 42), control: CGPoint(x: t.width * 0.8, y: t.height - 26))
+                    p.addLine(to: CGPoint(x: t.width, y: t.height))
+                    p.addLine(to: CGPoint(x: 0, y: t.height))
+                }
+                c.fill(relva, with: .color(cor(0.59, 0.77, 0.35)))
+                // Na ponta direita, para não tapar a frase.
+                let tronco = CGPoint(x: t.width - 18, y: t.height - 40)
+                c.fill(Path(roundedRect: CGRect(x: tronco.x - 4, y: tronco.y - 50, width: 8, height: 52), cornerRadius: 3), with: .color(cor(0.54, 0.35, 0.2)))
+                for (dx, dy, r, tom) in [(0.0, -58.0, 24.0, cor(0.39, 0.6, 0.13)), (-16.0, -48.0, 14.0, cor(0.48, 0.68, 0.21)), (16.0, -46.0, 14.0, cor(0.48, 0.68, 0.21))] {
+                    c.fill(Path(ellipseIn: CGRect(x: tronco.x + dx - r, y: tronco.y + dy - r, width: r * 2, height: r * 2)), with: .color(tom))
+                }
+            case .viagem:
+                gradiente(cor(0.91, 0.93, 0.95), cor(0.79, 0.83, 0.87))
+                let moldura = CGRect(x: 14, y: 12, width: 112, height: t.height - 24)
+                c.fill(Path(roundedRect: moldura, cornerRadius: 44), with: .color(cor(0.68, 0.73, 0.78)))
+                let vidro = moldura.insetBy(dx: 9, dy: 9)
+                c.fill(Path(roundedRect: vidro, cornerRadius: 38), with: .linearGradient(
+                    Gradient(colors: [cor(0.36, 0.66, 0.94), cor(0.75, 0.88, 0.98)]),
+                    startPoint: CGPoint(x: 0, y: vidro.minY),
+                    endPoint: CGPoint(x: 0, y: vidro.maxY)
+                ))
+                var ceu = c
+                ceu.clip(to: Path(roundedRect: vidro, cornerRadius: 38))
+                for (x, y, l) in [(0.35, 0.72, 44.0), (0.6, 0.66, 28.0), (0.82, 0.32, 26.0)] {
+                    let centro = CGPoint(x: vidro.minX + vidro.width * x, y: vidro.minY + vidro.height * y)
+                    ceu.fill(Path(ellipseIn: CGRect(x: centro.x - l / 2, y: centro.y - l / 6, width: l, height: l / 3)), with: .color(.white))
+                }
+            case .geral, .desporto:
+                break
             }
         }
     }

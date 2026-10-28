@@ -14,14 +14,12 @@ struct DemoWidgetsView: View {
                     cartao(VistaPontos(resumo: resumo, data: .now))
                         .environment(\.colorScheme, esquema)
                 }
-                // Sem pontos: a Ampulheta nas quatro poses, com o cenário de cada uma.
+                // Sem pontos: a Ampulheta nas quatro poses e, de dia, nos três temas.
                 ForEach(PoseMascote.allCases, id: \.self) { pose in
-                    VistaVazia(pose: pose)
-                        .padding(16)
-                        .frame(width: 364, height: 170)
-                        .background(CenarioMascote(pose: pose))
-                        .clipShape(.rect(cornerRadius: 24, style: .continuous))
-                        .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
+                    vazio(pose, .geral)
+                }
+                ForEach([TemaMascote.trabalho, .pessoal, .viagem], id: \.self) { tema in
+                    vazio(.areia, tema)
                 }
                 ecraBloqueado
             }
@@ -39,6 +37,15 @@ struct DemoWidgetsView: View {
             .padding(16)
             .frame(width: 364, height: 170)
             .background(FundoPontos(resumo: resumo))
+            .clipShape(.rect(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
+    }
+
+    private func vazio(_ pose: PoseMascote, _ tema: TemaMascote) -> some View {
+        VistaVazia(pose: pose, tema: tema)
+            .padding(16)
+            .frame(width: 364, height: 170)
+            .background(CenarioMascote(pose: pose, tema: tema))
             .clipShape(.rect(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
     }

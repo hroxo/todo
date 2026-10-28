@@ -314,6 +314,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - **noite (23h–7h):** deitada a dormir, porque o tempo pára enquanto dormes, com lua e estrelas.
 
   Ao lado, um título e uma linha ("Bom dia! / Nada pendente por agora."), e "+ Nova nota" no canto. O widget não toca animações contínuas: tem uma entrada da timeline de 20 em 20 minutos, a pose muda e o WidgetKit anima a troca.
+- **A Ampulheta conhece a pessoa [Decidido 28/10/2026]:** de dia, as poses mudam de tema conforme o uso (`Tarefas.temaMascote`, tudo no iPhone):
+  - **Tema de cada lista:** vem do ícone, do emoji ou do nome (maleta é trabalho; avião é viagem; haltere é desporto; pessoa, casa, livro ou coração é vida pessoal).
+  - **Tema do widget:** o das listas com mais atividade nos últimos 7 dias. Uma viagem com pontos abertos ganha sempre.
+  - **Trabalho:** escritório claro com janela e secretária, a Ampulheta ao portátil com café. "Foco no trabalho."
+  - **Vida pessoal:** parque com sol, relva e árvore, a ler um livro. "Tempo para ti."
+  - **Viagem:** cabine de avião, sentada ao lado da janela. "Boa viagem!"
+  - O desporto usa, por agora, o cenário da vida pessoal. Celebrar e dormir são iguais em todos os temas.
 - **Ecrã bloqueado:** um "+" circular e um retangular "Nova nota · 1 ponto expira hoje", e o controlo **Nova nota** (botões do ecrã bloqueado, Centro de Controlo, Action Button). Todos abrem a captura.
 - **Dados:** a app grava `resumo-widget.json` no App Group `group.com.hugo.todo` sempre que algo muda (`Notificacoes.atualizarWidget`). A base de dados também passa para o grupo, para o widget poder concluir. Demonstração: `-ecra widget`.
 - Seguintes: o pequeno (um ponto, anel grande) e o grande.
