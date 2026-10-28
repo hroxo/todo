@@ -19,6 +19,7 @@ struct ToDoApp: App {
 
     @State private var estado = EstadoApp(notificacoes: ToDoApp.notificacoes)
     @State private var calendario = Calendario(contentor: ToDoApp.contentor)
+    @State private var conta = ContaApple()
     @Environment(\.scenePhase) private var fase
     @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
 
@@ -32,6 +33,7 @@ struct ToDoApp: App {
             RaizView()
                 .environment(estado)
                 .environment(calendario)
+                .environment(conta)
                 .preferredColorScheme(Aparencia(rawValue: aparencia)?.esquema)
                 .task {
                     if !Demo.ativo { Self.notificacoes.pedirPermissao() }

@@ -32,6 +32,8 @@ struct DefinicoesView: View {
     var body: some View {
         NavigationStack {
             EcraBaseLista(titulo: "Definições") {
+                SecaoConta()
+
                 Section {
                     ForEach(listas) { lista in
                         Button {
@@ -130,6 +132,23 @@ struct DefinicoesView: View {
                 }
 
                 secaoBackup
+
+                #if DEBUG
+                Section {
+                    Button("Criar estrutura no iCloud") {
+                        do {
+                            try EsquemaICloud.criar()
+                            erroBackup = "Estrutura criada no CloudKit (desenvolvimento). Publica-a em produção no painel do CloudKit."
+                        } catch {
+                            erroBackup = "Não foi possível: \(error.localizedDescription). Precisa da conta paga, do iCloud ligado e de sessão iniciada no iCloud."
+                        }
+                    }
+                } header: {
+                    Text("Programador")
+                } footer: {
+                    Text("Só nas compilações de desenvolvimento. Ver docs/CONTA-DEVELOPER.md.")
+                }
+                #endif
 
                 Section("Avançado") {
                     NavigationLink {

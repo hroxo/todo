@@ -1,0 +1,99 @@
+name: TestFlight
+
+# Assina e envia para o TestFlight com a conta Apple Developer paga (docs/CONTA-DEVELOPER.md).
+# Só corre à mão até os secrets existirem; o CI normal (ci.yml) continua a gerar o .ipa sem
+# assinatura para o iloader.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - name: Confirmar os secrets
+        run: |
+          for nome in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID; do
+            if [ -z "${!nome}" ]; then
+              echo "Falta o secret $nome (docs/CONTA-DEVELOPER.md, passo 3)."
+              exit 1
+            fi
+          done
+
+      - uses: actions/checkout@v4
+
+      - name: Escolher Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -E '/Xcode_[0-9]+(\.[0-9]+)*\.app$' | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - name: Testes do núcleo
+        working-directory: Packages/ToDoCore
+        run: swift test
+
+      - name: Chave da App Store Connect
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/chave"
+          echo "$ASC_KEY_P8" | base64 --decode > "$RUNNER_TEMP/chave/AuthKey.p8"
+
+      - name: Gerar projeto (XcodeGen)
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      # Assinatura automática na nuvem: com a chave (papel Admin), o Xcode cria ou reutiliza o
+      # certificado de distribuição e os perfis da app e do widget.
+      - name: Arquivar
+        run: |
+          xcodebuild archive \
+            -project ToDo.xcodeproj \
+            -scheme ToDo \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/ToDo.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/chave/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}"
+
+      - name: Exportar e enviar para o TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/ToDo.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/chave/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Limpar a chave
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/chave"

@@ -9,6 +9,8 @@ struct RaizView: View {
     @Environment(EstadoApp.self) private var estado
     @Environment(\.modelContext) private var contexto
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
+    /// As boas-vindas (com o login opcional) só aparecem na primeira abertura.
+    @AppStorage("boasVindasVistas") private var boasVindasVistas = false
 
     var body: some View {
         @Bindable var estado = estado
@@ -36,6 +38,13 @@ struct RaizView: View {
             Button("OK", role: .cancel) {}
         }
         .fullScreenCover(isPresented: $estado.demoWidgets) { DemoWidgetsView() }
+        .sheet(isPresented: Binding(
+            get: { !boasVindasVistas && !Demo.ativo },
+            set: { if !$0 { boasVindasVistas = true } }
+        )) {
+            BoasVindasView()
+                .presentationDetents([.large])
+        }
         .onChange(of: estado.separador) { anterior, novo in
             if anterior == .listas, novo != .captura {
                 estado.avisosDispensados = true

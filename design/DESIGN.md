@@ -356,6 +356,17 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Não há backup automático semanal: no iPhone, ia-se com a app; com o iCloud, deixa de ser preciso.
 - As **listas de compras partilhadas ao vivo** precisam da partilha do CloudKit (`CKShare`), que o SwiftData ainda não faz sozinho: é trabalho à parte.
 
+### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
+
+- **Para que serve:** dá um identificador estável e privado, o mesmo em qualquer aparelho, que ligará os dados à pessoa se um dia houver outra forma de lá chegar (web, outra plataforma, um servidor). Não é o login que guarda os dados: isso é o iCloud (7.19).
+- **Primeira abertura:** a Ampulheta a acenar, "Bem-vindo à ToDo", o botão do sistema "Iniciar sessão com a Apple" e "Agora não". Não volta a aparecer.
+- **Definições › Conta (no topo):** com sessão, a inicial, o nome e o email e "Terminar sessão" (não apaga nada); sem sessão, o botão.
+- **Técnica:**
+  - O identificador fica no Keychain; o nome e o email, que a Apple só dá na primeira vez, em UserDefaults.
+  - Ao abrir, a app verifica se o acesso foi revogado nos Ajustes.
+  - Sem a capacidade (Apple ID gratuito), o iOS recusa e a app diz "fica disponível quando a ToDo tiver a conta Apple Developer".
+- **No dia da conta:** juntar `com.apple.developer.applesignin` às entitlements (docs/CONTA-DEVELOPER.md).
+
 ### 7.18 Ecrãs vazios com a Ampulheta [Decidido 28/10/2026]
 
 - Os ecrãs vazios usam a mesma mascote do widget (`EstadoVazio`), que flutua devagar como quem respira (fica parada com "Reduzir movimento"):

@@ -53,6 +53,7 @@ targets:
     #   com.apple.developer.icloud-container-identifiers: [iCloud.com.hugo.todo]
     #   com.apple.developer.icloud-services: [CloudKit]
     #   aps-environment: production
+    #   com.apple.developer.applesignin: [Default]   (iniciar sessão com a Apple, DESIGN.md 7.20)
     # e, nas propriedades do Info.plist acima, UIBackgroundModes: [remote-notification].
     # O esquema (EsquemaV6) e o contentor (.automatic) já estão prontos.
     entitlements:

@@ -7,6 +7,8 @@ import ToDoCore
 /// sincronização com o iCloud (SwiftData com CloudKit), quando a app tiver a conta paga; este
 /// ficheiro serve para uma cópia à mão e para mudar de instalação sem perder nada.
 enum Backups {
+    /// O contentor CloudKit da app (o mesmo das entitlements, no dia da conta paga).
+    static let contentorICloud = "iCloud.com.hugo.todo"
     private static let chaveUltimoExportado = "backupExportadoEm"
 
     static var ultimoExportado: Date? {
