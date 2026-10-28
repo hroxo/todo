@@ -177,16 +177,9 @@ struct SecaoCalendario: View {
                     TituloSecao(texto: "Hoje no calendário")
                     Spacer()
                     if !calendario.eventos.isEmpty {
-                        NavigationLink(value: RotaDia()) {
-                            HStack(spacing: Espaco.minimo) {
-                                Text(calendario.eventos.count == 1 ? "1 evento" : "\(calendario.eventos.count) eventos")
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.bold))
-                            }
+                        Text(calendario.eventos.count == 1 ? "1 evento" : "\(calendario.eventos.count) eventos")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color.accentColor)
-                        }
-                        .accessibilityHint("Mostra o dia numa linha do tempo")
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -317,24 +310,36 @@ struct SecaoCalendario: View {
         }
     }
 
-    private var acoes: AcoesEvento {
-        AcoesEvento(calendario: calendario, listas: listas, deEventos: deEventos, ultimaListaId: ultimaListaId)
+    private func espaco(de evento: EventoHoje) -> Lista? {
+        guard let id = calendario.espaco(de: evento.calendarioId) else { return nil }
+        return listas.first { $0.id == id }
     }
 
-    private func espaco(de evento: EventoHoje) -> Lista? { acoes.espaco(de: evento) }
-    private func destino(de evento: EventoHoje) -> Lista? { acoes.destino(de: evento) }
-    private func existente(_ evento: EventoHoje) -> Item? { acoes.existente(evento) }
+    /// Onde o "+" cria o ponto: o espaço do evento ou, sem espaço, a última lista usada.
+    private func destino(de evento: EventoHoje) -> Lista? {
+        espaco(de: evento) ?? listas.first { $0.id.uuidString == ultimaListaId } ?? listas.first
+    }
+
+    private func existente(_ evento: EventoHoje) -> Item? {
+        Tarefas.pontoDeEvento(em: deEventos, id: evento.eventoId, inicio: evento.inicio)
+    }
 
     private func criar(_ evento: EventoHoje, em lista: Lista) {
-        switch AcoesEvento.criar(evento, em: lista, contexto: contexto) {
-        case .jaExiste(let existente):
+        let tarefas = Tarefas(contexto: contexto)
+        // Nunca duas vezes o mesmo evento (Melhoria 6.4).
+        if let existente = try? tarefas.pontoDeEvento(id: evento.eventoId, inicio: evento.inicio) {
             jaAdicionado = existente
             return
-        case .falhou:
-            return
-        case .criado:
-            break
         }
+        guard (try? tarefas.criarPontoDeEvento(
+            titulo: evento.titulo,
+            inicio: evento.inicio,
+            fim: evento.fim,
+            diaInteiro: evento.diaInteiro,
+            detalhe: evento.detalhe,
+            eventoId: evento.eventoId,
+            em: lista
+        )) != nil else { return }
         ultimaListaId = lista.id.uuidString
         criados += 1
         estado.reagendarAvisos()
@@ -354,52 +359,6 @@ struct SecaoCalendario: View {
             try? await Task.sleep(for: .milliseconds(400))
             estado.caminho.append(item)
         }
-    }
-}
-
-/// O que a secção do Início e o ecrã do dia fazem com um evento: saber o espaço, onde o "+"
-/// cria o ponto, se já foi adicionado, e criá-lo.
-@MainActor
-struct AcoesEvento {
-    let calendario: Calendario
-    let listas: [Lista]
-    let deEventos: [Item]
-    let ultimaListaId: String
-
-    enum Resultado {
-        case criado, jaExiste(Item), falhou
-    }
-
-    func espaco(de evento: EventoHoje) -> Lista? {
-        guard let id = calendario.espaco(de: evento.calendarioId) else { return nil }
-        return listas.first { $0.id == id }
-    }
-
-    /// Onde o "+" cria o ponto: o espaço do evento ou, sem espaço, a última lista usada.
-    func destino(de evento: EventoHoje) -> Lista? {
-        espaco(de: evento) ?? listas.first { $0.id.uuidString == ultimaListaId } ?? listas.first
-    }
-
-    func existente(_ evento: EventoHoje) -> Item? {
-        Tarefas.pontoDeEvento(em: deEventos, id: evento.eventoId, inicio: evento.inicio)
-    }
-
-    static func criar(_ evento: EventoHoje, em lista: Lista, contexto: ModelContext) -> Resultado {
-        let tarefas = Tarefas(contexto: contexto)
-        // Nunca duas vezes o mesmo evento (Melhoria 6.4).
-        if let existente = try? tarefas.pontoDeEvento(id: evento.eventoId, inicio: evento.inicio) {
-            return .jaExiste(existente)
-        }
-        let criado = try? tarefas.criarPontoDeEvento(
-            titulo: evento.titulo,
-            inicio: evento.inicio,
-            fim: evento.fim,
-            diaInteiro: evento.diaInteiro,
-            detalhe: evento.detalhe,
-            eventoId: evento.eventoId,
-            em: lista
-        )
-        return criado == nil ? .falhou : .criado
     }
 }
 
