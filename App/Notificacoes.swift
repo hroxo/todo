@@ -5,14 +5,20 @@ import UIKit
 import UserNotifications
 
 /// Notificações locais (especificação 6): um aviso 24 horas antes de cada item expirar, com
-/// as ações Manter +5, Manter +15 e Concluir, que funcionam sem abrir a app.
+/// as ações Manter +5, Manter +15 e Concluir, e outro antes de uma lista vazia desaparecer,
+/// com Manter mais 5 dias e Tornar permanente (DESIGN.md 7.17). Funcionam sem abrir a app.
 final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
     static let categoria = "EXPIRA"
+    static let categoriaLista = "LISTA_VAZIA"
+    /// Prefixo dos identificadores dos avisos de listas; os dos itens são só o id do item.
+    private static let prefixoLista = "lista-"
 
     private enum Acao: String {
         case manterCurto = "MANTER_CURTO"
         case manterLongo = "MANTER_LONGO"
         case concluir = "CONCLUIR"
+        case manterLista = "MANTER_LISTA"
+        case permanente = "PERMANENTE"
     }
 
     private let contentor: ModelContainer
@@ -47,9 +53,15 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
     func reagendar() {
         registarCategoria()
         let definicoes = Definicoes.carregar()
-        let avisos = (try? Tarefas(contexto: ModelContext(contentor)).planoAvisos()) ?? []
+        let tarefas = Tarefas(contexto: ModelContext(contentor))
+        let avisosListas = (try? tarefas.planoAvisosListas()) ?? []
+        // As listas primeiro: são poucas (no máximo 8) e o iOS só guarda 64 avisos.
+        let avisos = Array(((try? tarefas.planoAvisos()) ?? []).prefix(Tarefas.maxAvisos - avisosListas.count))
         let centro = UNUserNotificationCenter.current()
         centro.removeAllPendingNotificationRequests()
+        for aviso in avisosListas {
+            agendar(aviso)
+        }
         let inteligente = definicoes.inteligenciaAtiva
         for aviso in avisos {
             agendar(aviso, corpo: (inteligente ? escritos[Self.chave(aviso)] : nil) ?? TextoAviso.corpo(aviso))
@@ -91,6 +103,21 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().add(pedido)
     }
 
+    private func agendar(_ aviso: AvisoLista) {
+        let conteudo = UNMutableNotificationContent()
+        conteudo.title = TextoAviso.tituloLista(aviso)
+        conteudo.body = TextoAviso.corpoLista(aviso)
+        conteudo.sound = .default
+        conteudo.categoryIdentifier = Self.categoriaLista
+        let quando = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: aviso.data)
+        let pedido = UNNotificationRequest(
+            identifier: Self.prefixoLista + aviso.listaId.uuidString,
+            content: conteudo,
+            trigger: UNCalendarNotificationTrigger(dateMatching: quando, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(pedido)
+    }
+
     /// Muda quando muda alguma coisa que o texto diz.
     private static func chave(_ aviso: Aviso) -> String {
         "\(aviso.itemId)|\(aviso.data.timeIntervalSince1970)|\(aviso.expiraEm.timeIntervalSince1970)|\(aviso.subtopicosPorFazer)|\(aviso.lista ?? "")"
@@ -107,7 +134,15 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
             ],
             intentIdentifiers: []
         )
-        UNUserNotificationCenter.current().setNotificationCategories([categoria])
+        let lista = UNNotificationCategory(
+            identifier: Self.categoriaLista,
+            actions: [
+                UNNotificationAction(identifier: Acao.manterLista.rawValue, title: "Manter mais \(definicoes.diasListaVazia) dias"),
+                UNNotificationAction(identifier: Acao.permanente.rawValue, title: "Tornar permanente"),
+            ],
+            intentIdentifiers: []
+        )
+        UNUserNotificationCenter.current().setNotificationCategories([categoria, lista])
     }
 
     // MARK: - UNUserNotificationCenterDelegate
@@ -118,10 +153,15 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let acao = Acao(rawValue: response.actionIdentifier)
-        let id = UUID(uuidString: response.notification.request.identifier)
+        let identificador = response.notification.request.identifier
         DispatchQueue.main.async {
-            if let acao, let id {
-                self.tratar(acao, itemId: id)
+            if let acao {
+                if identificador.hasPrefix(Self.prefixoLista),
+                   let id = UUID(uuidString: String(identificador.dropFirst(Self.prefixoLista.count))) {
+                    self.tratar(acao, listaId: id)
+                } else if let id = UUID(uuidString: identificador) {
+                    self.tratar(acao, itemId: id)
+                }
             }
             completionHandler()
         }
@@ -145,6 +185,29 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         case .manterCurto: tarefas.manter(item, longo: false)
         case .manterLongo: tarefas.manter(item, longo: true)
         case .concluir: tarefas.concluir(item)
+        case .manterLista, .permanente: return
+        }
+        try? contexto.save()
+        reagendar()
+    }
+
+    /// "Tornar permanente" com as 4 já ocupadas mantém a lista mais 5 dias, em vez de não
+    /// fazer nada: o pedido era que não desaparecesse.
+    private func tratar(_ acao: Acao, listaId: UUID) {
+        let contexto = ModelContext(contentor)
+        var pedido = FetchDescriptor<Lista>(predicate: #Predicate { $0.id == listaId })
+        pedido.fetchLimit = 1
+        guard let lista = try? contexto.fetch(pedido).first else { return }
+        let tarefas = Tarefas(contexto: contexto)
+        switch acao {
+        case .permanente:
+            if (try? tarefas.definirPermanente(lista, true)) == nil {
+                tarefas.manterLista(lista)
+            }
+        case .manterLista:
+            tarefas.manterLista(lista)
+        case .manterCurto, .manterLongo, .concluir:
+            return
         }
         try? contexto.save()
         reagendar()

@@ -295,8 +295,9 @@ public enum EsquemaV4: VersionedSchema {
     }
 }
 
-/// V5 (listas de compras partilhadas, DESIGN.md 7.15): o tipo da lista e o identificador da
-/// partilha; nos itens, quando mudaram (para juntar cópias) e a lápide dos apagados.
+/// V5 (listas de compras partilhadas, DESIGN.md 7.15, e listas que se apagam sozinhas, 7.17):
+/// o tipo da lista, o identificador da partilha, se é permanente e desde quando está vazia;
+/// nos itens, quando mudaram (para juntar cópias) e a lápide dos apagados.
 public enum EsquemaV5: VersionedSchema {
     public static let versionIdentifier = Schema.Version(5, 0, 0)
     public static var models: [any PersistentModel.Type] { [Lista.self, Item.self, Foto.self] }
@@ -311,9 +312,26 @@ public enum PlanoMigracao: SchemaMigrationPlan {
             .lightweight(fromVersion: EsquemaV1.self, toVersion: EsquemaV2.self),
             .lightweight(fromVersion: EsquemaV2.self, toVersion: EsquemaV3.self),
             .lightweight(fromVersion: EsquemaV3.self, toVersion: EsquemaV4.self),
-            .lightweight(fromVersion: EsquemaV4.self, toVersion: EsquemaV5.self),
+            migrarV4ParaV5,
         ]
     }
+}
+
+extension PlanoMigracao {
+    /// As listas que já existiam não podem começar a desaparecer: as 4 primeiras do Início
+    /// ficam permanentes (o máximo); as outras seguem a regra dos 5 dias (DESIGN.md 7.17).
+    static let migrarV4ParaV5 = MigrationStage.custom(
+        fromVersion: EsquemaV4.self,
+        toVersion: EsquemaV5.self,
+        willMigrate: nil,
+        didMigrate: { contexto in
+            let listas = try contexto.fetch(FetchDescriptor<Lista>(sortBy: [SortDescriptor(\.ordem)]))
+            for lista in listas.prefix(Tarefas.maxPermanentes) {
+                lista.permanente = true
+            }
+            try contexto.save()
+        }
+    )
 }
 
 public enum BaseDados {

@@ -90,6 +90,14 @@ enum Demo {
         _ = item("Renovar inscrição", ginasio, horas: 20)
         _ = item("Reservar hotel em Lisboa", viagem, horas: 6)
 
+        // Permanentes (no máximo 4) e uma lista vazia há 2 dias, que sai daqui a 3 (DESIGN.md 7.17).
+        for lista in [trabalho, pessoal, ideias, casa] {
+            try? t.definirPermanente(lista, true)
+        }
+        if let leituras = try? t.criarLista(nome: "Leituras", cor: .indigo, icone: "book.fill") {
+            leituras.vaziaDesde = Date.now.addingTimeInterval(-2 * 86_400)
+        }
+
         // Compras: lojas com artigos, alguns já no carrinho (DESIGN.md 7.15).
         for (loja, artigos) in [
             ("Continente", [("Leite", true), ("Pão", true), ("Peixe", false), ("Fruta", false), ("Café", false)]),

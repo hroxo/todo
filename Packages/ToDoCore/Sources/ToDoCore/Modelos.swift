@@ -73,6 +73,11 @@ public final class Lista {
     public var tipoRaw: String = TipoLista.normal.rawValue
     /// Igual nas cópias de uma lista partilhada, para as juntar.
     public var partilhaId: UUID?
+    /// Uma lista permanente nunca desaparece; as outras saem do Início ao fim de 5 dias sem
+    /// pontos abertos (DESIGN.md 7.17). No máximo 4.
+    public var permanente = false
+    /// Desde quando a lista está sem pontos abertos; nil quando tem algum.
+    public var vaziaDesde: Date?
 
     /// Só os itens principais; os subtópicos pertencem ao item pai.
     @Relationship(deleteRule: .cascade, inverse: \Item.lista)
@@ -98,6 +103,9 @@ public final class Lista {
     }
 
     public var ehCompras: Bool { tipo == .compras }
+
+    /// Há algum ponto ativo na lista.
+    public var temPontosAbertos: Bool { !itensAtivos.isEmpty }
 
     public var itensAtivos: [Item] {
         itens.filter { $0.estado == .ativo && $0.apagadoEm == nil }.sorted { $0.ordem < $1.ordem }

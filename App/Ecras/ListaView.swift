@@ -76,7 +76,7 @@ struct ListaView: View {
                 ContentUnavailableView(
                     "Nada por fazer",
                     systemImage: "checkmark.circle",
-                    description: Text("Toca em + para escrever uma nota nesta lista.")
+                    description: Text(descricaoVazia)
                 )
             }
         }
@@ -93,6 +93,7 @@ struct ListaView: View {
                     } label: {
                         Label("Personalizar lista", systemImage: "paintbrush")
                     }
+                    BotaoPermanente(lista: lista)
                     Button {
                         PartilhaCSV.partilhar(listas: listas, lista: lista)
                     } label: {
@@ -145,6 +146,14 @@ struct ListaView: View {
         } message: {
             Text(mensagemApagar)
         }
+    }
+
+    /// Uma lista vazia e não permanente desaparece ao fim de 5 dias (DESIGN.md 7.17).
+    private var descricaoVazia: String {
+        guard let fim = tarefas.quandoDesaparece(lista) else {
+            return "Toca em + para escrever uma nota nesta lista."
+        }
+        return "\(SaidaLista.texto(fim)) do Início, se continuar vazia. Toca em + para escrever uma nota, ou em … › Tornar permanente."
     }
 
     private func cabecalho(ativos: Int, hoje: Int) -> some View {

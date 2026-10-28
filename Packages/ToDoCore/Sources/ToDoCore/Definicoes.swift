@@ -10,6 +10,8 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public var horaNotificacao = 9
     public var minutoNotificacao = 0
     public var avisosAtivos = true
+    /// Dias sem pontos abertos até uma lista não permanente desaparecer (DESIGN.md 7.17).
+    public var diasListaVazia = 5
     /// Textos e sugestões escritos pelo modelo da Apple no iPhone (DESIGN.md 7.16).
     public var inteligenciaAtiva = true
 
@@ -27,6 +29,7 @@ public struct Definicoes: Codable, Equatable, Sendable {
         horaNotificacao = try c.decodeIfPresent(Int.self, forKey: .horaNotificacao) ?? base.horaNotificacao
         minutoNotificacao = try c.decodeIfPresent(Int.self, forKey: .minutoNotificacao) ?? base.minutoNotificacao
         avisosAtivos = try c.decodeIfPresent(Bool.self, forKey: .avisosAtivos) ?? base.avisosAtivos
+        diasListaVazia = try c.decodeIfPresent(Int.self, forKey: .diasListaVazia) ?? base.diasListaVazia
         inteligenciaAtiva = try c.decodeIfPresent(Bool.self, forKey: .inteligenciaAtiva) ?? base.inteligenciaAtiva
     }
 

@@ -8,15 +8,23 @@ struct CartaoLista: View {
     /// 148 pt; 128 pt quando os espaços estão em páginas.
     var altura: CGFloat = 148
 
+    @Environment(\.modelContext) private var contexto
+
     var body: some View {
         let cor = lista.cor
         // Nas compras conta o que falta comprar e o anel enche com o carrinho (DESIGN.md 7.15).
         let artigos = lista.itensAtivos.flatMap(\.subtopicosOrdenados)
         let porComprar = artigos.filter { $0.estado != .concluido }.count
         let ativos = lista.ehCompras ? porComprar : lista.itensAtivos.count
-        let fracao = lista.ehCompras
-            ? (artigos.isEmpty ? 0 : Double(artigos.count - porComprar) / Double(artigos.count))
-            : lista.frescura(agora: agora)
+        // Uma lista vazia que vai desaparecer: o anel esvazia nos 5 dias (DESIGN.md 7.17).
+        let tarefas = Tarefas(contexto: contexto)
+        let saida = tarefas.quandoDesaparece(lista)
+        let fracao = fracaoAnel(saida: saida, artigos: artigos.count, porComprar: porComprar)
+        // Vazia e a sair: o número grande passa a ser os dias que faltam.
+        let diasParaSair = saida.map { max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: agora), to: Calendar.current.startOfDay(for: $0)).day ?? 0) }
+        let numero = diasParaSair ?? ativos
+        let legenda = diasParaSair.map { $0 == 0 ? "sai hoje" : ($0 == 1 ? "dia para sair" : "dias para sair") }
+            ?? (lista.ehCompras ? "por comprar" : (ativos == 1 ? "ativo" : "ativos"))
         let hoje = lista.expiramHoje(agora: agora).count
         let aExpirar = hoje > 0
 
@@ -39,11 +47,11 @@ struct CartaoLista: View {
                 .lineLimit(1)
                 .opacity(0.9)
             HStack(alignment: .firstTextBaseline, spacing: Espaco.fino) {
-                Text("\(ativos)")
+                Text("\(numero)")
                     .font(.system(size: altura > 140 ? 40 : 34, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                Text(lista.ehCompras ? "por comprar" : (ativos == 1 ? "ativo" : "ativos"))
+                Text(legenda)
                     .font(.footnote.weight(.semibold))
                     .opacity(0.8)
             }
@@ -62,8 +70,19 @@ struct CartaoLista: View {
         .accessibilityLabel(
             "\(lista.nome), " + (lista.ehCompras ? "\(ativos) por comprar" : (ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos"))
                 + (aExpirar ? ", \(hoje == 1 ? "1 expira" : "\(hoje) expiram") hoje" : "")
+                + (saida.map { ", vazia, \(SaidaLista.texto($0, agora: agora).lowercased())" } ?? "")
         )
         .accessibilityAddTraits(.isButton)
+    }
+
+    private func fracaoAnel(saida: Date?, artigos: Int, porComprar: Int) -> Double {
+        if let saida, let desde = lista.vaziaDesde {
+            return max(0, min(1, saida.timeIntervalSince(agora) / max(1, saida.timeIntervalSince(desde))))
+        }
+        if lista.ehCompras {
+            return artigos == 0 ? 0 : Double(artigos - porComprar) / Double(artigos)
+        }
+        return lista.frescura(agora: agora)
     }
 
     /// Quantos itens expiram hoje, numa ficha branca com o laranja de "a expirar".

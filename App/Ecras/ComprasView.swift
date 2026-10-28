@@ -71,6 +71,7 @@ struct ComprasView: View {
                     } label: {
                         Label("Personalizar lista", systemImage: "paintbrush")
                     }
+                    BotaoPermanente(lista: lista)
                     Button(role: .destructive) {
                         apagarLista = true
                     } label: {

@@ -9,6 +9,8 @@ public enum ErroTarefas: Error, Equatable {
     case limiteFotos
     /// No máximo `Tarefas.maxListas` espaços (especificação 4.4).
     case limiteListas
+    /// No máximo `Tarefas.maxPermanentes` listas permanentes (DESIGN.md 7.17).
+    case limitePermanentes
 }
 
 /// Notificação a agendar para um item que vai expirar (especificação 6).
@@ -21,6 +23,15 @@ public struct Aviso: Equatable, Sendable {
     public var expiraEm: Date
     public var subtopicosPorFazer = 0
     public var ultimaAcaoEm: Date
+}
+
+/// Aviso de que uma lista sem pontos abertos vai desaparecer (DESIGN.md 7.17).
+public struct AvisoLista: Equatable, Sendable {
+    public let listaId: UUID
+    public let nome: String
+    public let data: Date
+    public let desapareceEm: Date
+    public let vaziaDesde: Date
 }
 
 /// Estado de um item antes de ser concluído, para o poder anular.
@@ -40,6 +51,8 @@ public final class Tarefas {
     public static let maxFotos = 4
     /// Máximo de espaços (listas); com mais de 4, o Início mostra páginas com setas.
     public static let maxListas = 8
+    /// Listas que nunca desaparecem, mesmo vazias (DESIGN.md 7.17).
+    public static let maxPermanentes = 4
     /// A descrição é curta: 2 a 3 linhas no ecrã.
     public static let maxDescricao = 200
     /// O iOS guarda no máximo 64 notificações pendentes.
@@ -73,7 +86,9 @@ public final class Tarefas {
     public func criarListasIniciaisSeVazio() throws -> Bool {
         guard try contexto.fetchCount(FetchDescriptor<Lista>()) == 0 else { return false }
         for (ordem, inicial) in Self.listasIniciais.enumerated() {
-            contexto.insert(Lista(nome: inicial.nome, cor: inicial.cor, ordem: ordem, icone: inicial.icone))
+            let lista = Lista(nome: inicial.nome, cor: inicial.cor, ordem: ordem, icone: inicial.icone)
+            lista.permanente = true
+            contexto.insert(lista)
         }
         return true
     }
@@ -101,6 +116,35 @@ public final class Tarefas {
         lista.cor = cor
         lista.icone = icone
         lista.emoji = emojiLimpo(emoji)
+    }
+
+    // MARK: - Listas que desaparecem (DESIGN.md 7.17)
+
+    public func definirPermanente(_ lista: Lista, _ permanente: Bool) throws {
+        guard lista.permanente != permanente else { return }
+        if permanente {
+            guard try listas().filter(\.permanente).count < Self.maxPermanentes else {
+                throw ErroTarefas.limitePermanentes
+            }
+            lista.vaziaDesde = nil
+        }
+        lista.permanente = permanente
+    }
+
+    public func podeSerPermanente() throws -> Bool {
+        try listas().filter(\.permanente).count < Self.maxPermanentes
+    }
+
+    /// "Manter mais 5 dias" no aviso: a contagem recomeça agora.
+    public func manterLista(_ lista: Lista) {
+        guard !lista.permanente, !lista.temPontosAbertos else { return }
+        lista.vaziaDesde = relogio.agora
+    }
+
+    /// Quando uma lista vazia e não permanente sai do Início, ou nil.
+    public func quandoDesaparece(_ lista: Lista) -> Date? {
+        guard !lista.permanente, let desde = lista.vaziaDesde else { return nil }
+        return daquiA(definicoes.diasListaVazia, desde: desde)
     }
 
     /// Grava a ordem pela posição no array recebido.
@@ -138,6 +182,7 @@ public final class Tarefas {
         contexto.insert(item)
         item.lista = lista
         item.alteradoEm = agora
+        lista.vaziaDesde = nil
         // Nas listas de compras nada expira (DESIGN.md 7.15).
         if !lista.ehCompras {
             item.expiraEm = daquiA(definicoes.diasExpiracao, desde: agora)
@@ -226,6 +271,7 @@ public final class Tarefas {
         let agora = relogio.agora
         item.alteradoEm = agora
         alvo.ultimaAcaoEm = agora
+        alvo.lista?.vaziaDesde = nil
         if alvo.lista?.ehCompras == true {
             alvo.expiraEm = nil
         } else if alvo.estado == .ativo && !alvo.fixado {
@@ -378,7 +424,28 @@ public final class Tarefas {
                 apagados += 1
             }
         }
+        try avaliarListasVazias()
         return (expirados, apagados)
+    }
+
+    /// Uma lista não permanente sem pontos abertos começa a contar; ao fim de 5 dias
+    /// desaparece. Espera pelos itens em Expirados, que ainda podem voltar para ela (nada se
+    /// perde por engano).
+    private func avaliarListasVazias() throws {
+        let agora = relogio.agora
+        for lista in try listas() where !lista.permanente {
+            if lista.temPontosAbertos {
+                lista.vaziaDesde = nil
+                continue
+            }
+            guard let fim = quandoDesaparece(lista) else {
+                lista.vaziaDesde = agora
+                continue
+            }
+            if agora >= fim && !lista.itens.contains(where: { $0.estado == .expirado }) {
+                apagar(lista)
+            }
+        }
     }
 
     /// Volta à lista original, ativo, com um prazo novo de 3 dias.
@@ -425,6 +492,18 @@ public final class Tarefas {
             )
         }
         return Array(avisos.sorted { $0.data < $1.data }.prefix(Self.maxAvisos))
+    }
+
+    /// Um aviso 24 horas antes de cada lista vazia desaparecer, com a mesma regra da noite.
+    public func planoAvisosListas() throws -> [AvisoLista] {
+        guard definicoes.avisosAtivos else { return [] }
+        let agora = relogio.agora
+        return try listas().compactMap { lista in
+            guard let fim = quandoDesaparece(lista), let desde = lista.vaziaDesde else { return nil }
+            let data = horaDoAviso(paraExpiracaoEm: fim)
+            guard data > agora, data < fim else { return nil }
+            return AvisoLista(listaId: lista.id, nome: lista.nome, data: data, desapareceEm: fim, vaziaDesde: desde)
+        }
     }
 
     func horaDoAviso(paraExpiracaoEm limite: Date) -> Date {

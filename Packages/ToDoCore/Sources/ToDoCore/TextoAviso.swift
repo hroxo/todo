@@ -29,6 +29,24 @@ public enum TextoAviso {
         }
     }
 
+    /// "«Ideias» vai desaparecer" (DESIGN.md 7.17).
+    public static func tituloLista(_ aviso: AvisoLista) -> String {
+        "«\(aviso.nome)» vai desaparecer"
+    }
+
+    /// "Sem pontos abertos há 4 dias. Sai amanhã às 09:00, a não ser que a mantenhas."
+    public static func corpoLista(_ aviso: AvisoLista, calendario: Calendar = .current) -> String {
+        let dias = calendario.dateComponents(
+            [.day],
+            from: calendario.startOfDay(for: aviso.vaziaDesde),
+            to: calendario.startOfDay(for: aviso.data)
+        ).day ?? 0
+        let ha = dias <= 0 ? "desde hoje" : (dias == 1 ? "há 1 dia" : "há \(dias) dias")
+        let hora = Formatos.hora(aviso.desapareceEm, calendario: calendario)
+        let mesmoDia = calendario.isDate(aviso.desapareceEm, inSameDayAs: aviso.data)
+        return "Sem pontos abertos \(ha). Sai \(mesmoDia ? "hoje" : "amanhã") às \(hora), a não ser que a mantenhas."
+    }
+
     /// Dias entre a última ação e a hora do aviso.
     public static func diasParado(_ aviso: Aviso, calendario: Calendar = .current) -> Int? {
         calendario.dateComponents(

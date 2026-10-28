@@ -132,7 +132,7 @@ final class PartilhaTests: BaseTestes {
 }
 
 final class MigracaoV4Tests: XCTestCase {
-    func testMigracaoV4ParaV5MantemTudoEAsListasFicamNormais() throws {
+    func testMigracaoV4ParaV5MantemTudoEMarcaQuatroPermanentes() throws {
         let pasta = FileManager.default.temporaryDirectory.appendingPathComponent("migracao-v4-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: pasta, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: pasta) }
@@ -145,6 +145,9 @@ final class MigracaoV4Tests: XCTestCase {
             let contexto = ModelContext(contentor)
             let lista = EsquemaV4.Lista(nome: "Trabalho", corRaw: "azul", ordem: 0)
             contexto.insert(lista)
+            for ordem in 1...5 {
+                contexto.insert(EsquemaV4.Lista(nome: "Lista \(ordem)", corRaw: "verde", ordem: ordem))
+            }
             let item = EsquemaV4.Item(titulo: "Reunião", criadoEm: criado, ordem: 0)
             item.nota = "Levar o portátil"
             item.eventoId = "evento-1"
@@ -155,8 +158,11 @@ final class MigracaoV4Tests: XCTestCase {
         }
 
         let contexto = ModelContext(try BaseDados.contentor(url: url))
-        let lista = try XCTUnwrap(contexto.fetch(FetchDescriptor<Lista>()).first)
+        let listas = try contexto.fetch(FetchDescriptor<Lista>(sortBy: [SortDescriptor(\.ordem)]))
+        let lista = try XCTUnwrap(listas.first)
         let item = try XCTUnwrap(lista.itens.first)
+        // As 4 primeiras ficam permanentes, para nenhuma lista antiga desaparecer de surpresa.
+        XCTAssertEqual(listas.map(\.permanente), [true, true, true, true, false, false])
         XCTAssertEqual(lista.tipo, .normal)
         XCTAssertNil(lista.partilhaId)
         XCTAssertEqual(item.titulo, "Reunião")

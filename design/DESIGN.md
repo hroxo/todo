@@ -21,6 +21,7 @@ Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJD
 3. **Cor com significado.** Cada lista tem uma cor e um ícone. A cor pinta o cartão da lista, o fundo dos ecrãs dessa lista e o anel de cada item. [Decidido]
 4. **O anel conta o tempo.** Cada item mostra um anel que se esvazia nos 3 dias. No último dia fica laranja. É o elemento-assinatura da app. [Decidido]
 5. **Nada sai do ecrã.** Todo o conteúdo cabe na largura e altura disponíveis, respeita as safe areas e nunca fica por baixo da barra de separadores sem poder ser percorrido. [Decidido]
+7. **Carinho em cada gesto.** A app distingue-se pela beleza e pelo cuidado das animações: o botão Manter (física de água, 7.5) é a referência. Cada ecrã e cada widget devem ter esse cuidado: molas em vez de durações fixas, transições que mostram de onde as coisas vêm e para onde vão, números que rolam, vibração nos momentos certos, e sempre uma versão calma com "Reduzir movimento". [Decidido 28/10/2026]
 6. **Claro, vivo e minimalista.** Tema claro como referência, com cores saturadas nas listas e superfícies brancas. O modo escuro existe, derivado automaticamente das cores do catálogo (secção 3). [Decidido: claro como referência · Proposta: escuro derivado, sem desenho próprio na v1]
    A app segue o tema do iPhone por defeito (Definições › Aparência = Sistema). O dono usa o escuro: fundos e ícone da app têm de ficar escuros nesse caso (o ícone escuro depende de Ecrã principal › Personalizar › Escuro ou Automático). [Decidido 21/10/2026]
 
@@ -298,6 +299,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.14 Widgets [Decidido 27/10/2026: entram no âmbito · Proposta: tamanhos]
 
+- **Visão [Decidido 28/10/2026]:** o widget é a porta de entrada da app, mais do que a própria app. Tem de ser tão bonito que apeteça pô-lo no ecrã principal, e **inteligente**: mostra o que importa agora, escolhido pelo modelo do iPhone (7.16) a partir do que a pessoa tem na app. O mesmo carinho de animação (princípio 7), dentro do que o WidgetKit permite: transições de conteúdo, números que rolam e o anel a animar entre estados.
+
 - Estilo: **simples, claros, limpos e informativos.** Pouca informação, boa hierarquia de texto (título, contagem grande e arredondada, uma linha de prazo), sem decoração nem vidro. A cor da lista e o anel (7.3) são os únicos elementos gráficos.
 - Pequeno: os próximos itens a expirar, com anel. Médio: uma lista escolhida (configurável), com 3 a 4 itens e a contagem. Ecrã bloqueado: circular (anel + itens que expiram hoje) e retangular (próximo item).
 - Botões interativos: Concluir e Manter +5.
@@ -310,6 +313,16 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - A foto do Apple ID não está acessível às apps. A cara é uma foto escolhida na app (PhotosPicker) ou as iniciais na cor da pessoa.
 - A captura numa lista de compras escolhe a loja e aceita vários artigos seguidos.
 - No menu "…": "Partilhar por AirDrop" envia um ficheiro `.todolista`. Abri-lo no outro iPhone cria a lista ou junta as duas cópias (por id, ganha a alteração mais recente). O tempo real vem depois, com o serviço escolhido.
+
+### 7.17 Listas que desaparecem e listas permanentes [Decidido 28/10/2026 · Proposta: detalhes]
+
+- No máximo 8 listas. Uma lista **sem pontos abertos** durante 5 dias (`Definicoes.diasListaVazia`) desaparece do Início, com o que lá estiver concluído.
+- **Aviso 24 h antes**, com a mesma regra da noite: título "«Ideias» vai desaparecer", corpo "Sem pontos abertos há 4 dias. Sai amanhã às 15:30, a não ser que a mantenhas." Ações:
+  - **Manter mais 5 dias**: a contagem recomeça;
+  - **Tornar permanente**: com as 4 ocupadas, mantém mais 5 dias.
+- **Permanentes:** até 4, no menu "…" da lista ("Tornar permanente", símbolo `infinity`). Nunca desaparecem.
+- **No cartão do Início**, numa lista vazia que vai sair, o número grande passa a ser os dias que faltam ("3 dias para sair") e o anel esvazia ao longo dos 5 dias. Com a lista aberta e vazia, o ecrã diz quando sai e como a guardar.
+- **[Proposta]** Itens em Expirados seguram a lista até serem recuperados ou apagados, porque nada se perde por engano. Trabalho e Pessoal nascem permanentes. Ao atualizar a app, as 4 primeiras listas existentes ficam permanentes.
 
 ### 7.16 Inteligência no iPhone [Decidido 28/10/2026 · Proposta: forma]
 
