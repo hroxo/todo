@@ -422,7 +422,15 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - O gesto de arrastar do Manter tem alternativa: `accessibilityActions` com "Manter mais 5 dias" e "Manter mais 15 dias".
 - A cor nunca é o único sinal: o último dia também mostra o texto "Hoje".
 
-## 10. Ícone da app [Decidido: proposta B2 com efeito vidro]
+## 10. Ícone da app [Decidido 28/10/2026: proposta B, Anel]
+
+- **Atual:** a Ampulheta (sem braços) dentro do anel do prazo, três quartos cheio. Junta as duas assinaturas da app.
+  - **Claro:** o gradiente roxo (#A050E0) → azul (#0A60EE) de sempre, com um brilho no canto.
+  - **Escuro:** noite índigo com estrelas.
+  - **Tingido:** cinzentos sobre preto.
+- Gerado a partir do mesmo código da mascote (`Widgets/Mascote.swift`, `Ampulheta(semBracos:)`), com um script SwiftUI `ImageRenderer` a 1024 px. Para mudar o desenho, muda-se a mascote e volta-se a gerar.
+- **Ícone anterior (B2, substituído):**
+
 
 - Conceito: três linhas de lista que encolhem e desvanecem; a primeira está feita. É a "lista que se limpa sozinha".
 - Fundo em gradiente diagonal roxo (#A050E0) → azul (#0A60EE), com um brilho suave no canto superior esquerdo. Elementos em vidro branco translúcido, com reflexo no contorno.

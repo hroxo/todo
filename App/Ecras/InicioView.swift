@@ -117,7 +117,9 @@ struct InicioView: View {
 
     private func celulas() -> [Celula] {
         var resultado = listas.map { Celula.lista($0) }
-        if listas.count < Tarefas.maxListas {
+        // Com 4 espaços a vista fica cheia: o "Nova lista" abriria uma terceira fila. Aí
+        // cria-se em Definições › Listas; com mais de 4, volta na última página.
+        if listas.count < Tarefas.maxListas && listas.count != Espacos.porPagina {
             resultado.append(.nova)
         }
         return resultado

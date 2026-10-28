@@ -87,6 +87,8 @@ extension TemaMascote {
 struct Ampulheta: View {
     let pose: PoseMascote
     var tema: TemaMascote = .geral
+    /// Sem braços: no ícone da app ficam a mais.
+    var semBracos = false
 
     /// No trabalho e na vida pessoal, de dia, segura um objeto à frente: o portátil e o café,
     /// ou um livro.
@@ -188,34 +190,37 @@ struct Ampulheta: View {
     }
 
     private var bracos: [Path] {
+        guard !semBracos else { return [] }
         func braco(_ de: CGPoint, _ controlo: CGPoint, _ ate: CGPoint) -> Path {
             Path { p in
                 p.move(to: de)
                 p.addQuadCurve(to: ate, control: controlo)
             }
         }
+        // Os braços saem da cintura e do bolbo de baixo (o corpo), nunca do de cima, onde
+        // está a cara: daí pareciam sair da cabeça. A raiz fica por baixo do vidro.
         if objeto != nil {
             // Os dois braços à frente, a segurar o objeto.
             return [
-                braco(CGPoint(x: 30, y: 44), CGPoint(x: 20, y: 62), CGPoint(x: 34, y: 74)),
-                braco(CGPoint(x: 70, y: 44), CGPoint(x: 80, y: 62), CGPoint(x: 66, y: 74)),
+                braco(CGPoint(x: 38, y: 72), CGPoint(x: 22, y: 80), CGPoint(x: 32, y: 88)),
+                braco(CGPoint(x: 62, y: 72), CGPoint(x: 78, y: 80), CGPoint(x: 68, y: 88)),
             ]
         }
         switch pose {
         case .acenar:
             return [
-                braco(CGPoint(x: 72, y: 40), CGPoint(x: 92, y: 30), CGPoint(x: 96, y: 12)),
-                braco(CGPoint(x: 28, y: 42), CGPoint(x: 12, y: 52), CGPoint(x: 10, y: 64)),
+                braco(CGPoint(x: 62, y: 72), CGPoint(x: 90, y: 66), CGPoint(x: 94, y: 46)),
+                braco(CGPoint(x: 38, y: 74), CGPoint(x: 16, y: 80), CGPoint(x: 14, y: 94)),
             ]
         case .areia:
             return [
-                braco(CGPoint(x: 28, y: 42), CGPoint(x: 14, y: 52), CGPoint(x: 12, y: 62)),
-                braco(CGPoint(x: 72, y: 42), CGPoint(x: 86, y: 52), CGPoint(x: 88, y: 62)),
+                braco(CGPoint(x: 38, y: 74), CGPoint(x: 16, y: 80), CGPoint(x: 12, y: 94)),
+                braco(CGPoint(x: 62, y: 74), CGPoint(x: 84, y: 80), CGPoint(x: 88, y: 94)),
             ]
         case .celebrar:
             return [
-                braco(CGPoint(x: 26, y: 40), CGPoint(x: 10, y: 28), CGPoint(x: 10, y: 12)),
-                braco(CGPoint(x: 74, y: 40), CGPoint(x: 90, y: 28), CGPoint(x: 90, y: 12)),
+                braco(CGPoint(x: 36, y: 70), CGPoint(x: 12, y: 64), CGPoint(x: 10, y: 44)),
+                braco(CGPoint(x: 64, y: 70), CGPoint(x: 88, y: 64), CGPoint(x: 90, y: 44)),
             ]
         case .dormir:
             return []
