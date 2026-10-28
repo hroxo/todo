@@ -10,7 +10,13 @@ struct CartaoLista: View {
 
     var body: some View {
         let cor = lista.cor
-        let ativos = lista.itensAtivos.count
+        // Nas compras conta o que falta comprar e o anel enche com o carrinho (DESIGN.md 7.15).
+        let artigos = lista.itensAtivos.flatMap(\.subtopicosOrdenados)
+        let porComprar = artigos.filter { $0.estado != .concluido }.count
+        let ativos = lista.ehCompras ? porComprar : lista.itensAtivos.count
+        let fracao = lista.ehCompras
+            ? (artigos.isEmpty ? 0 : Double(artigos.count - porComprar) / Double(artigos.count))
+            : lista.frescura(agora: agora)
         let hoje = lista.expiramHoje(agora: agora).count
         let aExpirar = hoje > 0
 
@@ -20,7 +26,7 @@ struct CartaoLista: View {
                 IconeListaView(lista: lista, tamanho: 36, fundo: cor.ficha)
                 Spacer()
                 AnelExpiracao(
-                    fracao: lista.frescura(agora: agora),
+                    fracao: fracao,
                     cor: cor.texto,
                     tamanho: 40,
                     espessura: 7,
@@ -37,7 +43,7 @@ struct CartaoLista: View {
                     .font(.system(size: altura > 140 ? 40 : 34, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                Text(ativos == 1 ? "ativo" : "ativos")
+                Text(lista.ehCompras ? "por comprar" : (ativos == 1 ? "ativo" : "ativos"))
                     .font(.footnote.weight(.semibold))
                     .opacity(0.8)
             }
@@ -54,7 +60,7 @@ struct CartaoLista: View {
         .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(lista.nome), \(ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos")"
+            "\(lista.nome), " + (lista.ehCompras ? "\(ativos) por comprar" : (ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos"))
                 + (aExpirar ? ", \(hoje == 1 ? "1 expira" : "\(hoje) expiram") hoje" : "")
         )
         .accessibilityAddTraits(.isButton)

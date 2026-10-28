@@ -79,12 +79,19 @@ public final class Tarefas {
     }
 
     @discardableResult
-    public func criarLista(nome: String, cor: CorLista, icone: String = IconesLista.padrao, emoji: String? = nil) throws -> Lista {
+    public func criarLista(
+        nome: String,
+        cor: CorLista,
+        icone: String = IconesLista.padrao,
+        emoji: String? = nil,
+        tipo: TipoLista = .normal
+    ) throws -> Lista {
         let nome = try limpo(nome)
         let existentes = try listas()
         guard existentes.count < Self.maxListas else { throw ErroTarefas.limiteListas }
         let ordem = (existentes.map(\.ordem).max() ?? -1) + 1
         let lista = Lista(nome: nome, cor: cor, ordem: ordem, icone: icone, emoji: emojiLimpo(emoji))
+        lista.tipo = tipo
         contexto.insert(lista)
         return lista
     }
@@ -109,11 +116,16 @@ public final class Tarefas {
     }
 
     public func apagar(_ lista: Lista) {
+        aApagarLista = true
+        defer { aApagarLista = false }
         for item in lista.itens {
             apagar(item)
         }
         contexto.delete(lista)
     }
+
+    /// A lista inteira sai: os itens apagam-se mesmo, sem lápides.
+    private var aApagarLista = false
 
     // MARK: - Itens
 
@@ -125,7 +137,11 @@ public final class Tarefas {
         let item = Item(titulo: titulo, tipo: tipo, criadoEm: agora, ordem: ordem)
         contexto.insert(item)
         item.lista = lista
-        item.expiraEm = daquiA(definicoes.diasExpiracao, desde: agora)
+        item.alteradoEm = agora
+        // Nas listas de compras nada expira (DESIGN.md 7.15).
+        if !lista.ehCompras {
+            item.expiraEm = daquiA(definicoes.diasExpiracao, desde: agora)
+        }
         return item
     }
 
@@ -182,6 +198,7 @@ public final class Tarefas {
         let sub = Item(titulo: titulo, tipo: .tarefa, criadoEm: relogio.agora, ordem: ordem)
         contexto.insert(sub)
         sub.pai = pai
+        sub.alteradoEm = relogio.agora
         registarAcao(em: pai)
         return sub
     }
@@ -203,11 +220,15 @@ public final class Tarefas {
     }
 
     /// Uma ação reinicia a contagem de expiração do item principal (especificação 4.1 e 4.3).
+    /// Nas listas de compras não há prazo: só fica registado quando o item mudou.
     public func registarAcao(em item: Item) {
         let alvo = item.pai ?? item
         let agora = relogio.agora
+        item.alteradoEm = agora
         alvo.ultimaAcaoEm = agora
-        if alvo.estado == .ativo && !alvo.fixado {
+        if alvo.lista?.ehCompras == true {
+            alvo.expiraEm = nil
+        } else if alvo.estado == .ativo && !alvo.fixado {
             alvo.expiraEm = daquiA(definicoes.diasExpiracao, desde: agora)
         }
     }
@@ -293,6 +314,15 @@ public final class Tarefas {
     /// Apaga o item, os subtópicos e as fotos (critério 6). Apagar um subtópico conta como
     /// ação no item principal.
     public func apagar(_ item: Item) {
+        // Numa lista de compras fica uma lápide, para o artigo não voltar ao juntar cópias.
+        if item.listaEfetiva?.ehCompras == true && item.apagadoEm == nil && !aApagarLista {
+            let agora = relogio.agora
+            for alvo in [item] + item.subtopicos {
+                alvo.apagadoEm = agora
+                alvo.alteradoEm = agora
+            }
+            return
+        }
         if let pai = item.pai {
             registarAcao(em: pai)
         }

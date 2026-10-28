@@ -25,6 +25,7 @@ struct PersonalizarListaView: View {
     @State private var icone = IconesLista.padrao
     @State private var emoji: String?
     @State private var separadorEmoji = false
+    @State private var tipo: TipoLista = .normal
 
     private var podeGuardar: Bool {
         !nome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -34,6 +35,20 @@ struct PersonalizarListaView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Espaco.margem) {
+                    // O tipo só se escolhe ao criar: uma lista de compras não expira (DESIGN.md 7.15).
+                    if case .nova = modo {
+                        Picker("Tipo de lista", selection: $tipo) {
+                            Label("Lista", systemImage: "checklist").tag(TipoLista.normal)
+                            Label("Compras", systemImage: "cart").tag(TipoLista.compras)
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: tipo) { _, novo in
+                            if emoji == nil {
+                                icone = novo == .compras ? "cart.fill" : IconesLista.padrao
+                            }
+                        }
+                    }
+
                     IconeListaView(cor: cor, icone: icone, emoji: emoji, tamanho: 92)
                         .shadow(color: cor.base.opacity(0.35), radius: 14, y: 8)
                         .animation(.snappy, value: cor)
@@ -95,7 +110,7 @@ struct PersonalizarListaView: View {
         let tarefas = Tarefas(contexto: contexto)
         switch modo {
         case .nova:
-            _ = try? tarefas.criarLista(nome: nome, cor: cor, icone: icone, emoji: emoji)
+            _ = try? tarefas.criarLista(nome: nome, cor: cor, icone: icone, emoji: emoji, tipo: tipo)
         case .editar(let lista):
             try? tarefas.editar(lista, nome: nome, cor: cor, icone: icone, emoji: emoji)
         }

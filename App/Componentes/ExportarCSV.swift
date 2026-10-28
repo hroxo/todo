@@ -10,6 +10,12 @@ enum PartilhaCSV {
     @MainActor
     static func partilhar(listas: [Lista], lista: Lista? = nil) {
         guard let url = escrever(listas: listas, lista: lista) else { return }
+        mostrarFolha(com: url)
+    }
+
+    /// A folha de partilha do iOS (AirDrop, Mensagens, Ficheiros…) com um ficheiro.
+    @MainActor
+    static func mostrarFolha(com url: URL) {
         // Deixa o menu "…" fechar antes de abrir a folha.
         DispatchQueue.main.async {
             guard let topo = controladorDoTopo() else { return }

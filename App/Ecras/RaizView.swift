@@ -32,6 +32,9 @@ struct RaizView: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
+        .alert(estado.avisoPartilha ?? "", isPresented: Binding(presente: $estado.avisoPartilha)) {
+            Button("OK", role: .cancel) {}
+        }
         .onChange(of: estado.separador) { anterior, novo in
             if anterior == .listas, novo != .captura {
                 estado.avisosDispensados = true

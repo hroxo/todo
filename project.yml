@@ -16,6 +16,27 @@ targets:
     type: application
     platform: iOS
     sources: [App]
+    # Juntam-se às chaves geradas (GENERATE_INFOPLIST_FILE): o tipo de ficheiro das listas
+    # partilhadas por AirDrop (DESIGN.md 7.15), que a app exporta e abre.
+    info:
+      path: App/Info.plist
+      properties:
+        # Sem isto o XcodeGen escreve 1.0 e 1 e esconde a versão das definições abaixo.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSSupportsOpeningDocumentsInPlace: false
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.hugo.todo.lista
+            UTTypeDescription: Lista ToDo
+            UTTypeConformsTo: [public.json, public.data]
+            UTTypeTagSpecification:
+              public.filename-extension: [todolista]
+              public.mime-type: [application/x-todolista]
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Lista ToDo
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Owner
+            LSItemContentTypes: [com.hugo.todo.lista]
     dependencies:
       - package: ToDoCore
     settings:

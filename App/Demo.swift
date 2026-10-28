@@ -32,7 +32,8 @@ enum Demo {
               let ideias = try? t.criarLista(nome: "Ideias", cor: .amarelo, icone: "lightbulb.fill"),
               let casa = try? t.criarLista(nome: "Casa", cor: .verde, icone: "house.fill"),
               let ginasio = try? t.criarLista(nome: "Ginásio", cor: .vermelho, icone: "dumbbell.fill"),
-              let viagem = try? t.criarLista(nome: "Viagem", cor: .ceu, icone: "airplane")
+              let viagem = try? t.criarLista(nome: "Viagem", cor: .ceu, icone: "airplane"),
+              let compras = try? t.criarLista(nome: "Compras", cor: .turquesa, icone: "cart.fill", tipo: .compras)
         else { return }
 
         func item(_ titulo: String, _ lista: Lista, horas: Double, tipo: TipoItem = .tarefa) -> Item? {
@@ -89,6 +90,19 @@ enum Demo {
         _ = item("Renovar inscrição", ginasio, horas: 20)
         _ = item("Reservar hotel em Lisboa", viagem, horas: 6)
 
+        // Compras: lojas com artigos, alguns já no carrinho (DESIGN.md 7.15).
+        for (loja, artigos) in [
+            ("Continente", [("Leite", true), ("Pão", true), ("Peixe", false), ("Fruta", false), ("Café", false)]),
+            ("IKEA", [("Candeeiro de pé", false), ("Parafusos", true), ("Cabides", false)]),
+        ] {
+            guard let loja = try? t.criarItem(titulo: loja, em: compras) else { continue }
+            for (titulo, feito) in artigos {
+                if let artigo = try? t.adicionarSubtopico(titulo: titulo, a: loja), feito {
+                    t.alternarSubtopico(artigo)
+                }
+            }
+        }
+
         // Expirados: criados há mais de 3 dias, expiram na avaliação abaixo.
         _ = item("Comprar pilhas para o comando", pessoal, horas: 24 * 4)
         _ = item("Ideia: modo foco à sexta", ideias, horas: 24 * 8, tipo: .notaRapida)
@@ -117,6 +131,10 @@ enum Demo {
         switch ecra {
         case "lista":
             estado.caminho.append(trabalho)
+        case "compras":
+            if let compras = listas.first(where: \.ehCompras) {
+                estado.caminho.append(compras)
+            }
         case "detalhe":
             if let roadmap = trabalho.itensAtivos.first(where: { $0.titulo.hasPrefix("Rever proposta") }) {
                 estado.caminho.append(trabalho)

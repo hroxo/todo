@@ -31,6 +31,8 @@ struct ListaView: View {
     var body: some View {
         if lista.isDeleted || lista.modelContext == nil {
             Color.clear
+        } else if lista.ehCompras {
+            ComprasView(lista: lista)
         } else {
             conteudo
         }

@@ -55,6 +55,12 @@ public enum EstadoItem: String, CaseIterable, Codable, Sendable {
     case ativo, concluido, expirado
 }
 
+/// Uma lista normal (itens que expiram) ou de compras (DESIGN.md 7.15): os itens são lojas,
+/// os subtópicos são artigos, e nada expira.
+public enum TipoLista: String, CaseIterable, Codable, Sendable {
+    case normal, compras
+}
+
 @Model
 public final class Lista {
     @Attribute(.unique) public var id: UUID
@@ -64,6 +70,9 @@ public final class Lista {
     /// Nome do SF Symbol. Ignorado quando há `emoji`.
     public var icone: String = "checkmark.circle.fill"
     public var emoji: String?
+    public var tipoRaw: String = TipoLista.normal.rawValue
+    /// Igual nas cópias de uma lista partilhada, para as juntar.
+    public var partilhaId: UUID?
 
     /// Só os itens principais; os subtópicos pertencem ao item pai.
     @Relationship(deleteRule: .cascade, inverse: \Item.lista)
@@ -83,8 +92,15 @@ public final class Lista {
         set { corRaw = newValue.rawValue }
     }
 
+    public var tipo: TipoLista {
+        get { TipoLista(rawValue: tipoRaw) ?? .normal }
+        set { tipoRaw = newValue.rawValue }
+    }
+
+    public var ehCompras: Bool { tipo == .compras }
+
     public var itensAtivos: [Item] {
-        itens.filter { $0.estado == .ativo }.sorted { $0.ordem < $1.ordem }
+        itens.filter { $0.estado == .ativo && $0.apagadoEm == nil }.sorted { $0.ordem < $1.ordem }
     }
 
     /// Itens ativos que expiram nas próximas 24 horas.
@@ -122,6 +138,10 @@ public final class Item {
     /// da ocorrência (cada ocorrência de um evento recorrente conta à parte).
     public var eventoId: String?
     public var eventoInicio: Date?
+    /// Última alteração, para juntar as cópias de uma lista partilhada (ganha a mais recente).
+    public var alteradoEm: Date?
+    /// Lápide: numa lista partilhada, apagar só marca, para o apagado não voltar ao juntar.
+    public var apagadoEm: Date?
 
     public var lista: Lista?
     public var pai: Item?
@@ -155,12 +175,13 @@ public final class Item {
 
     public var ehSubtopico: Bool { pai != nil }
 
+    /// Sem as lápides das listas partilhadas.
     public var subtopicosOrdenados: [Item] {
-        subtopicos.sorted { $0.ordem < $1.ordem }
+        subtopicos.filter { $0.apagadoEm == nil }.sorted { $0.ordem < $1.ordem }
     }
 
     public var subtopicosFeitos: Int {
-        subtopicos.filter { $0.estado == .concluido }.count
+        subtopicos.filter { $0.estado == .concluido && $0.apagadoEm == nil }.count
     }
 
     public var fotosOrdenadas: [Foto] {

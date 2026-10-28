@@ -28,6 +28,8 @@ final class EstadoApp {
     /// Filtros de Concluídos e Expirados: independentes e só enquanto a app está aberta.
     var filtroConcluidos = FiltroItens()
     var filtroExpirados = FiltroItens()
+    /// Mensagem depois de abrir uma lista partilhada (DESIGN.md 7.15).
+    var avisoPartilha: String?
 
     @ObservationIgnored let notificacoes: Notificacoes
 

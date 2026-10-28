@@ -36,6 +36,7 @@ struct ToDoApp: App {
                 .task {
                     if !Demo.ativo { Self.notificacoes.pedirPermissao() }
                 }
+                .onOpenURL { abrirFicheiro($0) }
         }
         .modelContainer(Self.contentor)
         .onChange(of: fase) { anterior, nova in
@@ -47,6 +48,29 @@ struct ToDoApp: App {
             case .background where !Demo.ativo: Self.notificacoes.reagendar()
             default: break
             }
+        }
+    }
+
+    /// Um `.todolista` recebido por AirDrop: cria a lista ou junta-a à cópia que já existe e
+    /// abre-a (DESIGN.md 7.15).
+    @MainActor
+    private func abrirFicheiro(_ url: URL) {
+        guard url.pathExtension == ListaPartilhada.extensao else { return }
+        do {
+            let resultado = try PartilhaCompras.abrir(url, contexto: Self.contentor.mainContext)
+            estado.separador = .listas
+            estado.caminho = NavigationPath([resultado.lista])
+            if !resultado.nova {
+                estado.avisoPartilha = resultado.alterados == 0
+                    ? "«\(resultado.lista.nome)» já estava igual."
+                    : "«\(resultado.lista.nome)» atualizada com \(resultado.alterados == 1 ? "1 alteração" : "\(resultado.alterados) alterações")."
+            }
+        } catch ErroPartilha.versaoDesconhecida {
+            estado.avisoPartilha = "Esta lista vem de uma versão mais recente da app. Atualiza a ToDo para a abrir."
+        } catch ErroTarefas.limiteListas {
+            estado.avisoPartilha = "Já tens \(Tarefas.maxListas) listas. Apaga uma para receber esta."
+        } catch {
+            estado.avisoPartilha = "Não foi possível abrir esta lista."
         }
     }
 
