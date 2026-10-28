@@ -282,6 +282,19 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **O "+" só funciona uma vez por evento** (Melhoria 6.4): o ponto guarda o identificador externo do evento e o início da ocorrência (cada ocorrência de um evento recorrente conta à parte). Depois de adicionado, o "+" passa a ✓ num círculo da cor da lista; tocar no ✓ (ou tentar outra vez) mostra "Já está em <lista>" com "Abrir". Se o ponto for apagado ou expirar, o evento pode voltar a ser adicionado; se for concluído, não.
 - **Definições › Calendários (mock 13)**: calendários agrupados por conta; cada linha mostra o ponto de cor do calendário, o nome e, à direita, o espaço escolhido (ponto da cor do espaço + nome, ou "Nenhum"). Tocar abre a escolha do espaço (mock 14): lista dos espaços com visto no escolhido e, numa secção à parte, "Sem espaço" e "Não mostrar no Início".
 
+### 7.12d Ecrã do dia (Melhoria 12) [Decidido 27/10/2026 · Proposta: forma]
+
+- Abre a partir de "N eventos ›" na secção "Hoje no calendário" do Início (`DiaView`, demo `-ecra dia`).
+- Topo: a data e dois quadros ao estilo Fitness:
+  - Eventos: total e quantos faltam.
+  - Agora / A seguir: a hora em número grande, na cor do evento.
+- Depois: os eventos de todo o dia e "Expiram hoje", com a hora ou "amanhã, 00:10", porque o "hoje" são as últimas 24 h do prazo.
+- Linha do tempo das 7 às 23 h (alarga se houver eventos fora disso), 64 pt por hora:
+  - Cada evento é um bloco na cor do calendário, com barra à esquerda, título, horas e local. Os blocos sobrepostos ficam lado a lado.
+  - Os eventos que já passaram ficam esbatidos, e os já adicionados mostram um ✓ na cor da lista.
+  - A linha vermelha marca a hora atual.
+- A faixa da semana fica para depois: o calendário só lê os eventos de hoje (EventKit e contas ligadas).
+
 ### 7.12c Contas Google e Outlook (Melhoria 7) [Decidido 22/10/2026: ler Google e Outlook diretamente; sem Sign in with Apple]
 
 - Definições › Calendário › **Contas Google e Outlook** (ícone `person.crop.circle.badge.checkmark` em azul): uma linha por fornecedor (Google `g.circle.fill` verde, Outlook `envelope.fill` azul) com o email da conta ligada e "Desligar" (com confirmação), ou "Ligar" (abre a página de início de sessão do fornecedor, `ASWebAuthenticationSession`), ou "Por configurar" se a app ainda não estiver registada (`docs/CONTAS.md`). Erros por baixo, com `exclamationmark.triangle.fill`.

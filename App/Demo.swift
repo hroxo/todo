@@ -129,6 +129,8 @@ enum Demo {
             estado.abrirPersonalizar = true
         case "calendario":
             estado.rolarParaCalendario = true
+        case "dia":
+            estado.caminho.append(RotaDia())
         case "evento":
             estado.rolarParaCalendario = true
             estado.abrirEventoDemo = true
