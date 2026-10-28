@@ -151,6 +151,8 @@ enum Demo {
         case "captura":
             estado.listaAtual = listas.dropFirst().first
             estado.mostrarCaptura = true
+        case "widget":
+            estado.demoWidgets = true
         case "personalizar":
             estado.abrirPersonalizar = true
         case "calendario":

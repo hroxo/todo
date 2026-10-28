@@ -3,6 +3,7 @@ import SwiftData
 import ToDoCore
 import UIKit
 import UserNotifications
+import WidgetKit
 
 /// Notificações locais (especificação 6): um aviso 24 horas antes de cada item expirar, com
 /// as ações Manter +5, Manter +15 e Concluir, e outro antes de uma lista vazia desaparecer,
@@ -63,6 +64,7 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
             agendar(aviso)
         }
         let inteligente = definicoes.inteligenciaAtiva
+        atualizarWidget(tarefas, inteligente: inteligente)
         for aviso in avisos {
             agendar(aviso, corpo: (inteligente ? escritos[Self.chave(aviso)] : nil) ?? TextoAviso.corpo(aviso))
         }
@@ -80,6 +82,39 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
                 escritos[Self.chave(aviso)] = corpo
                 agendar(aviso, corpo: corpo)
             }
+        }
+    }
+
+    // MARK: - Widget (DESIGN.md 7.14)
+
+    /// A última frase do modelo e os pontos para que foi escrita.
+    private var fraseEscrita: (chave: String, frase: String)?
+    private var escritaWidget: Task<Void, Never>?
+
+    /// Grava o resumo do widget no App Group e recarrega-o: logo com a frase de base (ou a do
+    /// modelo, se os pontos não mudaram) e, com o modelo do iPhone, outra vez com uma nova.
+    func atualizarWidget() {
+        atualizarWidget(Tarefas(contexto: ModelContext(contentor)), inteligente: Definicoes.carregar().inteligenciaAtiva)
+    }
+
+    private func atualizarWidget(_ tarefas: Tarefas, inteligente: Bool) {
+        guard let pasta = BaseDados.pastaPartilhada, var resumo = try? tarefas.resumoWidget() else { return }
+        let chave = "\(resumo.totalAtivos)|\(resumo.expiramHoje)|"
+            + resumo.pontos.map { "\($0.id)\($0.razao)" }.joined(separator: "|")
+        if inteligente, let escrita = fraseEscrita, escrita.chave == chave {
+            resumo.frase = escrita.frase
+        }
+        try? resumo.gravar(em: pasta)
+        WidgetCenter.shared.reloadAllTimelines()
+
+        escritaWidget?.cancel()
+        guard inteligente, Inteligencia.disponivel, fraseEscrita?.chave != chave else { return }
+        escritaWidget = Task { @MainActor in
+            guard let frase = await Inteligencia.fraseWidget(resumo), !Task.isCancelled else { return }
+            fraseEscrita = (chave, frase)
+            resumo.frase = frase
+            try? resumo.gravar(em: pasta)
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 

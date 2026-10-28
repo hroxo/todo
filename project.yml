@@ -15,7 +15,12 @@ targets:
   ToDo:
     type: application
     platform: iOS
-    sources: [App]
+    sources:
+      - App
+      # A vista do widget médio também se mostra no ecrã de demonstração, e os intents têm
+      # de estar na app (o Nova nota abre-a).
+      - Widgets/VistaWidget.swift
+      - Widgets/Intents.swift
     # Juntam-se às chaves geradas (GENERATE_INFOPLIST_FILE): o tipo de ficheiro das listas
     # partilhadas por AirDrop (DESIGN.md 7.15), que a app exporta e abre.
     info:
@@ -32,13 +37,23 @@ targets:
             UTTypeTagSpecification:
               public.filename-extension: [todolista]
               public.mime-type: [application/x-todolista]
+        # todo://captura abre a captura rápida (widget do ecrã bloqueado, DESIGN.md 7.14).
+        CFBundleURLTypes:
+          - CFBundleURLName: com.hugo.todo
+            CFBundleURLSchemes: [todo]
         CFBundleDocumentTypes:
           - CFBundleTypeName: Lista ToDo
             CFBundleTypeRole: Editor
             LSHandlerRank: Owner
             LSItemContentTypes: [com.hugo.todo.lista]
+    # O App Group partilha a base de dados e o resumo com o widget (DESIGN.md 7.14).
+    entitlements:
+      path: App/ToDo.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.hugo.todo]
     dependencies:
       - package: ToDoCore
+      - target: ToDoWidgets
     settings:
       base:
         PRODUCT_NAME: ToDo
@@ -56,3 +71,39 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     scheme: {}
+
+  # Widgets: o médio "o que importa agora", o "+" do ecrã bloqueado e o controlo Nova nota
+  # (DESIGN.md 7.14). Partilha com a app as cores, o anel e os dados do App Group.
+  ToDoWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widgets
+      - App/Componentes/Estilo.swift
+      - App/Componentes/AnelExpiracao.swift
+      - App/Resources/Assets.xcassets
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: ToDo
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widgets/ToDoWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.hugo.todo]
+    dependencies:
+      - package: ToDoCore
+    settings:
+      base:
+        PRODUCT_NAME: ToDoWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: com.hugo.todo.widgets
+        MARKETING_VERSION: "0.6.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

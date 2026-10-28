@@ -21,6 +21,39 @@ enum Inteligencia {
     }
 
     @Generable
+    struct FraseWidget {
+        @Guide(description: "Uma frase curta e calorosa em português europeu, com no máximo 60 caracteres")
+        var texto: String
+    }
+
+    /// A frase do topo do widget (DESIGN.md 7.14): o estado do dia numa frase, a partir dos
+    /// pontos que importam agora.
+    static func fraseWidget(_ resumo: ResumoWidget) async -> String? {
+        guard disponivel else { return nil }
+        let sessao = LanguageModelSession(instructions: """
+            Escreves a frase do topo do widget de uma app de tarefas pessoal, em português \
+            europeu (de Portugal, nunca do Brasil). Resume numa só frase curta o que importa \
+            hoje, com calma e calor, como um amigo organizado. Sem emojis, sem pontos de \
+            exclamação. Usa só os factos dados; não inventes nada.
+            """)
+        var factos = ["Pontos ativos: \(resumo.totalAtivos)", "Expiram hoje: \(resumo.expiramHoje)"]
+        for ponto in resumo.pontos {
+            factos.append("- \(ponto.titulo) (\(ponto.lista)): \(ponto.razao)")
+        }
+        do {
+            let resposta = try await sessao.respond(
+                to: factos.joined(separator: "\n"),
+                generating: FraseWidget.self,
+                options: GenerationOptions(temperature: 0.5)
+            )
+            let texto = resposta.content.texto.trimmingCharacters(in: .whitespacesAndNewlines)
+            return texto.isEmpty || texto.count > 80 ? nil : texto
+        } catch {
+            return nil
+        }
+    }
+
+    @Generable
     struct LinhaAviso {
         @Guide(description: "Uma frase curta em português europeu, com no máximo 90 caracteres")
         var texto: String

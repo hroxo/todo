@@ -55,6 +55,14 @@ struct ToDoApp: App {
     /// abre-a (DESIGN.md 7.15).
     @MainActor
     private func abrirFicheiro(_ url: URL) {
+        // todo://captura: o "+" dos widgets e o controlo Nova nota (DESIGN.md 7.14).
+        if url.scheme == "todo" {
+            if url.host() == "captura" {
+                estado.separador = .listas
+                estado.mostrarCaptura = true
+            }
+            return
+        }
         guard url.pathExtension == ListaPartilhada.extensao else { return }
         do {
             let resultado = try PartilhaCompras.abrir(url, contexto: Self.contentor.mainContext)
@@ -82,6 +90,11 @@ struct ToDoApp: App {
         _ = try? tarefas.criarListasIniciaisSeVazio()
         _ = try? tarefas.avaliar()
         try? contexto.save()
-        if !Demo.ativo { Self.notificacoes.reagendar() }
+        // Na demonstração não há avisos, mas o widget mostra os dados de exemplo.
+        if Demo.ativo {
+            Self.notificacoes.atualizarWidget()
+        } else {
+            Self.notificacoes.reagendar()
+        }
     }
 }

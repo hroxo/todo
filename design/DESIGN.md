@@ -301,6 +301,15 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 - **Visão [Decidido 28/10/2026]:** o widget é a porta de entrada da app, mais do que a própria app. Tem de ser tão bonito que apeteça pô-lo no ecrã principal, e **inteligente**: mostra o que importa agora, escolhido pelo modelo do iPhone (7.16) a partir do que a pessoa tem na app. O mesmo carinho de animação (princípio 7), dentro do que o WidgetKit permite: transições de conteúdo, números que rolam e o anel a animar entre estados.
 
+- **Médio "O que importa agora" [Decidido 28/10/2026: variante B]:**
+  - À esquerda, o número grande e arredondado do dia ("1 expira hoje", em laranja; sem nada a expirar, os pontos ativos) e, por baixo, a frase em até 3 linhas: escrita pelo modelo do iPhone, ou a de base ("Nada urgente hoje").
+  - À direita, os 3 pontos escolhidos pela prioridade do núcleo (`Tarefas.prioridades`: último dia, falta 1 subtópico, dias sem mexer). Cada um tem o anel na cor da lista (laranja no último dia), o título e a razão. **Tocar no anel conclui** sem abrir a app.
+  - No canto, o "+" abre a captura (`todo://captura`).
+  - Fundo em gradiente da cor de fundo da lista do primeiro ponto para o fundo do sistema.
+  - Uma entrada por hora, para os anéis esvaziarem com animação; os pontos trocam com `push` de baixo.
+- **Ecrã bloqueado:** um "+" circular e um retangular "Nova nota · 1 ponto expira hoje", e o controlo **Nova nota** (botões do ecrã bloqueado, Centro de Controlo, Action Button). Todos abrem a captura.
+- **Dados:** a app grava `resumo-widget.json` no App Group `group.com.hugo.todo` sempre que algo muda (`Notificacoes.atualizarWidget`). A base de dados também passa para o grupo, para o widget poder concluir. Demonstração: `-ecra widget`.
+- Seguintes: o pequeno (um ponto, anel grande) e o grande.
 - Estilo: **simples, claros, limpos e informativos.** Pouca informação, boa hierarquia de texto (título, contagem grande e arredondada, uma linha de prazo), sem decoração nem vidro. A cor da lista e o anel (7.3) são os únicos elementos gráficos.
 - Pequeno: os próximos itens a expirar, com anel. Médio: uma lista escolhida (configurável), com 3 a 4 itens e a contagem. Ecrã bloqueado: circular (anel + itens que expiram hoje) e retangular (próximo item).
 - Botões interativos: Concluir e Manter +5.

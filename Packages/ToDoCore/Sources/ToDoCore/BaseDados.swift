@@ -335,15 +335,55 @@ extension PlanoMigracao {
 }
 
 public enum BaseDados {
-    /// Sem `url`, usa o ficheiro por defeito da app.
+    /// App Group partilhado com o widget (DESIGN.md 7.14).
+    public static let grupo = "group.com.hugo.todo"
+    private static let sufixos = ["", "-wal", "-shm"]
+
+    /// A pasta do App Group, ou nil quando a app não o tem (testes, `.ipa` sem assinatura).
+    public static var pastaPartilhada: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: grupo)
+    }
+
+    /// Sem `url`, usa o ficheiro no App Group, se houver, ou o ficheiro por defeito da app.
     public static func contentor(emMemoria: Bool = false, url: URL? = nil) throws -> ModelContainer {
         let esquema = Schema(versionedSchema: EsquemaV5.self)
         let configuracao: ModelConfiguration
         if let url {
             configuracao = ModelConfiguration(schema: esquema, url: url)
+        } else if !emMemoria, let pasta = pastaPartilhada {
+            let destino = pasta.appendingPathComponent("ToDo.store")
+            mudar(de: URL.applicationSupportDirectory.appendingPathComponent("default.store"), para: destino)
+            configuracao = ModelConfiguration(schema: esquema, url: destino)
         } else {
             configuracao = ModelConfiguration(schema: esquema, isStoredInMemoryOnly: emMemoria)
         }
         return try ModelContainer(for: esquema, migrationPlan: PlanoMigracao.self, configurations: configuracao)
+    }
+
+    /// Muda a base de dados (e os ficheiros `-wal` e `-shm`) para o App Group, uma só vez.
+    /// Copia tudo primeiro e só depois apaga o original: se alguma cópia falhar, desfaz e a app
+    /// continua com o ficheiro antigo (nada se perde). Devolve verdadeiro se mudou.
+    @discardableResult
+    public static func mudar(de origem: URL, para destino: URL) -> Bool {
+        let gestor = FileManager.default
+        guard gestor.fileExists(atPath: origem.path), !gestor.fileExists(atPath: destino.path) else { return false }
+        let pares = sufixos
+            .map { (URL(fileURLWithPath: origem.path + $0), URL(fileURLWithPath: destino.path + $0)) }
+            .filter { gestor.fileExists(atPath: $0.0.path) }
+        do {
+            try gestor.createDirectory(at: destino.deletingLastPathComponent(), withIntermediateDirectories: true)
+            for (de, para) in pares {
+                try gestor.copyItem(at: de, to: para)
+            }
+        } catch {
+            for (_, para) in pares {
+                try? gestor.removeItem(at: para)
+            }
+            return false
+        }
+        for (de, _) in pares {
+            try? gestor.removeItem(at: de)
+        }
+        return true
     }
 }

@@ -15,3 +15,6 @@ docs/PROGRESSO.md
 
 # Gerado pelo XcodeGen a partir do project.yml.
 App/Info.plist
+App/ToDo.entitlements
+Widgets/Info.plist
+Widgets/ToDoWidgets.entitlements
