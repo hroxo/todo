@@ -1,1 +1,1 @@
-Gerado por scripts/readme-media.py a partir de capturas/0.6.0-bcea12e
+Gerado a partir de capturas do simulador da versão 0.2 (28/10/2026, modo de demonstração)
