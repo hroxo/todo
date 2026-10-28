@@ -14,12 +14,14 @@ enum PartilhaCSV {
     }
 
     /// A folha de partilha do iOS (AirDrop, Mensagens, Ficheiros…) com um ficheiro.
+    /// `aoTerminar` diz se a pessoa chegou a guardar ou enviar o ficheiro.
     @MainActor
-    static func mostrarFolha(com url: URL) {
+    static func mostrarFolha(com url: URL, aoTerminar: ((Bool) -> Void)? = nil) {
         // Deixa o menu "…" fechar antes de abrir a folha.
         DispatchQueue.main.async {
             guard let topo = controladorDoTopo() else { return }
             let folha = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+            folha.completionWithItemsHandler = { _, concluido, _, _ in aoTerminar?(concluido) }
             folha.popoverPresentationController?.sourceView = topo.view
             topo.present(folha, animated: true)
         }

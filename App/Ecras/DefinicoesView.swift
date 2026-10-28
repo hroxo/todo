@@ -1,11 +1,12 @@
 import EventKit
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 import ToDoCore
 import UIKit
 
 /// Definições (especificação 4.8, mock 9): listas primeiro; depois calendário, notificações,
-/// aparência e, em Avançado, os prazos e exportar tudo em CSV. Importar e backup chegam no M6.
+/// aparência e, em Avançado, os prazos e exportar tudo em CSV. Em Backup, exportar e restaurar tudo em JSON (DESIGN.md 7.19).
 struct DefinicoesView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
@@ -17,6 +18,16 @@ struct DefinicoesView: View {
     @State private var definicoes = Definicoes.carregar()
     @State private var formulario: PersonalizarListaView.Modo?
     @State private var aApagar: Lista?
+    @State private var ultimoBackup = Backups.ultimoExportado
+    @State private var escolherBackup = false
+    @State private var porRestaurar: PorRestaurar?
+    @State private var erroBackup: String?
+
+    /// Um backup lido e o que o restauro faria, para confirmar antes.
+    private struct PorRestaurar {
+        let backup: Backup
+        let resumo: ResumoRestauro
+    }
 
     var body: some View {
         NavigationStack {
@@ -118,6 +129,8 @@ struct DefinicoesView: View {
                     .labelsHidden()
                 }
 
+                secaoBackup
+
                 Section("Avançado") {
                     NavigationLink {
                         PrazosView(definicoes: $definicoes)
@@ -150,6 +163,18 @@ struct DefinicoesView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
+            .fileImporter(isPresented: $escolherBackup, allowedContentTypes: [.json]) { resultado in
+                lerBackup(resultado)
+            }
+            .alert("Restaurar este backup?", isPresented: Binding(presente: $porRestaurar), presenting: porRestaurar) { escolhido in
+                Button("Restaurar") { restaurar(escolhido.backup) }
+                Button("Cancelar", role: .cancel) {}
+            } message: { escolhido in
+                Text(mensagemRestauro(escolhido))
+            }
+            .alert(erroBackup ?? "", isPresented: Binding(presente: $erroBackup)) {
+                Button("OK", role: .cancel) {}
+            }
             .onChange(of: definicoes) { _, novas in
                 novas.guardar()
                 estado.reagendarAvisos()
@@ -168,6 +193,94 @@ struct DefinicoesView: View {
                 let n = Tarefas(contexto: contexto).contarItens(de: lista)
                 Text(n == 1 ? "Apaga também 1 item." : "Apaga também \(n) itens.")
             }
+        }
+    }
+
+
+    // MARK: - Backup (DESIGN.md 7.19)
+
+    private var secaoBackup: some View {
+        Section {
+            LabeledContent {
+                Text(ultimoBackup.map { Formatos.momento($0, agora: .now) } ?? "Nunca")
+            } label: {
+                Label {
+                    Text("Último backup exportado")
+                } icon: {
+                    IconeDefinicao(simbolo: "doc.badge.clock", cor: .teal)
+                }
+            }
+            Button(action: exportarBackup) {
+                Label {
+                    Text("Exportar backup agora")
+                        .foregroundStyle(Color.primary)
+                } icon: {
+                    IconeDefinicao(simbolo: "square.and.arrow.up", cor: .teal)
+                }
+            }
+            Button {
+                escolherBackup = true
+            } label: {
+                Label {
+                    Text("Restaurar de um ficheiro…")
+                        .foregroundStyle(Color.primary)
+                } icon: {
+                    IconeDefinicao(simbolo: "arrow.counterclockwise", cor: .orange)
+                }
+            }
+        } header: {
+            Text("Backup")
+        } footer: {
+            Text("Uma cópia de tudo num ficheiro, para guardares no iCloud Drive, em Ficheiros ou por AirDrop. Restaurar junta os dados por id, sem apagar nada. A cópia contínua vai ser a sincronização com o iCloud.")
+        }
+    }
+
+    private func exportarBackup() {
+        do {
+            let url = try Backups.paraExportar(contexto)
+            PartilhaCSV.mostrarFolha(com: url) { guardado in
+                guard guardado else { return }
+                Backups.marcarExportado()
+                ultimoBackup = Backups.ultimoExportado
+            }
+        } catch {
+            erroBackup = "Não foi possível criar o backup."
+        }
+    }
+
+    private func lerBackup(_ resultado: Result<URL, Error>) {
+        do {
+            let backup = try Backups.ler(resultado.get())
+            let resumo = try Tarefas(contexto: contexto).restaurar(backup, aplicar: false)
+            porRestaurar = PorRestaurar(backup: backup, resumo: resumo)
+        } catch ErroBackup.versaoDesconhecida {
+            erroBackup = "Este backup vem de uma versão mais recente da ToDo. Atualiza a app para o restaurar."
+        } catch {
+            erroBackup = "Este ficheiro não é um backup da ToDo."
+        }
+    }
+
+    private func mensagemRestauro(_ escolhido: PorRestaurar) -> String {
+        let b = escolhido.backup
+        let r = escolhido.resumo
+        let origem = "Backup de \(Formatos.dia(b.criadoEm, agora: .now)), com \(b.listas.count == 1 ? "1 lista" : "\(b.listas.count) listas") e \(b.totalItens == 1 ? "1 ponto" : "\(b.totalItens) pontos")."
+        guard !r.nadaMuda else { return origem + " Já tens tudo o que está nele." }
+        var partes: [String] = []
+        if r.listasNovas > 0 { partes.append(r.listasNovas == 1 ? "1 lista nova" : "\(r.listasNovas) listas novas") }
+        if r.itensNovos > 0 { partes.append(r.itensNovos == 1 ? "1 ponto novo" : "\(r.itensNovos) pontos novos") }
+        if r.itensAtualizados > 0 { partes.append(r.itensAtualizados == 1 ? "1 atualizado" : "\(r.itensAtualizados) atualizados") }
+        return origem + " Entram " + partes.joined(separator: ", ") + ". Nada é apagado."
+    }
+
+    private func restaurar(_ backup: Backup) {
+        do {
+            try Tarefas(contexto: contexto).restaurar(backup)
+            try contexto.save()
+            definicoes = backup.definicoes
+            estado.reagendarAvisos()
+            estado.avisoPartilha = "Backup restaurado."
+        } catch {
+            erroBackup = "Não foi possível restaurar o backup."
         }
     }
 

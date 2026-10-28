@@ -30,7 +30,8 @@ targets:
         # Sem isto o XcodeGen escreve 1.0 e 1 e esconde a versão das definições abaixo.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        LSSupportsOpeningDocumentsInPlace: false
+        # Abre os ficheiros recebidos (.todolista, backups) no sítio, com acesso com âmbito.
+        LSSupportsOpeningDocumentsInPlace: true
         UTExportedTypeDeclarations:
           - UTTypeIdentifier: com.hugo.todo.lista
             UTTypeDescription: Lista ToDo
@@ -48,6 +49,12 @@ targets:
             LSHandlerRank: Owner
             LSItemContentTypes: [com.hugo.todo.lista]
     # O App Group partilha a base de dados e o resumo com o widget (DESIGN.md 7.14).
+    # iCloud (DESIGN.md 7.19), no dia da conta Apple Developer paga, juntar aqui:
+    #   com.apple.developer.icloud-container-identifiers: [iCloud.com.hugo.todo]
+    #   com.apple.developer.icloud-services: [CloudKit]
+    #   aps-environment: production
+    # e, nas propriedades do Info.plist acima, UIBackgroundModes: [remote-notification].
+    # O esquema (EsquemaV6) e o contentor (.automatic) já estão prontos.
     entitlements:
       path: App/ToDo.entitlements
       properties:

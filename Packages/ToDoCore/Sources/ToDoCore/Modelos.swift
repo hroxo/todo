@@ -61,12 +61,14 @@ public enum TipoLista: String, CaseIterable, Codable, Sendable {
     case normal, compras
 }
 
+/// Compatível com o CloudKit (EsquemaV6): sem atributos únicos, tudo com valor por defeito e
+/// as relações para muitos opcionais; `itens` dá sempre uma lista.
 @Model
 public final class Lista {
-    @Attribute(.unique) public var id: UUID
-    public var nome: String
-    public var corRaw: String
-    public var ordem: Int
+    public var id = UUID()
+    public var nome = ""
+    public var corRaw = CorLista.azul.rawValue
+    public var ordem = 0
     /// Nome do SF Symbol. Ignorado quando há `emoji`.
     public var icone: String = "checkmark.circle.fill"
     public var emoji: String?
@@ -80,8 +82,13 @@ public final class Lista {
     public var vaziaDesde: Date?
 
     /// Só os itens principais; os subtópicos pertencem ao item pai.
-    @Relationship(deleteRule: .cascade, inverse: \Item.lista)
-    public var itens: [Item] = []
+    @Relationship(deleteRule: .cascade, originalName: "itens", inverse: \Item.lista)
+    public var itensGuardados: [Item]? = []
+
+    public var itens: [Item] {
+        get { itensGuardados ?? [] }
+        set { itensGuardados = newValue }
+    }
 
     public init(id: UUID = UUID(), nome: String, cor: CorLista, ordem: Int, icone: String = IconesLista.padrao, emoji: String? = nil) {
         self.id = id
@@ -129,17 +136,17 @@ public final class Lista {
 /// (pertence à lista do pai). Só há um nível de subtópicos.
 @Model
 public final class Item {
-    @Attribute(.unique) public var id: UUID
-    public var titulo: String
-    public var tipoRaw: String
-    public var estadoRaw: String
-    public var fixado: Bool
-    public var criadoEm: Date
-    public var ultimaAcaoEm: Date
+    public var id = UUID()
+    public var titulo = ""
+    public var tipoRaw = TipoItem.tarefa.rawValue
+    public var estadoRaw = EstadoItem.ativo.rawValue
+    public var fixado = false
+    public var criadoEm = Date.distantPast
+    public var ultimaAcaoEm = Date.distantPast
     public var expiraEm: Date?
     public var expiradoEm: Date?
     public var concluidoEm: Date?
-    public var ordem: Int
+    public var ordem = 0
     /// Descrição curta do item principal (especificação 4.6). Vazia nos subtópicos.
     public var nota: String?
     /// Evento do calendário de onde veio o item: identificador externo do evento e início
@@ -154,11 +161,21 @@ public final class Item {
     public var lista: Lista?
     public var pai: Item?
 
-    @Relationship(deleteRule: .cascade, inverse: \Item.pai)
-    public var subtopicos: [Item] = []
+    @Relationship(deleteRule: .cascade, originalName: "subtopicos", inverse: \Item.pai)
+    public var subtopicosGuardados: [Item]? = []
 
-    @Relationship(deleteRule: .cascade, inverse: \Foto.item)
-    public var fotos: [Foto] = []
+    @Relationship(deleteRule: .cascade, originalName: "fotos", inverse: \Foto.item)
+    public var fotosGuardadas: [Foto]? = []
+
+    public var subtopicos: [Item] {
+        get { subtopicosGuardados ?? [] }
+        set { subtopicosGuardados = newValue }
+    }
+
+    public var fotos: [Foto] {
+        get { fotosGuardadas ?? [] }
+        set { fotosGuardadas = newValue }
+    }
 
     public init(id: UUID = UUID(), titulo: String, tipo: TipoItem, criadoEm: Date, ordem: Int) {
         self.id = id
@@ -222,10 +239,10 @@ public final class Item {
 /// Foto anexada a um item, em JPEG reduzido, guardada fora da base de dados.
 @Model
 public final class Foto {
-    @Attribute(.unique) public var id: UUID
-    @Attribute(.externalStorage) public var dados: Data
-    public var ordem: Int
-    public var criadaEm: Date
+    public var id = UUID()
+    @Attribute(.externalStorage) public var dados = Data()
+    public var ordem = 0
+    public var criadaEm = Date.distantPast
     public var item: Item?
 
     public init(id: UUID = UUID(), dados: Data, ordem: Int, criadaEm: Date) {

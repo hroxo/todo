@@ -344,6 +344,18 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - A captura numa lista de compras escolhe a loja e aceita vários artigos seguidos.
 - No menu "…": "Partilhar por AirDrop" envia um ficheiro `.todolista`. Abri-lo no outro iPhone cria a lista ou junta as duas cópias (por id, ganha a alteração mais recente). O tempo real vem depois, com o serviço escolhido.
 
+### 7.19 Backup e iCloud [Decidido 28/10/2026]
+
+- **A cópia contínua é o iCloud:** a base de dados sincroniza sozinha com o iCloud privado da pessoa (SwiftData com CloudKit), sobrevive a apagar a app e passa para um iPhone novo. Precisa da conta Apple Developer paga.
+  - **Pronto já:** o esquema V6, sem atributos únicos, com valores por defeito e relações opcionais, como o CloudKit exige, e o contentor em `.automatic`, que não sincroniza sem as entitlements.
+  - **No dia da conta:** juntar as entitlements do iCloud e do CloudKit (comentadas no `project.yml`) e testar com dois aparelhos.
+- **Cópia manual em JSON** (`Backup`, Definições › Backup):
+  - **Exportar:** tudo (listas, itens, subtópicos, fotos e definições) para onde a pessoa quiser: iCloud Drive, Ficheiros ou AirDrop.
+  - **Restaurar:** de um ficheiro, com um resumo antes de confirmar ("Entram 1 lista nova, 4 pontos novos… Nada é apagado"). Junta por id, e numa instalação nova junta as listas pelo nome. Ganha a alteração mais recente.
+  - Serve para mudar de instalação sem perder nada, por exemplo antes de reinstalar com a conta paga.
+- Não há backup automático semanal: no iPhone, ia-se com a app; com o iCloud, deixa de ser preciso.
+- As **listas de compras partilhadas ao vivo** precisam da partilha do CloudKit (`CKShare`), que o SwiftData ainda não faz sozinho: é trabalho à parte.
+
 ### 7.18 Ecrãs vazios com a Ampulheta [Decidido 28/10/2026]
 
 - Os ecrãs vazios usam a mesma mascote do widget (`EstadoVazio`), que flutua devagar como quem respira (fica parada com "Reduzir movimento"):
