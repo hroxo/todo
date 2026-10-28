@@ -10,6 +10,8 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public var horaNotificacao = 9
     public var minutoNotificacao = 0
     public var avisosAtivos = true
+    /// Textos e sugestões escritos pelo modelo da Apple no iPhone (DESIGN.md 7.16).
+    public var inteligenciaAtiva = true
 
     public init() {}
 
@@ -25,6 +27,7 @@ public struct Definicoes: Codable, Equatable, Sendable {
         horaNotificacao = try c.decodeIfPresent(Int.self, forKey: .horaNotificacao) ?? base.horaNotificacao
         minutoNotificacao = try c.decodeIfPresent(Int.self, forKey: .minutoNotificacao) ?? base.minutoNotificacao
         avisosAtivos = try c.decodeIfPresent(Bool.self, forKey: .avisosAtivos) ?? base.avisosAtivos
+        inteligenciaAtiva = try c.decodeIfPresent(Bool.self, forKey: .inteligenciaAtiva) ?? base.inteligenciaAtiva
     }
 
     private static let chave = "definicoes"

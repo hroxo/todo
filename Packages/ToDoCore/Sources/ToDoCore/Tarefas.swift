@@ -16,6 +16,11 @@ public struct Aviso: Equatable, Sendable {
     public let itemId: UUID
     public let titulo: String
     public let data: Date
+    /// O resto serve para o texto da notificação (DESIGN.md 7.16).
+    public var lista: String?
+    public var expiraEm: Date
+    public var subtopicosPorFazer = 0
+    public var ultimaAcaoEm: Date
 }
 
 /// Estado de um item antes de ser concluído, para o poder anular.
@@ -379,7 +384,15 @@ public final class Tarefas {
             guard item.estado == .ativo, !item.fixado, let limite = item.expiraEm else { return nil }
             let data = horaDoAviso(paraExpiracaoEm: limite)
             guard data > agora, data < limite else { return nil }
-            return Aviso(itemId: item.id, titulo: item.titulo, data: data)
+            return Aviso(
+                itemId: item.id,
+                titulo: item.titulo,
+                data: data,
+                lista: item.lista?.nome,
+                expiraEm: limite,
+                subtopicosPorFazer: item.subtopicos.count - item.subtopicosFeitos,
+                ultimaAcaoEm: item.ultimaAcaoEm
+            )
         }
         return Array(avisos.sorted { $0.data < $1.data }.prefix(Self.maxAvisos))
     }

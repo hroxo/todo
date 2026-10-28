@@ -89,6 +89,25 @@ struct DefinicoesView: View {
                     Text("Avisa 24 horas antes de um item expirar. À noite, o aviso passa para esta hora.")
                 }
 
+                Section {
+                    Toggle(isOn: $definicoes.inteligenciaAtiva) {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Avisos inteligentes")
+                                Text(Inteligencia.estado)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            IconeDefinicao(simbolo: "sparkles", cor: .indigo)
+                        }
+                    }
+                } header: {
+                    Text("Inteligência")
+                } footer: {
+                    Text("O modelo da Apple escreve o texto de cada aviso a partir do que tens na app. Corre só no iPhone: nada sai do telemóvel. Sem Apple Intelligence, os avisos usam um texto simples.")
+                }
+
                 Section("Aparência") {
                     Picker("Aparência", selection: $aparencia) {
                         ForEach(Aparencia.allCases) { opcao in

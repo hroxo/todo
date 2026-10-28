@@ -171,7 +171,40 @@ final class ExpiracaoTests: BaseTestes {
 
         let avisos = try tarefas.planoAvisos()
 
-        XCTAssertEqual(avisos, [Aviso(itemId: item.id, titulo: "Preparar demo", data: data(2026, 10, 23, 15, 30))])
+        XCTAssertEqual(avisos, [Aviso(
+            itemId: item.id,
+            titulo: "Preparar demo",
+            data: data(2026, 10, 23, 15, 30),
+            lista: lista.nome,
+            expiraEm: data(2026, 10, 24, 15, 30),
+            subtopicosPorFazer: 0,
+            ultimaAcaoEm: data(2026, 10, 21, 15, 30)
+        )])
+    }
+
+    // MARK: - Texto das notificações
+
+    func testTextoDoAvisoDizQuandoExpiraEOQueFalta() throws {
+        relogio.agora = data(2026, 10, 21, 15, 30)
+        let item = try tarefas.criarItem(titulo: "Preparar demo", em: lista)
+        try tarefas.adicionarSubtopico(titulo: "Slides", a: item)
+        try tarefas.adicionarSubtopico(titulo: "Ensaio", a: item)
+        let aviso = try XCTUnwrap(tarefas.planoAvisos().first)
+
+        let texto = TextoAviso.corpo(aviso, calendario: calendario)
+
+        XCTAssertEqual(texto, "Expira amanhã às 15:30 · 2 subtópicos por fazer")
+    }
+
+    func testTextoDoAvisoLembraHaQuantoTempoNaoSeMexe() throws {
+        relogio.agora = data(2026, 10, 21, 10, 0)
+        let item = try tarefas.criarItem(titulo: "Responder ao fornecedor", em: lista)
+        tarefas.manter(item, longo: false)
+        let aviso = try XCTUnwrap(tarefas.planoAvisos().first)
+
+        let texto = TextoAviso.corpo(aviso, calendario: calendario)
+
+        XCTAssertEqual(texto, "Expira amanhã às 10:00 · sem mexer há 4 dias")
     }
 
     func testAvisoNaNoitePassaParaAsNoveDoDiaSeguinte() throws {

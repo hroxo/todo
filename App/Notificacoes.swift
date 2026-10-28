@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import ToDoCore
+import UIKit
 import UserNotifications
 
 /// Notificações locais (especificação 6): um aviso 24 horas antes de cada item expirar, com
@@ -32,26 +33,67 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
+    /// Textos já escritos pelo modelo, para não os pedir outra vez enquanto o aviso não muda.
+    private var escritos: [String: String] = [:]
+    private var escrita: Task<Void, Never>?
+
+    /// Avisos escritos pelo modelo em cada reagendamento: os mais próximos, que são os que
+    /// importam e cabem no tempo que o iOS dá em segundo plano.
+    private static let maxEscritos = 12
+
     /// Substitui todos os avisos pendentes pelos mais próximos (o iOS guarda no máximo 64).
+    /// Agenda logo com o texto de base; se o modelo do iPhone estiver disponível, reescreve
+    /// os mais próximos e substitui-os (o mesmo identificador troca o pedido).
     func reagendar() {
         registarCategoria()
+        let definicoes = Definicoes.carregar()
         let avisos = (try? Tarefas(contexto: ModelContext(contentor)).planoAvisos()) ?? []
         let centro = UNUserNotificationCenter.current()
         centro.removeAllPendingNotificationRequests()
+        let inteligente = definicoes.inteligenciaAtiva
         for aviso in avisos {
-            let conteudo = UNMutableNotificationContent()
-            conteudo.title = aviso.titulo
-            conteudo.body = "Manter?"
-            conteudo.sound = .default
-            conteudo.categoryIdentifier = Self.categoria
-            let quando = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: aviso.data)
-            let pedido = UNNotificationRequest(
-                identifier: aviso.itemId.uuidString,
-                content: conteudo,
-                trigger: UNCalendarNotificationTrigger(dateMatching: quando, repeats: false)
-            )
-            centro.add(pedido)
+            agendar(aviso, corpo: (inteligente ? escritos[Self.chave(aviso)] : nil) ?? TextoAviso.corpo(aviso))
         }
+
+        escrita?.cancel()
+        guard inteligente, Inteligencia.disponivel else { return }
+        let porEscrever = avisos.prefix(Self.maxEscritos).filter { escritos[Self.chave($0)] == nil }
+        guard !porEscrever.isEmpty else { return }
+        escrita = Task { @MainActor in
+            let tarefa = UIApplication.shared.beginBackgroundTask()
+            defer { UIApplication.shared.endBackgroundTask(tarefa) }
+            for aviso in porEscrever {
+                guard !Task.isCancelled else { return }
+                guard let corpo = await Inteligencia.corpoAviso(aviso, base: TextoAviso.corpo(aviso)) else { continue }
+                escritos[Self.chave(aviso)] = corpo
+                agendar(aviso, corpo: corpo)
+            }
+        }
+    }
+
+    /// Título = item, subtítulo = lista, corpo = uma linha com contexto (DESIGN.md 7.16).
+    private func agendar(_ aviso: Aviso, corpo: String) {
+        let conteudo = UNMutableNotificationContent()
+        conteudo.title = aviso.titulo
+        if let lista = aviso.lista {
+            conteudo.subtitle = lista
+            conteudo.threadIdentifier = lista
+        }
+        conteudo.body = corpo
+        conteudo.sound = .default
+        conteudo.categoryIdentifier = Self.categoria
+        let quando = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: aviso.data)
+        let pedido = UNNotificationRequest(
+            identifier: aviso.itemId.uuidString,
+            content: conteudo,
+            trigger: UNCalendarNotificationTrigger(dateMatching: quando, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(pedido)
+    }
+
+    /// Muda quando muda alguma coisa que o texto diz.
+    private static func chave(_ aviso: Aviso) -> String {
+        "\(aviso.itemId)|\(aviso.data.timeIntervalSince1970)|\(aviso.expiraEm.timeIntervalSince1970)|\(aviso.subtopicosPorFazer)|\(aviso.lista ?? "")"
     }
 
     private func registarCategoria() {
