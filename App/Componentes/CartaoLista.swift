@@ -11,50 +11,68 @@ struct CartaoLista: View {
     var body: some View {
         let cor = lista.cor
         let ativos = lista.itensAtivos.count
-        let aExpirar = !lista.expiramHoje(agora: agora).isEmpty
+        let hoje = lista.expiramHoje(agora: agora).count
+        let aExpirar = hoje > 0
 
+        // Estilo Fitness: o nome por cima e o número grande e arredondado em baixo.
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top) {
-                IconeListaView(lista: lista, tamanho: 40, fundo: cor.ficha)
-                    .overlay(alignment: .bottomTrailing) {
-                        if aExpirar { sinalExpira }
-                    }
+                IconeListaView(lista: lista, tamanho: 36, fundo: cor.ficha)
                 Spacer()
                 AnelExpiracao(
                     fracao: lista.frescura(agora: agora),
                     cor: cor.texto,
-                    tamanho: 36,
-                    espessura: 6,
+                    tamanho: 40,
+                    espessura: 7,
                     trilho: cor.ficha
                 )
             }
-            Spacer(minLength: Espaco.grelha)
+            Spacer(minLength: 0)
             Text(lista.nome)
-                .font(.headline.bold())
-                .lineLimit(2)
-            Text(ativos == 1 ? "1 ativo" : "\(ativos) ativos")
-                .font(.footnote.weight(.semibold))
+                .font(.subheadline.weight(.bold))
+                .lineLimit(1)
+                .opacity(0.9)
+            HStack(alignment: .firstTextBaseline, spacing: Espaco.fino) {
+                Text("\(ativos)")
+                    .font(.system(size: altura > 140 ? 40 : 34, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                Text(ativos == 1 ? "ativo" : "ativos")
+                    .font(.footnote.weight(.semibold))
+                    .opacity(0.8)
+            }
         }
         .foregroundStyle(cor.texto)
         .padding(Espaco.grelha)
         .frame(maxWidth: .infinity, minHeight: altura, alignment: .leading)
+        .overlay(alignment: .bottomTrailing) {
+            if aExpirar {
+                fichaHoje(hoje).padding(Espaco.grelha)
+            }
+        }
         .background(cor.base, in: .rect(cornerRadius: 22, style: .continuous))
         .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "\(lista.nome), \(ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos")"
-                + (aExpirar ? ", com itens a expirar hoje" : "")
+                + (aExpirar ? ", \(hoje == 1 ? "1 expira" : "\(hoje) expiram") hoje" : "")
         )
         .accessibilityAddTraits(.isButton)
     }
 
-    /// Sinal discreto no canto do círculo do ícone: há itens a expirar hoje.
-    private var sinalExpira: some View {
-        Image(systemName: "exclamationmark.triangle.fill")
-            .font(.system(size: 9, weight: .bold))
-            .foregroundStyle(CoresEstado.expira)
-            .frame(width: 16, height: 16)
-            .background(.white, in: .circle)
+    /// Quantos itens expiram hoje, numa ficha branca com o laranja de "a expirar".
+    private func fichaHoje(_ total: Int) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: "clock.fill")
+            Text("\(total) hoje")
+        }
+        .font(.caption2.weight(.bold))
+        .foregroundStyle(CoresEstado.expiraTinta)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
+        .lineLimit(1)
+        .fixedSize()
+        .background(.white, in: .capsule)
     }
 }
 

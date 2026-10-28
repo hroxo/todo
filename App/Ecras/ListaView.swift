@@ -241,7 +241,8 @@ struct ListaView: View {
         }
         .padding(.horizontal, Espaco.margem)
         .frame(minHeight: 52)
-        .glassEffect(.regular, in: .capsule)
+        .background(Color(.secondarySystemGroupedBackground), in: .capsule)
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
         .padding(.horizontal, Espaco.margem)
         .padding(.bottom, Espaco.curto)
     }

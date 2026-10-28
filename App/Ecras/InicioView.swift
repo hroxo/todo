@@ -197,8 +197,7 @@ struct InicioView: View {
                     .font(.headline)
                     .frame(width: 32, height: 32)
             }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
+            .buttonStyle(SetaPagina())
             .disabled(pagina == 0)
             .accessibilityLabel("Espaços anteriores")
 
@@ -228,12 +227,25 @@ struct InicioView: View {
                     .font(.headline)
                     .frame(width: 32, height: 32)
             }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
+            .buttonStyle(SetaPagina())
             .disabled(pagina >= total - 1)
             .accessibilityLabel("Espaços seguintes")
         }
         .sensoryFeedback(.selection, trigger: pagina)
+    }
+
+    /// Setas sólidas: o vidro fica só na barra de baixo e nos botões dos cantos (DESIGN.md 1.2).
+    private struct SetaPagina: ButtonStyle {
+        @Environment(\.isEnabled) private var ativa
+
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.label
+                .foregroundStyle(ativa ? Color.primary : Color(.systemGray3))
+                .frame(width: 44, height: 44)
+                .background(Color(.secondarySystemGroupedBackground), in: .circle)
+                .scaleEffect(configuration.isPressed ? 0.92 : 1)
+                .animation(.snappy, value: configuration.isPressed)
+        }
     }
 
     private var avisoExpirados: some View {
