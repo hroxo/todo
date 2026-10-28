@@ -362,22 +362,17 @@ struct Ampulheta: View {
         }
     }
 
-    /// Olhos fechados com pestanas, no bolbo da esquerda da ampulheta deitada.
+    /// Olhos fechados, no bolbo da esquerda da ampulheta deitada: dois arcos largos e suaves,
+    /// sem pestanas (pequenas, pareciam sobrancelhas franzidas), e a boca num "o" pequenino.
     private func desenharRostoDeitado(em c: inout GraphicsContext) {
-        bochechas(em: &c, centros: [CGPoint(x: 23, y: 57), CGPoint(x: 51, y: 57)])
+        bochechas(em: &c, centros: [CGPoint(x: 22, y: 57), CGPoint(x: 48, y: 57)])
         for x in [27.0, 43.0] {
             var palpebra = Path()
-            palpebra.move(to: CGPoint(x: x - 5, y: 48))
-            palpebra.addQuadCurve(to: CGPoint(x: x + 5, y: 48), control: CGPoint(x: x, y: 52))
-            c.stroke(palpebra, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
-            var pestanas = Path()
-            for (dx, inclinacao) in [(-4.0, -2.0), (0.0, 0.0), (4.0, 2.0)] {
-                pestanas.move(to: CGPoint(x: x + dx, y: 50.5))
-                pestanas.addLine(to: CGPoint(x: x + dx + inclinacao, y: 53.5))
-            }
-            c.stroke(pestanas, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
+            palpebra.move(to: CGPoint(x: x - 5.5, y: 47))
+            palpebra.addQuadCurve(to: CGPoint(x: x + 5.5, y: 47), control: CGPoint(x: x, y: 53))
+            c.stroke(palpebra, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
         }
-        c.fill(Path(ellipseIn: CGRect(x: 32.6, y: 57.4, width: 4.8, height: 3.6)), with: .color(Self.escuro))
+        c.fill(Path(ellipseIn: CGRect(x: 32.6, y: 57.4, width: 4.8, height: 3.8)), with: .color(Self.escuro))
         let lilas = Color(red: 0.69, green: 0.66, blue: 0.93)
         c.draw(Text("z").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 100, y: 16))
         c.draw(Text("z").font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 110, y: 7))
