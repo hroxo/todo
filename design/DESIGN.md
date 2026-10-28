@@ -306,7 +306,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 ### 7.15 Listas de compras partilhadas [Decidido 28/10/2026 · Proposta: forma]
 
 - Tipo de lista **Compras**: secções por loja (Continente, IKEA…) com "3 de 8". Tocar risca o artigo. Não tem anel nem prazo, porque os artigos não expiram.
-- No topo, as fichas de quem partilha: "Ana · Continente", e "Tu · IKEA" com um seletor de loja. É a presença por loja, sem mapa.
+- **Presença automática, como os avatares do Figma:** a cara (ou as iniciais) de cada pessoa aparece no cabeçalho da loja que ela tem aberta no ecrã naquele momento. Não diz onde a pessoa está fisicamente e ninguém escolhe nada: abrir a vista do IKEA põe lá a tua cara. Se ninguém mexer, a presença desaparece ao fim de uns minutos. [Decidido 28/10/2026]
+- A foto do Apple ID não está acessível às apps. A cara é uma foto escolhida na app (PhotosPicker) ou as iniciais na cor da pessoa.
 - A captura numa lista de compras escolhe a loja e aceita vários artigos seguidos.
 - No menu "…": "Partilhar por AirDrop" envia um ficheiro `.todolista`. Abri-lo no outro iPhone cria a lista ou junta as duas cópias (por id, ganha a alteração mais recente). O tempo real vem depois, com o serviço escolhido.
 
