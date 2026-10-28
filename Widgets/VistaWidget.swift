@@ -15,11 +15,25 @@ struct VistaPontos: View {
 
     @Environment(\.widgetRenderingMode) private var modo
 
+    /// A pose da Ampulheta quando não há pontos: "tudo em dia" só quando a app disse que não
+    /// há nenhum ponto ativo.
+    static func pose(_ resumo: ResumoWidget?, _ data: Date) -> PoseMascote {
+        .para(data, tudoEmDia: resumo?.totalAtivos == 0)
+    }
+
     var body: some View {
+        if let pontos = resumo?.pontos, !pontos.isEmpty {
+            comPontos
+        } else {
+            VistaVazia(pose: Self.pose(resumo, data), semDados: resumo == nil)
+        }
+    }
+
+    private var comPontos: some View {
         let hoje = resumo?.expiramHoje ?? 0
         let numero = hoje > 0 ? hoje : (resumo?.totalAtivos ?? 0)
         let legenda = hoje > 0 ? (hoje == 1 ? "expira hoje" : "expiram hoje") : (numero == 1 ? "ponto ativo" : "pontos ativos")
-        HStack(alignment: .top, spacing: 14) {
+        return HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(numero)")
                     .font(.system(size: 44, weight: .bold, design: .rounded))
@@ -39,16 +53,10 @@ struct VistaPontos: View {
             .frame(width: 104, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 8) {
-                if let pontos = resumo?.pontos, !pontos.isEmpty {
-                    ForEach(pontos) { ponto in
-                        linha(ponto)
-                            .id(ponto.id)
-                            .transition(.push(from: .bottom))
-                    }
-                } else {
-                    Text("Nada a pedir atenção.")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(.secondary)
+                ForEach(resumo?.pontos ?? []) { ponto in
+                    linha(ponto)
+                        .id(ponto.id)
+                        .transition(.push(from: .bottom))
                 }
                 Spacer(minLength: 0)
             }
@@ -94,17 +102,63 @@ struct VistaPontos: View {
     }
 }
 
-/// Fundo do widget médio: a cor de fundo da lista do primeiro ponto, a desvanecer.
-struct FundoPontos: View {
-    let resumo: ResumoWidget?
+/// O widget sem pontos: a Ampulheta numa pose do dia, com o título e uma linha por baixo, e
+/// o "+ Nova nota" no canto. Sem dados da app (sem App Group), convida a abri-la.
+struct VistaVazia: View {
+    let pose: PoseMascote
+    var semDados = false
 
     var body: some View {
-        let cor = resumo?.pontos.first.map { CorLista.deChave($0.cor) }
-        LinearGradient(
-            colors: [cor?.fundo ?? Color(.secondarySystemBackground), Color(.systemBackground)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        let claro = pose.cenarioEscuro
+        HStack(spacing: 14) {
+            Ampulheta(pose: pose)
+                .frame(width: pose == .dormir ? 118 : 92, height: 118)
+                .id(pose)
+                .transition(.scale(scale: 0.7).combined(with: .opacity))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(pose.titulo)
+                    .font(.system(.title3, design: .rounded).weight(.bold))
+                Text(semDados && pose != .dormir ? "Toca para abrir a ToDo." : pose.subtitulo)
+                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                    .opacity(0.8)
+                    .lineLimit(2)
+            }
+            .foregroundStyle(claro ? Color.white : Color(red: 0.05, green: 0.27, blue: 0.49))
+            .contentTransition(.opacity)
+            // Espaço para o "+ Nova nota" no canto, para o texto nunca lhe tocar.
+            .padding(.bottom, 28)
+            Spacer(minLength: 0)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Link(destination: urlCaptura) {
+                Label("Nova nota", systemImage: "plus")
+                    .font(.system(.caption, design: .rounded).weight(.bold))
+                    .foregroundStyle(claro ? Color.white : Color(red: 0.05, green: 0.27, blue: 0.49))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(.white.opacity(claro ? 0.18 : 0.85)))
+            }
+            .accessibilityLabel("Nova nota")
+        }
+    }
+}
+
+/// Fundo do widget médio: com pontos, a cor de fundo da lista do primeiro, a desvanecer; sem
+/// pontos, o cenário da pose da Ampulheta.
+struct FundoPontos: View {
+    let resumo: ResumoWidget?
+    var data: Date = .now
+
+    var body: some View {
+        if let primeiro = resumo?.pontos.first {
+            LinearGradient(
+                colors: [CorLista.deChave(primeiro.cor).fundo, Color(.systemBackground)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            CenarioMascote(pose: VistaPontos.pose(resumo, data))
+        }
     }
 }
 

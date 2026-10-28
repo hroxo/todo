@@ -14,6 +14,15 @@ struct DemoWidgetsView: View {
                     cartao(VistaPontos(resumo: resumo, data: .now))
                         .environment(\.colorScheme, esquema)
                 }
+                // Sem pontos: a Ampulheta nas quatro poses, com o cenário de cada uma.
+                ForEach(PoseMascote.allCases, id: \.self) { pose in
+                    VistaVazia(pose: pose)
+                        .padding(16)
+                        .frame(width: 364, height: 170)
+                        .background(CenarioMascote(pose: pose))
+                        .clipShape(.rect(cornerRadius: 24, style: .continuous))
+                        .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
+                }
                 ecraBloqueado
             }
             .padding(.vertical, 20)

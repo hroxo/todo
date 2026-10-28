@@ -307,6 +307,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - No canto, o "+" abre a captura (`todo://captura`).
   - Fundo em gradiente da cor de fundo da lista do primeiro ponto para o fundo do sistema.
   - Uma entrada por hora, para os anéis esvaziarem com animação; os pontos trocam com `push` de baixo.
+- **Sem pontos, a mascote [Decidido 28/10/2026]:** a **Ampulheta** (`Widgets/Mascote.swift`), com olhos escuros brilhantes de um só reflexo (sem branco, contorno nem sobrancelhas, para não ficar cartoon), bochechas coradas e tampas de madeira. Tem 4 poses, cada uma com o seu cenário em vez de fundo liso. A areia conta o dia:
+  - **manhã:** acena, com a areia quase toda em cima, em céu quente com sol;
+  - **tarde:** vê a areia cair, em céu com nuvens;
+  - **tudo em dia:** braços no ar e areia toda em baixo, em verde com confettis;
+  - **noite (23h–7h):** deitada a dormir, porque o tempo pára enquanto dormes, com lua e estrelas.
+
+  Ao lado, um título e uma linha ("Bom dia! / Nada pendente por agora."), e "+ Nova nota" no canto. O widget não toca animações contínuas: tem uma entrada da timeline de 20 em 20 minutos, a pose muda e o WidgetKit anima a troca.
 - **Ecrã bloqueado:** um "+" circular e um retangular "Nova nota · 1 ponto expira hoje", e o controlo **Nova nota** (botões do ecrã bloqueado, Centro de Controlo, Action Button). Todos abrem a captura.
 - **Dados:** a app grava `resumo-widget.json` no App Group `group.com.hugo.todo` sempre que algo muda (`Notificacoes.atualizarWidget`). A base de dados também passa para o grupo, para o widget poder concluir. Demonstração: `-ecra widget`.
 - Seguintes: o pequeno (um ponto, anel grande) e o grande.

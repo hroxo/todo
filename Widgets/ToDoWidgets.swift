@@ -28,13 +28,16 @@ struct FornecedorResumo: TimelineProvider {
         completion(EntradaResumo(date: .now, resumo: resumo ?? .exemplo()))
     }
 
-    /// Uma entrada por hora durante 6 horas, para os anéis irem esvaziando; a app pede um
+    /// Uma entrada de 20 em 20 minutos durante 6 horas, alinhadas aos blocos da Ampulheta:
+    /// os anéis vão esvaziando e, sem pontos, a mascote muda de pose. A app pede um
     /// recarregamento sempre que os pontos mudam.
     func getTimeline(in context: Context, completion: @escaping (Timeline<EntradaResumo>) -> Void) {
         let resumo = lerResumo()
         let agora = Date.now
-        let entradas = (0..<6).map { hora in
-            EntradaResumo(date: agora.addingTimeInterval(Double(hora) * 3600), resumo: resumo)
+        let bloco: TimeInterval = 20 * 60
+        let proximo = (agora.timeIntervalSinceReferenceDate / bloco).rounded(.up) * bloco
+        let entradas = [EntradaResumo(date: agora, resumo: resumo)] + (0..<18).map { i in
+            EntradaResumo(date: Date(timeIntervalSinceReferenceDate: proximo + Double(i) * bloco), resumo: resumo)
         }
         completion(Timeline(entries: entradas, policy: .after(agora.addingTimeInterval(6 * 3600))))
     }
@@ -49,7 +52,7 @@ struct WidgetPontos: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "com.hugo.todo.pontos", provider: FornecedorResumo()) { entrada in
             VistaPontos(resumo: entrada.resumo, data: entrada.date)
-                .containerBackground(for: .widget) { FundoPontos(resumo: entrada.resumo) }
+                .containerBackground(for: .widget) { FundoPontos(resumo: entrada.resumo, data: entrada.date) }
         }
         .configurationDisplayName("O que importa agora")
         .description("Os pontos que precisam de ti, com o anel do prazo. Toca no círculo para concluir.")

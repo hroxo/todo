@@ -20,6 +20,7 @@ targets:
       # A vista do widget médio também se mostra no ecrã de demonstração, e os intents têm
       # de estar na app (o Nova nota abre-a).
       - Widgets/VistaWidget.swift
+      - Widgets/Mascote.swift
       - Widgets/Intents.swift
     # Juntam-se às chaves geradas (GENERATE_INFOPLIST_FILE): o tipo de ficheiro das listas
     # partilhadas por AirDrop (DESIGN.md 7.15), que a app exporta e abre.
