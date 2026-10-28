@@ -336,7 +336,9 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Botões interativos: Concluir e Manter +5.
 - Técnica: extensão WidgetKit e App Group `group.com.hugo.todo` para partilhar a base de dados. Validar primeiro com um widget mínimo que o sideload gratuito aceita a extensão e o App Group.
 
-### 7.15 Listas de compras partilhadas [Decidido 28/10/2026 · Proposta: forma]
+### 7.15 Vistas partilhadas [Decidido 28/10/2026 · Proposta: forma]
+
+- **Nome [Decidido 28/10/2026]:** "Vista partilhada", e não "Compras", que era demasiado nicho. Organiza-se por **secções** (uma loja, uma divisão da casa, um dia da viagem) com pontos que se riscam: "por fazer" e "feitos". No código e nos dados, o tipo continua a chamar-se `compras`.
 
 - Tipo de lista **Compras**: secções por loja (Continente, IKEA…) com "3 de 8". Tocar risca o artigo. Não tem anel nem prazo, porque os artigos não expiram.
 - **Presença automática, como os avatares do Figma:** a cara (ou as iniciais) de cada pessoa aparece no cabeçalho da loja que ela tem aberta no ecrã naquele momento. Não diz onde a pessoa está fisicamente e ninguém escolhe nada: abrir a vista do IKEA põe lá a tua cara. Se ninguém mexer, a presença desaparece ao fim de uns minutos. [Decidido 28/10/2026]

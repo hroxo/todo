@@ -24,7 +24,7 @@ struct CartaoLista: View {
         let diasParaSair = saida.map { max(0, Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: agora), to: Calendar.current.startOfDay(for: $0)).day ?? 0) }
         let numero = diasParaSair ?? ativos
         let legenda = diasParaSair.map { $0 == 0 ? "sai hoje" : ($0 == 1 ? "dia para sair" : "dias para sair") }
-            ?? (lista.ehCompras ? "por comprar" : (ativos == 1 ? "ativo" : "ativos"))
+            ?? (lista.ehCompras ? "por fazer" : (ativos == 1 ? "ativo" : "ativos"))
         let hoje = lista.expiramHoje(agora: agora).count
         let aExpirar = hoje > 0
 
@@ -68,7 +68,7 @@ struct CartaoLista: View {
         .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(lista.nome), " + (lista.ehCompras ? "\(ativos) por comprar" : (ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos"))
+            "\(lista.nome), " + (lista.ehCompras ? "\(ativos) por fazer" : (ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos"))
                 + (aExpirar ? ", \(hoje == 1 ? "1 expira" : "\(hoje) expiram") hoje" : "")
                 + (saida.map { ", vazia, \(SaidaLista.texto($0, agora: agora).lowercased())" } ?? "")
         )

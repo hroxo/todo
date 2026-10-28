@@ -2,8 +2,9 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Uma lista de compras (DESIGN.md 7.15): uma secção por loja com "3 de 8", artigos que se
-/// riscam com um toque (os riscados descem para o fim da loja) e, no fundo, "Nova loja".
+/// Uma vista partilhada (DESIGN.md 7.15): uma secção por grupo (uma loja, uma divisão, um dia)
+/// com "3 de 8", pontos que se riscam com um toque (os riscados descem para o fim da secção)
+/// e, no fundo, "Nova secção".
 /// Nada expira. O menu "…" partilha a lista por AirDrop.
 struct ComprasView: View {
     let lista: Lista
@@ -34,7 +35,7 @@ struct ComprasView: View {
                     ForEach(artigos(de: loja)) { artigo in
                         linha(artigo, cor: cor)
                     }
-                    CampoNovo(placeholder: "Adicionar em \(loja.titulo)", cor: cor.tinta) { titulo in
+                    CampoNovo(placeholder: "Adicionar a \(loja.titulo)", cor: cor.tinta) { titulo in
                         withAnimation { _ = try? tarefas.adicionarSubtopico(titulo: titulo, a: loja) }
                     }
                 } header: {
@@ -43,11 +44,11 @@ struct ComprasView: View {
             }
 
             Section {
-                CampoNovo(placeholder: lojas.isEmpty ? "Primeira loja (ex.: Continente)" : "Nova loja", cor: cor.tinta) { nome in
+                CampoNovo(placeholder: lojas.isEmpty ? "Primeira secção (ex.: Continente)" : "Nova secção", cor: cor.tinta) { nome in
                     withAnimation { _ = try? tarefas.criarItem(titulo: nome, em: lista) }
                 }
             } footer: {
-                Text("Cada loja junta os artigos a comprar lá. Toca num artigo para o riscar.")
+                Text("Uma vista partilhada organiza-se por secções (uma loja, uma divisão da casa, um dia da viagem). Toca num ponto para o riscar.")
             }
         }
         .listStyle(.insetGrouped)
@@ -91,7 +92,7 @@ struct ComprasView: View {
         .sheet(isPresented: $personalizar) {
             PersonalizarListaView(modo: .editar(lista))
         }
-        .alert("Nome da loja", isPresented: Binding(presente: $lojaARenomear)) {
+        .alert("Nome da secção", isPresented: Binding(presente: $lojaARenomear)) {
             TextField("Nome", text: $novoNome)
             Button("Cancelar", role: .cancel) {}
             Button("OK") {
@@ -110,7 +111,7 @@ struct ComprasView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { tarefas.apagar(lista) }
             }
         } message: {
-            Text("Apaga todas as lojas e artigos. Esta ação não pode ser desfeita.")
+            Text("Apaga todas as secções e pontos. Esta ação não pode ser desfeita.")
         }
     }
 
@@ -132,7 +133,7 @@ struct ComprasView: View {
                     .foregroundStyle(lista.cor.tinta)
                     .lineLimit(2)
                     .accessibilityAddTraits(.isHeader)
-                Text(total == 0 ? "Sem artigos" : "\(total - feitos) por comprar · \(feitos) no carrinho")
+                Text(total == 0 ? "Sem pontos" : "\(total - feitos) por fazer · \(feitos) \(feitos == 1 ? "feito" : "feitos")")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(lista.cor.tinta.opacity(0.8))
                     .contentTransition(.numericText())
@@ -167,7 +168,7 @@ struct ComprasView: View {
                 Button(role: .destructive) {
                     withAnimation { tarefas.apagar(loja) }
                 } label: {
-                    Label("Apagar loja", systemImage: "trash")
+                    Label("Apagar secção", systemImage: "trash")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -200,7 +201,7 @@ struct ComprasView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityValue(feito ? "No carrinho" : "Por comprar")
+        .accessibilityValue(feito ? "Feito" : "Por fazer")
     }
 
     private func alternar(_ artigo: Item) {

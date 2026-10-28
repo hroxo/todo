@@ -39,12 +39,12 @@ struct PersonalizarListaView: View {
                     if case .nova = modo {
                         Picker("Tipo de lista", selection: $tipo) {
                             Label("Lista", systemImage: "checklist").tag(TipoLista.normal)
-                            Label("Compras", systemImage: "cart").tag(TipoLista.compras)
+                            Label("Vista partilhada", systemImage: "person.2").tag(TipoLista.compras)
                         }
                         .pickerStyle(.segmented)
                         .onChange(of: tipo) { _, novo in
                             if emoji == nil {
-                                icone = novo == .compras ? "cart.fill" : IconesLista.padrao
+                                icone = novo == .compras ? "person.2.fill" : IconesLista.padrao
                             }
                         }
                     }
