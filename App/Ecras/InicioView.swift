@@ -2,14 +2,14 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Ecrã Início (mocks 1 e 11): data, avisos (Expirados e "expiram hoje"), grelha de espaços
+/// Ecrã Início (mocks 1 e 11): data, o cartão "Para ti" (DESIGN.md 7.21), grelha de espaços
 /// (páginas de 4 com setas quando há mais de 4), o calendário e, no fundo, os itens que
 /// expiram hoje.
 struct InicioView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
+    @Environment(Calendario.self) private var calendario
     @Query(sort: \Lista.ordem) private var listas: [Lista]
-    @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "ativo" && $0.fixado == false && $0.pai == nil })
     private var ativos: [Item]
 
@@ -17,6 +17,9 @@ struct InicioView: View {
     @State private var formulario: PersonalizarListaView.Modo?
     @State private var aApagar: Lista?
     @State private var pagina = 0
+    /// "Para ti" (DESIGN.md 7.21): o assunto dispensado com o "x" e as frases do modelo.
+    @AppStorage("paraTiDispensado") private var paraTiDispensado = ""
+    @State private var frasesParaTi: [String: String] = [:]
 
     /// Um lugar da grelha: um espaço ou o cartão "Nova lista".
     private enum Celula: Identifiable {
@@ -43,15 +46,18 @@ struct InicioView: View {
 
         NavigationStack(path: $estadoLigado.caminho) {
             ScrollViewReader { rolagem in
+                let sugestao = paraTi(agora)
                 EcraBase(titulo: "Listas", sobretitulo: Formatos.cabecalho(agora)) {
-                    if !estado.avisosDispensados {
-                        if !expirados.isEmpty {
-                            avisoExpirados
+                    if let sugestao, sugestao.chave != paraTiDispensado {
+                        CartaoParaTi(
+                            paraTi: sugestao,
+                            frase: frasesParaTi[sugestao.chave] ?? sugestao.fraseBase,
+                            agir: agir
+                        ) {
+                            withAnimation(.snappy) { paraTiDispensado = sugestao.chave }
                         }
-
-                        if !hoje.isEmpty {
-                            avisoExpiramHoje(hoje.count, rolagem: rolagem)
-                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .task(id: sugestao.chave) { await escreverFrase(sugestao) }
                     }
 
                     grelhaEspacos(agora: agora)
@@ -85,8 +91,6 @@ struct InicioView: View {
                     estado.rolarParaCalendario = false
                     withAnimation { rolagem.scrollTo("calendario", anchor: .bottom) }
                 }
-                // Ao sair do Início (outra página ou uma lista), os avisos do topo saem.
-                .onDisappear { estado.avisosDispensados = true }
             }
             .navigationDestination(for: Lista.self) { ListaView(lista: $0) }
             .navigationDestination(for: Item.self) { DetalheNavegavel(item: $0) }
@@ -248,56 +252,6 @@ struct InicioView: View {
         }
     }
 
-    private var avisoExpirados: some View {
-        Button {
-            dispensarAvisos()
-            estado.separador = .expirados
-        } label: {
-            HStack(spacing: Espaco.grelha) {
-                Image(systemName: "hourglass")
-                    .foregroundStyle(CoresEstado.expira)
-                Text(expirados.count == 1 ? "1 item em Expirados" : "\(expirados.count) itens em Expirados")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Text("Ver")
-                    .font(.subheadline.weight(.semibold))
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.bold))
-            }
-            .foregroundStyle(CoresEstado.expiraTinta)
-            .padding(.horizontal, Espaco.bloco)
-            .frame(minHeight: 48)
-            .background(CoresEstado.expiradosFundo, in: .rect(cornerRadius: 16, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    /// "Expiram hoje" está no fundo do Início; o aviso no topo leva até lá.
-    private func avisoExpiramHoje(_ total: Int, rolagem: ScrollViewProxy) -> some View {
-        Button {
-            withAnimation {
-                rolagem.scrollTo("expiramHoje", anchor: .bottom)
-                estado.avisosDispensados = true
-            }
-        } label: {
-            HStack(spacing: Espaco.grelha) {
-                Image(systemName: "clock.badge.exclamationmark")
-                    .foregroundStyle(CoresEstado.expira)
-                Text(total == 1 ? "1 item expira hoje" : "\(total) itens expiram hoje")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Image(systemName: "chevron.down")
-                    .font(.footnote.weight(.bold))
-            }
-            .foregroundStyle(CoresEstado.expiraTinta)
-            .padding(.horizontal, Espaco.bloco)
-            .frame(minHeight: 48)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Desce até aos itens que expiram hoje")
-    }
-
     private func linhaHoje(_ item: Item) -> some View {
         HStack(spacing: Espaco.grelha) {
             if let lista = item.lista {
@@ -316,9 +270,49 @@ struct InicioView: View {
         .contentShape(Rectangle())
     }
 
-    private func dispensarAvisos() {
-        withAnimation { estado.avisosDispensados = true }
+    // MARK: - Para ti (DESIGN.md 7.21)
+
+    /// Os eventos das próximas horas entram com o espaço a que pertencem.
+    private func paraTi(_ agora: Date) -> ParaTi? {
+        let eventos = calendario.eventos
+            .filter { !$0.diaInteiro && $0.inicio > agora }
+            .map { EventoProximo(titulo: $0.titulo, inicio: $0.inicio, listaId: calendario.espaco(de: $0.calendarioId)) }
+        return try? Tarefas(contexto: contexto).paraTi(eventos: eventos)
     }
+
+    /// Com o modelo do iPhone, troca a frase de base por uma escrita por ele (uma vez por assunto).
+    private func escreverFrase(_ sugestao: ParaTi) async {
+        guard frasesParaTi[sugestao.chave] == nil, Definicoes.carregar().inteligenciaAtiva,
+              let frase = await Inteligencia.fraseParaTi(sugestao)
+        else { return }
+        withAnimation(.smooth) { frasesParaTi[sugestao.chave] = frase }
+    }
+
+    private func agir(_ acao: ParaTi.Acao) {
+        let tarefas = Tarefas(contexto: contexto)
+        func item(_ id: UUID) -> Item? {
+            var pedido = FetchDescriptor<Item>(predicate: #Predicate { $0.id == id })
+            pedido.fetchLimit = 1
+            return try? contexto.fetch(pedido).first
+        }
+        withAnimation(.snappy) {
+            switch acao {
+            case .abrirItem(let id):
+                if let alvo = item(id) { estado.caminho.append(alvo) }
+            case .manter(let id):
+                if let alvo = item(id) { tarefas.manter(alvo, longo: false) }
+            case .abrirLista(let id):
+                if let lista = listas.first(where: { $0.id == id }) { estado.caminho.append(lista) }
+            case .tornarPermanente(let id):
+                if let lista = listas.first(where: { $0.id == id }) { try? tarefas.definirPermanente(lista, true) }
+            case .manterLista(let id):
+                if let lista = listas.first(where: { $0.id == id }) { tarefas.manterLista(lista) }
+            }
+        }
+        try? contexto.save()
+        estado.reagendarAvisos()
+    }
+
 
     private func mensagemApagar(_ lista: Lista) -> String {
         switch Tarefas(contexto: contexto).contarItens(de: lista) {

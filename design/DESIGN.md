@@ -358,6 +358,18 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Não há backup automático semanal: no iPhone, ia-se com a app; com o iCloud, deixa de ser preciso.
 - As **listas de compras partilhadas ao vivo** precisam da partilha do CloudKit (`CKShare`), que o SwiftData ainda não faz sozinho: é trabalho à parte.
 
+### 7.21 Cartão "Para ti" no Início [Decidido 28/10/2026]
+
+- No topo do Início, logo a seguir à data: o que importa agora numa frase curta (até 2 linhas, com a hora antes dos nomes) e até 2 botões. É compacto: brilhos à esquerda, "x" à direita para o dispensar até o assunto mudar, e um contorno suave em gradiente (índigo, rosa, laranja) a marcar que é uma sugestão.
+- **O núcleo decide o que é relevante** (`Tarefas.paraTi`), por esta ordem:
+  1. pontos no último dia: "Abrir" e "Manter +5";
+  2. uma lista vazia que sai nas próximas 24 h: "Tornar permanente" e "Mais 5 dias";
+  3. um evento nas próximas 3 h cujo espaço tem um ponto com subtópicos por fazer: "Ver subtópicos";
+  4. uma vista partilhada a meio, mexida nos últimos 2 dias: "Abrir …".
+- O modelo do iPhone só reescreve a frase, a partir dos factos; sem ele, fica a frase de base.
+- **Sem nada relevante, o cartão não aparece.**
+- Substitui os avisos antigos do topo ("4 itens em Expirados" e "3 itens expiram hoje"). O número de itens em Expirados continua no separador da barra de baixo.
+
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 
 - **Para que serve:** dá um identificador estável e privado, o mesmo em qualquer aparelho, que ligará os dados à pessoa se um dia houver outra forma de lá chegar (web, outra plataforma, um servidor). Não é o login que guarda os dados: isso é o iCloud (7.19).

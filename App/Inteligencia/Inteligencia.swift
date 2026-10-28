@@ -54,6 +54,35 @@ enum Inteligencia {
     }
 
     @Generable
+    struct FraseParaTi {
+        @Guide(description: "Uma frase curta em português europeu, com no máximo 90 caracteres")
+        var texto: String
+    }
+
+    /// A frase do cartão "Para ti" do Início (DESIGN.md 7.21): interpreta o que importa agora,
+    /// a partir dos factos que o núcleo escolheu, e sugere o passo seguinte.
+    static func fraseParaTi(_ paraTi: ParaTi) async -> String? {
+        guard disponivel else { return nil }
+        let sessao = LanguageModelSession(instructions: """
+            Escreves o cartão "Para ti" de uma app de tarefas pessoal, em português europeu (de \
+            Portugal, nunca do Brasil), tratando a pessoa por tu. Numa só frase curta (cabe em \
+            duas linhas), diz o que importa agora, com a hora antes dos nomes, com calma e sem pressão. Sem \
+            emojis e sem pontos de exclamação. Usa só os factos dados; não inventes nada.
+            """)
+        do {
+            let resposta = try await sessao.respond(
+                to: (["Resumo: \(paraTi.fraseBase)"] + paraTi.factos).joined(separator: "\n"),
+                generating: FraseParaTi.self,
+                options: GenerationOptions(temperature: 0.5)
+            )
+            let texto = resposta.content.texto.trimmingCharacters(in: .whitespacesAndNewlines)
+            return texto.isEmpty || texto.count > 110 ? nil : texto
+        } catch {
+            return nil
+        }
+    }
+
+    @Generable
     struct LinhaAviso {
         @Guide(description: "Uma frase curta em português europeu, com no máximo 90 caracteres")
         var texto: String

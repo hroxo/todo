@@ -46,9 +46,6 @@ struct RaizView: View {
                 .presentationDetents([.large])
         }
         .onChange(of: estado.separador) { anterior, novo in
-            if anterior == .listas, novo != .captura {
-                estado.avisosDispensados = true
-            }
             if novo == .captura {
                 estado.separador = anterior == .captura ? .listas : anterior
                 estado.mostrarCaptura = true
