@@ -119,7 +119,9 @@ struct Ampulheta: View {
                 corpo.rotate(by: .degrees(-90))
                 corpo.translateBy(x: -50, y: -60)
                 desenharCorpo(em: &corpo)
-                desenharRostoDeitado(em: &contexto)
+                // A cara deita-se com o corpo, como quem dorme de lado na almofada.
+                desenharRostoDeitado(em: &corpo)
+                desenharSono(em: &contexto)
             } else {
                 desenharCorpo(em: &contexto)
                 desenharRosto(em: &contexto)
@@ -362,17 +364,23 @@ struct Ampulheta: View {
         }
     }
 
-    /// Olhos fechados, no bolbo da esquerda da ampulheta deitada: dois arcos largos e suaves,
-    /// sem pestanas (pequenas, pareciam sobrancelhas franzidas), e a boca num "o" pequenino.
+    /// A cara a dormir, desenhada no referencial do corpo deitado (rodado): olhos fechados em
+    /// arcos suaves, as bochechas e a boca num "o" pequenino. Deitada, os olhos ficam um por
+    /// cima do outro.
     private func desenharRostoDeitado(em c: inout GraphicsContext) {
-        bochechas(em: &c, centros: [CGPoint(x: 22, y: 57), CGPoint(x: 48, y: 57)])
-        for x in [27.0, 43.0] {
+        // Mais para dentro do que de pé: deitada, o vidro estreita junto às bochechas.
+        bochechas(em: &c, centros: [CGPoint(x: 36, y: 40), CGPoint(x: 64, y: 40)])
+        for x in [40.0, 60.0] {
             var palpebra = Path()
-            palpebra.move(to: CGPoint(x: x - 5.5, y: 47))
-            palpebra.addQuadCurve(to: CGPoint(x: x + 5.5, y: 47), control: CGPoint(x: x, y: 53))
+            palpebra.move(to: CGPoint(x: x - 5.5, y: 32))
+            palpebra.addQuadCurve(to: CGPoint(x: x + 5.5, y: 32), control: CGPoint(x: x, y: 38))
             c.stroke(palpebra, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
         }
-        c.fill(Path(ellipseIn: CGRect(x: 32.6, y: 57.4, width: 4.8, height: 3.8)), with: .color(Self.escuro))
+        c.fill(Path(ellipseIn: CGRect(x: 47.6, y: 43.6, width: 4.8, height: 3.8)), with: .color(Self.escuro))
+    }
+
+    /// Os "z" do sono, por cima da ampulheta deitada (fora do referencial rodado).
+    private func desenharSono(em c: inout GraphicsContext) {
         let lilas = Color(red: 0.69, green: 0.66, blue: 0.93)
         c.draw(Text("z").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 100, y: 16))
         c.draw(Text("z").font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 110, y: 7))
