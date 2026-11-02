@@ -42,18 +42,27 @@ jobs:
         run: swift test
 
       - name: Chave da App Store Connect
+        shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/chave"
           CHAVE="$RUNNER_TEMP/chave/AuthKey_$ASC_KEY_ID.p8"
           # Aceita o .p8 tal como é ou em base64.
           case "$ASC_KEY_P8" in
-            *"BEGIN PRIVATE KEY"*) printf '%s\n' "$ASC_KEY_P8" > "$CHAVE" ;;
-            *) echo "$ASC_KEY_P8" | base64 --decode > "$CHAVE" ;;
+            *"BEGIN PRIVATE KEY"*) printf '%s\n' "$ASC_KEY_P8" > "$CHAVE.bruta" ;;
+            *) echo "$ASC_KEY_P8" | base64 --decode > "$CHAVE.bruta" ;;
           esac
-          if ! openssl pkey -in "$CHAVE" -noout 2>/dev/null; then
+          # Reescreve em PEM normal: o xcodebuild é mais exigente do que o openssl.
+          if ! openssl pkey -in "$CHAVE.bruta" -out "$CHAVE" 2>/dev/null; then
             echo "::error::O secret ASC_KEY_P8 não é uma chave válida (docs/CONTA-DEVELOPER.md, passo 3)."
             exit 1
           fi
+          rm "$CHAVE.bruta"
+          chmod 600 "$CHAVE"
+          # Só o tipo da chave e a forma dos identificadores: nada de secreto vai para o registo.
+          echo "Tipo da chave: $(openssl pkey -in "$CHAVE" -noout -text 2>/dev/null | grep -E 'ASN1 OID' || echo 'não é EC')"
+          echo "Linhas do ficheiro: $(wc -l < "$CHAVE")"
+          [[ "$ASC_KEY_ID" =~ ^[A-Z0-9]{10}$ ]] || { echo "::error::O secret ASC_KEY_ID não tem o formato de um Key ID (10 letras e números, sem espaços)."; exit 1; }
+          [[ "$ASC_ISSUER_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] || { echo "::error::O secret ASC_ISSUER_ID não tem o formato de um Issuer ID (um UUID, sem espaços)."; exit 1; }
 
       - name: Gerar projeto (XcodeGen)
         run: |
