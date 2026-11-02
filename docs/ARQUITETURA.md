@@ -31,7 +31,7 @@ A UI não contém regras: chama `Tarefas` (que recebe `ModelContext`, `Relogio` 
 - **Target `ToDo`** (app, iOS 26). Declara:
   - o tipo `.todolista` (`UTExportedTypeDeclarations` e `CFBundleDocumentTypes`);
   - o esquema de URL `todo://` (`todo://captura` abre a captura);
-  - o App Group `group.com.hugo.todo`.
+  - o App Group `group.com.hugo.tudo`.
   - As capacidades da conta paga (iCloud/CloudKit, `aps-environment`, Sign in with Apple) estão escritas e comentadas.
 - **Target `ToDoWidgets`** (app-extension, embutida na app). A app também compila `Widgets/VistaWidget.swift`, `Mascote.swift` e `Intents.swift`, para o ecrã de demo e para os intents.
 - **Versão:** `MARKETING_VERSION` e `CURRENT_PROJECT_VERSION` (o CI usa o número da execução).
@@ -141,7 +141,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 - **Formato:** `Backup` (Codable, `versaoFormato` 1) leva listas, itens, subtópicos, estados, datas e definições.
 - **Restauro:** `restaurar(aplicar:)` junta por id (e por nome nas listas). Ganha o mais recente e nada é apagado. Devolve um `ResumoRestauro` para a confirmação.
 - **Na app:**
-  - `Backups.swift` exporta para Ficheiros ou para o iCloud Drive (`iCloud.com.hugo.todo`) e lê o ficheiro escolhido;
+  - `Backups.swift` exporta para Ficheiros ou para o iCloud Drive (`iCloud.com.hugo.tudo`) e lê o ficheiro escolhido;
   - Definições › Backup.
 - Com a conta paga, a sincronização contínua passa a ser o CloudKit do SwiftData. Em Debug, `EsquemaICloud.swift` cria a estrutura no ambiente de desenvolvimento.
 

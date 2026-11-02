@@ -15,7 +15,7 @@ Os identificadores de cliente não são segredos: a app usa OAuth com PKCE, como
    - **Utilizadores de teste**: acrescentar o teu email Google.
 4. **APIs e serviços › Credenciais › Criar credenciais › ID de cliente OAuth**:
    - Tipo de aplicação: **iOS**.
-   - ID do pacote: `com.hugo.todo`.
+   - ID do pacote: `com.hugo.tudo`.
 5. Copiar o **ID de cliente** (`123-abc.apps.googleusercontent.com`) para `googleClientId`.
 
 > Enquanto o ecrã de consentimento estiver em modo **Teste**, a Google pede para voltar a ligar a conta de 7 em 7 dias (o mesmo ritmo da reassinatura). Para não expirar, publicar a app ("Em produção"): a Google mostra um aviso de "app não verificada" no login, mas funciona para uso pessoal.

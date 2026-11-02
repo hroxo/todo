@@ -8,10 +8,10 @@ Identificadores usados no projeto:
 
 | O quê | Identificador |
 | --- | --- |
-| App | `com.hugo.todo` |
-| Widget | `com.hugo.todo.widgets` |
-| App Group | `group.com.hugo.todo` |
-| Contentor iCloud | `iCloud.com.hugo.todo` |
+| App | `com.hugo.tudo` |
+| Widget | `com.hugo.tudo.widgets` |
+| App Group | `group.com.hugo.tudo` |
+| Contentor iCloud | `iCloud.com.hugo.tudo` |
 
 ## 0. Antes de tudo: exportar um backup
 
@@ -20,19 +20,19 @@ ficheiro no iCloud Drive. A app nova (outra assinatura) pode não ver os dados d
 
 ## 1. Portal da Apple (developer.apple.com › Certificates, Identifiers & Profiles)
 
-1. **Identifiers › App Groups › +**: `group.com.hugo.todo`.
-2. **Identifiers › iCloud Containers › +**: `iCloud.com.hugo.todo`.
-3. **Identifiers › App IDs › +** `com.hugo.todo`, com as capacidades:
-   - App Groups → `group.com.hugo.todo`
-   - iCloud → CloudKit → `iCloud.com.hugo.todo`
+1. **Identifiers › App Groups › +**: `group.com.hugo.tudo`.
+2. **Identifiers › iCloud Containers › +**: `iCloud.com.hugo.tudo`.
+3. **Identifiers › App IDs › +** `com.hugo.tudo`, com as capacidades:
+   - App Groups → `group.com.hugo.tudo`
+   - iCloud → CloudKit → `iCloud.com.hugo.tudo`
    - Push Notifications (o CloudKit usa-as para avisar de mudanças)
    - Sign in with Apple
-4. **App IDs › +** `com.hugo.todo.widgets`, com App Groups → `group.com.hugo.todo`.
+4. **App IDs › +** `com.hugo.tudo.widgets`, com App Groups → `group.com.hugo.tudo`.
 5. Anotar o **Team ID** (Membership).
 
 ## 2. App Store Connect (appstoreconnect.apple.com)
 
-1. **Apps › +**: nova app iOS, nome "ToDo", bundle `com.hugo.todo`, SKU `todo`.
+1. **Apps › +**: nova app iOS, nome "ToDo", bundle `com.hugo.tudo`, SKU `todo`.
 2. **Users and Access › Integrations › App Store Connect API › +**: chave com o papel
    **Admin** (precisa de criar certificados e perfis na nuvem). Descarregar o `.p8` (só dá
    uma vez) e anotar o **Key ID** e o **Issuer ID**.
@@ -51,7 +51,7 @@ ficheiro no iCloud Drive. A app nova (outra assinatura) pode não ver os dados d
 No `project.yml`, nas `entitlements` do target `ToDo`, descomentar (estão escritas por cima):
 
 ```yaml
-com.apple.developer.icloud-container-identifiers: [iCloud.com.hugo.todo]
+com.apple.developer.icloud-container-identifiers: [iCloud.com.hugo.tudo]
 com.apple.developer.icloud-services: [CloudKit]
 aps-environment: production
 com.apple.developer.applesignin: [Default]
@@ -76,7 +76,7 @@ sincronização falha em silêncio.
 1. No Mac, com o Xcode e a conta paga: correr uma compilação de desenvolvimento (Debug,
    assinada com a equipa) no simulador, com sessão iniciada no iCloud nos Ajustes do simulador.
 2. Na app: **Definições › Programador › Criar estrutura no iCloud** (só existe em Debug).
-3. Em icloud.developer.apple.com › CloudKit Console › `iCloud.com.hugo.todo` › Schema:
+3. Em icloud.developer.apple.com › CloudKit Console › `iCloud.com.hugo.tudo` › Schema:
    confirmar os tipos `CD_Lista`, `CD_Item` e `CD_Foto` e carregar em **Deploy Schema
    Changes** para produção.
 4. Repetir os passos 1 a 3 sempre que o esquema mudar (EsquemaV7…).

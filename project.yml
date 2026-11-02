@@ -58,8 +58,8 @@ targets:
     entitlements:
       path: App/ToDo.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.hugo.todo]
-        com.apple.developer.icloud-container-identifiers: [iCloud.com.hugo.todo]
+        com.apple.security.application-groups: [group.com.hugo.tudo]
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.hugo.tudo]
         com.apple.developer.icloud-services: [CloudKit]
         aps-environment: production
         com.apple.developer.applesignin: [Default]
@@ -69,7 +69,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: ToDo
-        PRODUCT_BUNDLE_IDENTIFIER: com.hugo.todo
+        PRODUCT_BUNDLE_IDENTIFIER: com.hugo.tudo
         MARKETING_VERSION: "0.6.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.0"
@@ -105,13 +105,13 @@ targets:
     entitlements:
       path: Widgets/ToDoWidgets.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.hugo.todo]
+        com.apple.security.application-groups: [group.com.hugo.tudo]
     dependencies:
       - package: ToDoCore
     settings:
       base:
         PRODUCT_NAME: ToDoWidgets
-        PRODUCT_BUNDLE_IDENTIFIER: com.hugo.todo.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: com.hugo.tudo.widgets
         MARKETING_VERSION: "0.6.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.0"

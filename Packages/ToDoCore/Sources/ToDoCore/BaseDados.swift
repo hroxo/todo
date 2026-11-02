@@ -426,7 +426,7 @@ extension PlanoMigracao {
 
 public enum BaseDados {
     /// App Group partilhado com o widget (DESIGN.md 7.14).
-    public static let grupo = "group.com.hugo.todo"
+    public static let grupo = "group.com.hugo.tudo"
     private static let sufixos = ["", "-wal", "-shm"]
 
     /// A pasta do App Group, ou nil quando a app não o tem (testes, `.ipa` sem assinatura).

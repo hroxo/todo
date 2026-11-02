@@ -329,12 +329,12 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - **Viagem:** cabine de avião, sentada ao lado da janela. "Boa viagem!"
   - O desporto usa, por agora, o cenário da vida pessoal. Celebrar e dormir são iguais em todos os temas.
 - **Ecrã bloqueado:** um "+" circular e um retangular "Nova nota · 1 ponto expira hoje", e o controlo **Nova nota** (botões do ecrã bloqueado, Centro de Controlo, Action Button). Todos abrem a captura.
-- **Dados:** a app grava `resumo-widget.json` no App Group `group.com.hugo.todo` sempre que algo muda (`Notificacoes.atualizarWidget`). A base de dados também passa para o grupo, para o widget poder concluir. Demonstração: `-ecra widget`.
+- **Dados:** a app grava `resumo-widget.json` no App Group `group.com.hugo.tudo` sempre que algo muda (`Notificacoes.atualizarWidget`). A base de dados também passa para o grupo, para o widget poder concluir. Demonstração: `-ecra widget`.
 - Seguintes: o pequeno (um ponto, anel grande) e o grande.
 - Estilo: **simples, claros, limpos e informativos.** Pouca informação, boa hierarquia de texto (título, contagem grande e arredondada, uma linha de prazo), sem decoração nem vidro. A cor da lista e o anel (7.3) são os únicos elementos gráficos.
 - Pequeno: os próximos itens a expirar, com anel. Médio: uma lista escolhida (configurável), com 3 a 4 itens e a contagem. Ecrã bloqueado: circular (anel + itens que expiram hoje) e retangular (próximo item).
 - Botões interativos: Concluir e Manter +5.
-- Técnica: extensão WidgetKit e App Group `group.com.hugo.todo` para partilhar a base de dados. Validar primeiro com um widget mínimo que o sideload gratuito aceita a extensão e o App Group.
+- Técnica: extensão WidgetKit e App Group `group.com.hugo.tudo` para partilhar a base de dados. Validar primeiro com um widget mínimo que o sideload gratuito aceita a extensão e o App Group.
 
 ### 7.15 Vistas partilhadas [Decidido 28/10/2026 · Proposta: forma]
 

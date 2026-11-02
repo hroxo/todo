@@ -8,7 +8,7 @@
 #     em claro sem reabrir a app.
 set -euo pipefail
 
-BUNDLE="com.hugo.todo"
+BUNDLE="com.hugo.tudo"
 FICHEIRO_UDID="${RUNNER_TEMP:-/tmp}/simulador-udid"
 
 escolher_simulador() {
