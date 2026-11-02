@@ -18,10 +18,11 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
     steps:
       - name: Confirmar os secrets
         run: |
-          for nome in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID; do
+          for nome in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
             if [ -z "${!nome}" ]; then
               echo "Falta o secret $nome (docs/CONTA-DEVELOPER.md, passo 3)."
               exit 1
@@ -41,8 +42,6 @@ jobs:
         run: swift test
 
       - name: Chave da App Store Connect
-        env:
-          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
           mkdir -p "$RUNNER_TEMP/chave"
           echo "$ASC_KEY_P8" | base64 --decode > "$RUNNER_TEMP/chave/AuthKey.p8"
