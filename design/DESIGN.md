@@ -370,6 +370,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Sem nada relevante, o cartão não aparece.**
 - Substitui os avisos antigos do topo ("4 itens em Expirados" e "3 itens expiram hoje"). O número de itens em Expirados continua no separador da barra de baixo.
 
+### 7.22 A Ampulheta anfitriã no Início [Decidido 02/11/2026: direção A, com o final da B]
+- A Ampulheta fica no topo do Início, com um balão no lugar do antigo cartão "Para ti". O balão diz, por esta ordem: "Boa! Menos um." com Anular durante 4 s, a sugestão de "Para ti", ou a frase do dia.
+- **A areia conta o dia:** concluídos hoje a dividir por concluídos hoje mais os pontos no último dia do prazo (`ProgressoDia`). Sem pontos para hoje, fica toda em cima e não há festa.
+- **Concluir:** o círculo salta, com faíscas; no Início, um grão de areia voa até à Ampulheta, que salta ao recebê-lo. Tocar nela também a faz saltar.
+- **Dia ganho:** uma vez por dia, em qualquer ecrã, saem confettis com vibração; o Início ganha o cenário verde e um fundo esverdeado. Com "Reduzir movimento" não há grão, faíscas, saltos nem confettis.
+- "Expiram hoje" passa para cima do calendário, com o círculo de concluir na própria linha. As linhas da lista ganham um pouco da cor da lista.
+
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 
 - **Para que serve:** dá um identificador estável e privado, o mesmo em qualquer aparelho, que ligará os dados à pessoa se um dia houver outra forma de lá chegar (web, outra plataforma, um servidor). Não é o login que guarda os dados: isso é o iCloud (7.19).

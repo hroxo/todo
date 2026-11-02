@@ -28,6 +28,8 @@ final class EstadoApp {
     var filtroExpirados = FiltroItens()
     /// Mensagem depois de abrir uma lista partilhada (DESIGN.md 7.15).
     var avisoPartilha: String?
+    /// Muda quando o dia fica ganho: os confettis aparecem em qualquer ecrã (DESIGN.md 7.22).
+    var festa: UUID?
 
     @ObservationIgnored let notificacoes: Notificacoes
 

@@ -2,9 +2,9 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Ecrã Início (mocks 1 e 11): data, o cartão "Para ti" (DESIGN.md 7.21), grelha de espaços
-/// (páginas de 4 com setas quando há mais de 4), o calendário e, no fundo, os itens que
-/// expiram hoje.
+/// Ecrã Início (mocks 1 e 11): data, a Ampulheta anfitriã com "Para ti" no balão (DESIGN.md
+/// 7.21 e 7.22), grelha de espaços (páginas de 4 com setas quando há mais de 4), os itens que
+/// expiram hoje e o calendário.
 struct InicioView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
@@ -12,6 +12,8 @@ struct InicioView: View {
     @Query(sort: \Lista.ordem) private var listas: [Lista]
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "ativo" && $0.fixado == false && $0.pai == nil })
     private var ativos: [Item]
+    @Query(filter: #Predicate<Item> { $0.estadoRaw == "concluido" && $0.pai == nil })
+    private var concluidos: [Item]
 
     @AppStorage("mostrarCalendario") private var mostrarCalendario = true
     @State private var formulario: PersonalizarListaView.Modo?
@@ -20,6 +22,27 @@ struct InicioView: View {
     /// "Para ti" (DESIGN.md 7.21): o assunto dispensado com o "x" e as frases do modelo.
     @AppStorage("paraTiDispensado") private var paraTiDispensado = ""
     @State private var frasesParaTi: [String: String] = [:]
+    /// O dia em que já houve festa, para os confettis só saírem uma vez (DESIGN.md 7.22).
+    @AppStorage("festaDia") private var festaDia = ""
+    /// O ponto acabado de concluir aqui: o balão diz "Boa!" e oferece Anular durante 4 s.
+    @State private var acabado: Acabado?
+    @State private var saltos = 0
+    @State private var graos: [Grao] = []
+    @State private var posicaoAmpulheta = CGPoint.zero
+    @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
+
+    private struct Acabado: Equatable {
+        let id = UUID()
+        let item: Item
+        let antes: AntesDeConcluir
+    }
+
+    private struct Grao: Identifiable {
+        let id = UUID()
+        let origem: CGPoint
+    }
+
+    private static let espacoEcra = "inicio"
 
     /// Um lugar da grelha: um espaço ou o cartão "Nova lista".
     private enum Celula: Identifiable {
@@ -35,7 +58,6 @@ struct InicioView: View {
     }
 
     private let colunas = [GridItem(.flexible(), spacing: Espaco.grelha), GridItem(.flexible(), spacing: Espaco.grelha)]
-    private let tamanhoIconeHoje: CGFloat = 28
 
     var body: some View {
         let agora = Date.now
@@ -46,38 +68,30 @@ struct InicioView: View {
 
         NavigationStack(path: $estadoLigado.caminho) {
             ScrollViewReader { rolagem in
-                let sugestao = paraTi(agora)
-                EcraBase(titulo: "Listas", sobretitulo: Formatos.cabecalho(agora)) {
-                    if let sugestao, sugestao.chave != paraTiDispensado {
-                        CartaoParaTi(
-                            paraTi: sugestao,
-                            frase: frasesParaTi[sugestao.chave] ?? sugestao.fraseBase,
-                            agir: agir
-                        ) {
-                            withAnimation(.snappy) { paraTiDispensado = sugestao.chave }
+                let sugestao = paraTi(agora).flatMap { $0.chave == paraTiDispensado ? nil : $0 }
+                let progresso = ProgressoDia(ativos: ativos, concluidos: concluidos, agora: agora)
+                EcraBase(
+                    titulo: "Listas",
+                    sobretitulo: Formatos.cabecalho(agora),
+                    fundo: progresso.completo
+                        ? Color(.systemGroupedBackground).mix(with: CoresEstado.concluido, by: 0.16)
+                        : Color(.systemGroupedBackground)
+                ) {
+                    anfitria(progresso: progresso, sugestao: sugestao, agora: agora)
+                        .task(id: sugestao?.chave) {
+                            if let sugestao { await escreverFrase(sugestao) }
                         }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                        .task(id: sugestao.chave) { await escreverFrase(sugestao) }
-                    }
 
                     grelhaEspacos(agora: agora)
-
-                    if mostrarCalendario {
-                        SecaoCalendario()
-                            .id("calendario")
-                    }
 
                     if !hoje.isEmpty {
                         VStack(alignment: .leading, spacing: Espaco.curto) {
                             TituloSecao(texto: "Expiram hoje")
                             VStack(spacing: 0) {
                                 ForEach(hoje) { item in
-                                    NavigationLink(value: item) {
-                                        linhaHoje(item)
-                                    }
-                                    .buttonStyle(.plain)
+                                    linhaHoje(item, agora: agora)
                                     if item != hoje.last {
-                                        Divider().padding(.leading, Espaco.bloco + tamanhoIconeHoje + Espaco.grelha)
+                                        Divider().padding(.leading, Espaco.bloco + 44 + Espaco.grelha)
                                     }
                                 }
                             }
@@ -85,7 +99,21 @@ struct InicioView: View {
                         }
                         .id("expiramHoje")
                     }
+
+                    if mostrarCalendario {
+                        SecaoCalendario()
+                            .id("calendario")
+                    }
                 }
+                .coordinateSpace(name: Self.espacoEcra)
+                .overlay {
+                    ForEach(graos) { grao in
+                        GraoVoador(de: grao.origem, para: posicaoAmpulheta)
+                    }
+                }
+                .animation(.smooth(duration: 0.6), value: progresso.completo)
+                .onAppear { festejar(progresso) }
+                .onChange(of: progresso.completo) { festejar(progresso) }
                 .onChange(of: estado.rolarParaCalendario) { _, rolar in
                     guard rolar else { return }
                     estado.rolarParaCalendario = false
@@ -254,22 +282,111 @@ struct InicioView: View {
         }
     }
 
-    private func linhaHoje(_ item: Item) -> some View {
-        HStack(spacing: Espaco.grelha) {
-            if let lista = item.lista {
-                IconeListaView(lista: lista, tamanho: tamanhoIconeHoje)
-            }
-            Text(item.titulo)
-                .font(.body.weight(.medium))
-                .lineLimit(1)
-            Spacer()
-            Text("Hoje")
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(CoresEstado.expiraTinta)
+    /// Tocar no anel conclui aqui mesmo e lança um grão de areia para a Ampulheta.
+    private func linhaHoje(_ item: Item, agora: Date) -> some View {
+        LinhaHoje(item: item, agora: agora, espaco: Self.espacoEcra) { origem in
+            lancarGrao(de: origem)
+        } aoConcluir: {
+            concluir(item)
         }
-        .padding(.horizontal, Espaco.bloco)
-        .frame(minHeight: 56)
-        .contentShape(Rectangle())
+    }
+
+    private struct LinhaHoje: View {
+        let item: Item
+        let agora: Date
+        let espaco: String
+        let aoTocar: (CGPoint) -> Void
+        let aoConcluir: () -> Void
+        @State private var moldura = CGRect.zero
+
+        var body: some View {
+            NavigationLink(value: item) {
+                LinhaItem(item: item, cor: item.lista?.cor ?? .azul, agora: agora, aoConcluir: aoConcluir) {
+                    aoTocar(CGPoint(x: moldura.minX + 22, y: moldura.midY))
+                }
+                .padding(.horizontal, Espaco.grelha)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(espaco)) } action: { moldura = $0 }
+        }
+    }
+
+    private func lancarGrao(de origem: CGPoint) {
+        guard !reduzirMovimento else { return }
+        let grao = Grao(origem: origem)
+        graos.append(grao)
+        Task {
+            try? await Task.sleep(for: .milliseconds(520))
+            graos.removeAll { $0.id == grao.id }
+        }
+    }
+
+    private func concluir(_ item: Item) {
+        let antes = withAnimation(.snappy) { Tarefas(contexto: contexto).concluir(item) }
+        try? contexto.save()
+        estado.reagendarAvisos()
+        withAnimation(.snappy) {
+            saltos += 1
+            acabado = Acabado(item: item, antes: antes)
+        }
+    }
+
+    private func anular(_ ultimo: Acabado) {
+        withAnimation(.snappy) {
+            Tarefas(contexto: contexto).anular(ultimo.item, para: ultimo.antes)
+            acabado = nil
+        }
+        try? contexto.save()
+        estado.reagendarAvisos()
+    }
+
+    /// Uma vez por dia, em qualquer ecrã, quando o último ponto de hoje fica feito.
+    private func festejar(_ progresso: ProgressoDia) {
+        let hoje = Formatos.cabecalho(.now)
+        guard progresso.completo, festaDia != hoje else { return }
+        festaDia = hoje
+        estado.festa = UUID()
+    }
+
+    // MARK: - Anfitriã (DESIGN.md 7.22)
+
+    /// O balão diz, por esta ordem: o "Boa!" do ponto acabado de concluir, a sugestão de "Para ti"
+    /// ou a frase do dia.
+    private func anfitria(progresso: ProgressoDia, sugestao: ParaTi?, agora: Date) -> some View {
+        let hora = Calendar.current.component(.hour, from: agora)
+        let frase: String
+        let botoes: [CartaoAnfitria.Botao]
+        if let acabado {
+            frase = progresso.completo ? progresso.frase(hora: hora) : "Boa! Menos um."
+            botoes = [.init(rotulo: "Anular") { anular(acabado) }]
+        } else if let sugestao {
+            frase = frasesParaTi[sugestao.chave] ?? sugestao.fraseBase
+            botoes = sugestao.botoes.map { botao in .init(rotulo: botao.rotulo) { agir(botao.acao) } }
+        } else {
+            frase = progresso.frase(hora: hora)
+            botoes = []
+        }
+        return CartaoAnfitria(
+            progresso: progresso,
+            pose: progresso.completo ? .celebrar : .para(agora, tudoEmDia: false),
+            frase: frase,
+            botoes: botoes,
+            dispensar: acabado == nil ? sugestao.map { sugestao in
+                { withAnimation(.snappy) { paraTiDispensado = sugestao.chave } }
+            } : nil,
+            saltos: saltos
+        )
+        .onGeometryChange(for: CGPoint.self) { proxy in
+            let moldura = proxy.frame(in: .named(Self.espacoEcra))
+            return CGPoint(x: moldura.minX + 35, y: moldura.midY + 20)
+        } action: { posicaoAmpulheta = $0 }
+        .task(id: acabado?.id) {
+            guard acabado != nil else { return }
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            withAnimation(.snappy) { acabado = nil }
+        }
     }
 
     // MARK: - Para ti (DESIGN.md 7.21)

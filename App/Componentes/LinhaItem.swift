@@ -9,8 +9,11 @@ struct LinhaItem: View {
     let agora: Date
     /// Chamado depois da animação do anel; quem chama conclui o item.
     var aoConcluir: () -> Void = {}
+    /// Chamado logo no toque, antes da animação: o Início lança o grão de areia.
+    var aoTocarConcluir: () -> Void = {}
 
     @State private var concluindo = false
+    @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
 
     private var prazo: Prazo? { Prazo(item: item, agora: agora) }
 
@@ -58,13 +61,19 @@ struct LinhaItem: View {
         Button {
             guard !concluindo else { return }
             withAnimation(.snappy) { concluindo = true }
+            aoTocarConcluir()
             Task {
                 try? await Task.sleep(for: .milliseconds(450))
                 aoConcluir()
             }
         } label: {
             IndicadorPrazo(item: item, cor: cor, agora: agora, concluido: concluindo)
+                .scaleEffect(concluindo ? 1.15 : 1)
+                .animation(.spring(duration: 0.3, bounce: 0.6), value: concluindo)
                 .frame(width: 44, height: 44)
+                .overlay {
+                    if concluindo && !reduzirMovimento { FaiscasConcluir() }
+                }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)

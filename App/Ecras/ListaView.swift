@@ -185,6 +185,7 @@ struct ListaView: View {
                 concluir(item)
             }
         }
+        .listRowBackground(Color(.secondarySystemGroupedBackground).mix(with: cor.base, by: 0.14))
         .swipeActions(edge: .leading) {
             if !item.fixado {
                 Button {

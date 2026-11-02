@@ -89,6 +89,9 @@ struct Ampulheta: View {
     var tema: TemaMascote = .geral
     /// Sem braços: no ícone da app ficam a mais.
     var semBracos = false
+    /// A areia conta o dia (DESIGN.md 7.22): de 0, toda em cima, a 1, toda em baixo. Nil usa a
+    /// areia da pose.
+    var nivelAreia: Double?
 
     /// No trabalho e na vida pessoal, de dia, segura um objeto à frente: o portátil e o café,
     /// ou um livro.
@@ -161,10 +164,17 @@ struct Ampulheta: View {
             startPoint: CGPoint(x: 50, y: 14),
             endPoint: CGPoint(x: 50, y: 106)
         )
-        for monte in areia {
-            c.fill(monte, with: gradienteAreia)
+        if let nivelAreia, pose != .dormir {
+            var dentro = c
+            dentro.clip(to: vidro)
+            dentro.fill(Path(CGRect(x: 0, y: 20 + nivelAreia * 40, width: 100, height: 40 - nivelAreia * 40)), with: gradienteAreia)
+            dentro.fill(Path(CGRect(x: 0, y: 100 - nivelAreia * 34, width: 100, height: 6 + nivelAreia * 34)), with: gradienteAreia)
+        } else {
+            for monte in areia {
+                c.fill(monte, with: gradienteAreia)
+            }
         }
-        if pose == .areia {
+        if pose == .areia && (nivelAreia ?? 0) < 1 {
             // O fio de areia a cair.
             var fio = Path()
             fio.move(to: CGPoint(x: 50, y: 56))

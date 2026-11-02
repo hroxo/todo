@@ -11,6 +11,7 @@ struct RaizView: View {
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
     /// As boas-vindas (com o login opcional) só aparecem na primeira abertura.
     @AppStorage("boasVindasVistas") private var boasVindasVistas = false
+    @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
 
     var body: some View {
         @Bindable var estado = estado
@@ -34,6 +35,18 @@ struct RaizView: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
+        .overlay {
+            if let festa = estado.festa, !reduzirMovimento {
+                Confetes().id(festa)
+            }
+        }
+        .sensoryFeedback(.success, trigger: estado.festa) { _, nova in nova != nil }
+        .task(id: estado.festa) {
+            guard estado.festa != nil else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            estado.festa = nil
+        }
         .alert(estado.avisoPartilha ?? "", isPresented: Binding(presente: $estado.avisoPartilha)) {
             Button("OK", role: .cancel) {}
         }
