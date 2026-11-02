@@ -44,7 +44,16 @@ jobs:
       - name: Chave da App Store Connect
         run: |
           mkdir -p "$RUNNER_TEMP/chave"
-          echo "$ASC_KEY_P8" | base64 --decode > "$RUNNER_TEMP/chave/AuthKey.p8"
+          CHAVE="$RUNNER_TEMP/chave/AuthKey_$ASC_KEY_ID.p8"
+          # Aceita o .p8 tal como é ou em base64.
+          case "$ASC_KEY_P8" in
+            *"BEGIN PRIVATE KEY"*) printf '%s\n' "$ASC_KEY_P8" > "$CHAVE" ;;
+            *) echo "$ASC_KEY_P8" | base64 --decode > "$CHAVE" ;;
+          esac
+          if ! openssl pkey -in "$CHAVE" -noout 2>/dev/null; then
+            echo "::error::O secret ASC_KEY_P8 não é uma chave válida (docs/CONTA-DEVELOPER.md, passo 3)."
+            exit 1
+          fi
 
       - name: Gerar projeto (XcodeGen)
         run: |
@@ -62,7 +71,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/ToDo.xcarchive" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/chave/AuthKey.p8" \
+            -authenticationKeyPath "$RUNNER_TEMP/chave/AuthKey_$ASC_KEY_ID.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
@@ -89,7 +98,7 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/chave/AuthKey.p8" \
+            -authenticationKeyPath "$RUNNER_TEMP/chave/AuthKey_$ASC_KEY_ID.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
