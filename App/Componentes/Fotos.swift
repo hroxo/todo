@@ -101,7 +101,7 @@ struct BotaoBiblioteca: View {
         }
         .foregroundStyle(cor)
         .frame(width: tamanho, height: tamanho)
-        .background(Color(.systemBackground).opacity(0.5), in: .rect(cornerRadius: 14, style: .continuous))
+        .background(Ceu.cartao.opacity(0.5), in: .rect(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(cor.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5, 4]))

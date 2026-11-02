@@ -21,7 +21,6 @@ struct ToDoApp: App {
     @State private var calendario = Calendario(contentor: ToDoApp.contentor)
     @State private var conta = ContaApple()
     @Environment(\.scenePhase) private var fase
-    @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
 
     init() {
         // Antes de tudo, para o iOS poder entregar as ações das notificações.
@@ -30,11 +29,16 @@ struct ToDoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RaizView()
-                .environment(estado)
-                .environment(calendario)
-                .environment(conta)
-                .preferredColorScheme(Aparencia(rawValue: aparencia)?.esquema)
+            // O céu muda com o sol de cada dia: claro de dia, escuro só à noite (DESIGN.md 7.23).
+            TimelineView(.periodic(from: .now, by: 60)) { linha in
+                let ceu = CeuDoDia(agora: Demo.agora ?? linha.date)
+                RaizView()
+                    .environment(estado)
+                    .environment(calendario)
+                    .environment(conta)
+                    .environment(\.ceu, ceu)
+                    .preferredColorScheme(ceu.fase == .noite ? .dark : .light)
+            }
                 .task {
                     if !Demo.ativo { Self.notificacoes.pedirPermissao() }
                 }

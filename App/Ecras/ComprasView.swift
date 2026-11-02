@@ -23,7 +23,7 @@ struct ComprasView: View {
         let cor = lista.cor
         let lojas = lista.itensAtivos
 
-        List {
+        ListaCeu(cor: cor.fundo) {
             Section {
                 cabecalho(lojas)
             }
@@ -51,9 +51,6 @@ struct ComprasView: View {
                 Text("Uma vista partilhada organiza-se por secções (uma loja, uma divisão da casa, um dia da viagem). Toca num ponto para o riscar.")
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(cor.fundo.ignoresSafeArea())
         .navigationTitle(lista.nome)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

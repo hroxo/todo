@@ -23,7 +23,7 @@ struct ExpiradosView: View {
         let itens = filtro.aplicar(todos, agora: .now)
 
         NavigationStack {
-            EcraBase(titulo: "Expirados", fundo: CoresEstado.expiradosFundo) {
+            EcraBase(titulo: "Expirados") {
                 BotaoFiltro(filtro: $estado.filtroExpirados, listas: listas, tituloData: "Data de expiração")
                     .tint(CoresEstado.expiraTinta)
             } conteudo: {
@@ -107,7 +107,7 @@ struct ExpiradosView: View {
             }
         }
         .padding(Espaco.bloco)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+        .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
     }
 
     private func limparFiltros() {

@@ -2,8 +2,7 @@ import SwiftUI
 import ToDoCore
 
 /// A Ampulheta que recebe no Início (DESIGN.md 7.22): a areia conta o dia e o balão diz o que
-/// importa agora, no lugar do antigo cartão "Para ti". Com o dia ganho, o cartão ganha o cenário
-/// verde da festa. Tocar nela faz com que dê um salto.
+/// importa agora, no lugar do antigo cartão "Para ti". Tocar nela faz com que dê um salto.
 struct CartaoAnfitria: View {
     /// Uma ação do balão: as de "Para ti" ou o Anular de um ponto acabado de concluir.
     struct Botao: Identifiable {
@@ -32,14 +31,6 @@ struct CartaoAnfitria: View {
                 .onTapGesture { toques += 1 }
                 .sensoryFeedback(.impact(weight: .light), trigger: toques)
             balao
-        }
-        .padding(progresso.completo ? Espaco.grelha : 0)
-        .background {
-            if progresso.completo {
-                CenarioMascote(pose: .celebrar)
-                    .clipShape(.rect(cornerRadius: 22, style: .continuous))
-                    .transition(.opacity)
-            }
         }
     }
 
@@ -86,7 +77,7 @@ struct CartaoAnfitria: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(
-            Color(.secondarySystemGroupedBackground),
+            Ceu.cartao,
             // O canto junto à Ampulheta fica quase reto: é o bico do balão.
             in: UnevenRoundedRectangle(topLeadingRadius: 16, bottomLeadingRadius: 4, bottomTrailingRadius: 16, topTrailingRadius: 16, style: .continuous)
         )

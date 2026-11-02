@@ -343,7 +343,7 @@ struct ItemDetalheView: View {
                         .frame(minHeight: Espaco.linhaSubtopico)
                     }
                 }
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
             }
         }
     }
@@ -424,7 +424,7 @@ struct ItemDetalheView: View {
         .foregroundStyle(pronto ? cor.texto : cor.tinta)
         .padding(.horizontal, Espaco.bloco)
         .frame(minHeight: 36)
-        .background(pronto ? cor.base : Color(.secondarySystemGroupedBackground), in: .capsule)
+        .background(pronto ? cor.base : Ceu.cartao, in: .capsule)
         .shadow(color: .black.opacity(0.1), radius: 10, y: 3)
         .opacity(min(1, progresso / limiarPuxao))
         .padding(Espaco.curto)

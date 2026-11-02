@@ -41,11 +41,11 @@ final class ProgressoDiaTests: BaseTestes {
     }
 
     func testFrases() {
-        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 0).frase(hora: 9), "Bom dia! Nada urgente hoje.")
-        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 1).frase(hora: 14), "Boa tarde! Hoje é 1 ponto.")
-        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 3).frase(hora: 21), "Boa noite! Hoje são 3 pontos.")
-        XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 1).frase(hora: 9), "Boa! Só falta 1 ponto hoje.")
-        XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 2).frase(hora: 9), "Boa! Faltam 2 pontos hoje.")
-        XCTAssertEqual(ProgressoDia(concluidos: 2, porFazer: 0).frase(hora: 9), "Dia ganho! Bom trabalho.")
+        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 0).frase(saudacao: "Bom dia!"), "Bom dia! Nada urgente hoje.")
+        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 1).frase(saudacao: "Boa tarde!"), "Boa tarde! Hoje é 1 ponto.")
+        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 3).frase(saudacao: "Boa noite!"), "Boa noite! Hoje são 3 pontos.")
+        XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 1).frase(saudacao: "Bom dia!"), "Boa! Só falta 1 ponto hoje.")
+        XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 2).frase(saudacao: "Bom dia!"), "Boa! Faltam 2 pontos hoje.")
+        XCTAssertEqual(ProgressoDia(concluidos: 2, porFazer: 0).frase(saudacao: "Bom dia!"), "Dia ganho! Bom trabalho.")
     }
 }

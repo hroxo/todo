@@ -117,7 +117,7 @@ struct SecaoCalendario: View {
                 .multilineTextAlignment(.center)
         }
         .padding(Espaco.bloco)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+        .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
     }
 
     private var cartaoRecusado: some View {
@@ -146,7 +146,7 @@ struct SecaoCalendario: View {
             }
         }
         .padding(Espaco.bloco)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+        .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
     }
 
     private var circuloCalendario: some View {
@@ -226,7 +226,7 @@ struct SecaoCalendario: View {
                         }
                     }
                 }
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
                 .clipShape(.rect(cornerRadius: 18, style: .continuous))
             }
         }

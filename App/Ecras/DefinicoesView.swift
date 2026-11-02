@@ -14,7 +14,6 @@ struct DefinicoesView: View {
     @Environment(\.openURL) private var abrirURL
     @AppStorage("mostrarCalendario") private var mostrarCalendario = true
     @Query(sort: \Lista.ordem) private var listas: [Lista]
-    @AppStorage("aparencia") private var aparencia = Aparencia.sistema.rawValue
     @State private var definicoes = Definicoes.carregar()
     @State private var formulario: PersonalizarListaView.Modo?
     @State private var aApagar: Lista?
@@ -119,16 +118,6 @@ struct DefinicoesView: View {
                     Text("Inteligência")
                 } footer: {
                     Text("O modelo da Apple escreve o texto de cada aviso a partir do que tens na app. Corre só no iPhone: nada sai do telemóvel. Sem Apple Intelligence, os avisos usam um texto simples.")
-                }
-
-                Section("Aparência") {
-                    Picker("Aparência", selection: $aparencia) {
-                        ForEach(Aparencia.allCases) { opcao in
-                            Text(opcao.nome).tag(opcao.rawValue)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
                 }
 
                 secaoBackup
@@ -398,7 +387,7 @@ struct CalendariosView: View {
     var body: some View {
         let contas = Dictionary(grouping: calendario.calendarios, by: { $0.source.title })
         let ligadas = Dictionary(grouping: calendario.contas.calendarios, by: \.fornecedor)
-        List {
+        ListaCeu {
             Section {
             } footer: {
                 Text("Escolhe em que espaço aparece cada calendário. Os eventos sem espaço também aparecem no Início; \"Não mostrar\" esconde-os.")
@@ -474,7 +463,7 @@ struct ContasView: View {
 
     var body: some View {
         let contas = calendario.contas
-        List {
+        ListaCeu {
             Section {
                 ForEach(Fornecedor.allCases, id: \.self) { fornecedor in
                     linha(fornecedor, contas: contas)
@@ -581,7 +570,7 @@ struct EscolherEspacoView: View {
 
     var body: some View {
         let atual = leitor.destino(de: calendarioId)
-        List {
+        ListaCeu {
             Section {
                 ForEach(listas) { lista in
                     linha(.espaco(lista.id), atual: atual) {
@@ -645,7 +634,7 @@ struct PrazosView: View {
     @Binding var definicoes: Definicoes
 
     var body: some View {
-        Form {
+        ListaCeu {
             Section {
                 Stepper(value: $definicoes.diasExpiracao, in: 1...30) {
                     rotulo("Expiram sem ações", dias: definicoes.diasExpiracao)

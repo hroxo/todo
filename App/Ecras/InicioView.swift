@@ -30,6 +30,7 @@ struct InicioView: View {
     @State private var graos: [Grao] = []
     @State private var posicaoAmpulheta = CGPoint.zero
     @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
+    @Environment(\.ceu) private var ceu
 
     private struct Acabado: Equatable {
         let id = UUID()
@@ -73,9 +74,8 @@ struct InicioView: View {
                 EcraBase(
                     titulo: "Listas",
                     sobretitulo: Formatos.cabecalho(agora),
-                    fundo: progresso.completo
-                        ? Color(.systemGroupedBackground).mix(with: CoresEstado.concluido, by: 0.16)
-                        : Color(.systemGroupedBackground)
+                    cena: true,
+                    ganho: progresso.completo
                 ) {
                     anfitria(progresso: progresso, sugestao: sugestao, agora: agora)
                         .task(id: sugestao?.chave) {
@@ -86,7 +86,7 @@ struct InicioView: View {
 
                     if !hoje.isEmpty {
                         VStack(alignment: .leading, spacing: Espaco.curto) {
-                            TituloSecao(texto: "Expiram hoje")
+                            TituloSecao(texto: "Expiram hoje", cor: Ceu.paleta(ceu.fase).tinta)
                             VStack(spacing: 0) {
                                 ForEach(hoje) { item in
                                     linhaHoje(item, agora: agora)
@@ -95,7 +95,7 @@ struct InicioView: View {
                                     }
                                 }
                             }
-                            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                            .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
                         }
                         .id("expiramHoje")
                     }
@@ -111,7 +111,6 @@ struct InicioView: View {
                         GraoVoador(de: grao.origem, para: posicaoAmpulheta)
                     }
                 }
-                .animation(.smooth(duration: 0.6), value: progresso.completo)
                 .onAppear { festejar(progresso) }
                 .onChange(of: progresso.completo) { festejar(progresso) }
                 .onChange(of: estado.rolarParaCalendario) { _, rolar in
@@ -276,7 +275,7 @@ struct InicioView: View {
             configuration.label
                 .foregroundStyle(ativa ? Color.primary : Color(.systemGray3))
                 .frame(width: 44, height: 44)
-                .background(Color(.secondarySystemGroupedBackground), in: .circle)
+                .background(Ceu.cartao, in: .circle)
                 .scaleEffect(configuration.isPressed ? 0.92 : 1)
                 .animation(.snappy, value: configuration.isPressed)
         }
@@ -354,17 +353,17 @@ struct InicioView: View {
     /// O balão diz, por esta ordem: o "Boa!" do ponto acabado de concluir, a sugestão de "Para ti"
     /// ou a frase do dia.
     private func anfitria(progresso: ProgressoDia, sugestao: ParaTi?, agora: Date) -> some View {
-        let hora = Calendar.current.component(.hour, from: agora)
+        let fraseDoDia = progresso.frase(saudacao: ceu.saudacaoDoMomento)
         let frase: String
         let botoes: [CartaoAnfitria.Botao]
         if let acabado {
-            frase = progresso.completo ? progresso.frase(hora: hora) : "Boa! Menos um."
+            frase = progresso.completo ? fraseDoDia : "Boa! Menos um."
             botoes = [.init(rotulo: "Anular") { anular(acabado) }]
         } else if let sugestao {
             frase = frasesParaTi[sugestao.chave] ?? sugestao.fraseBase
             botoes = sugestao.botoes.map { botao in .init(rotulo: botao.rotulo) { agir(botao.acao) } }
         } else {
-            frase = progresso.frase(hora: hora)
+            frase = fraseDoDia
             botoes = []
         }
         return CartaoAnfitria(

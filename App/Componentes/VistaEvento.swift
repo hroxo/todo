@@ -55,13 +55,13 @@ struct VistaEvento: View {
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(Espaco.bloco)
-                                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                                .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
                         }
                     }
                 }
                 .padding(Espaco.margem)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Ceu.folha)
             .navigationTitle("Evento")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -71,6 +71,7 @@ struct VistaEvento: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .presentationBackground(Ceu.folha)
         .presentationDragIndicator(.visible)
     }
 
@@ -137,7 +138,7 @@ struct VistaEvento: View {
                         .frame(minHeight: 44)
                 }
                 .padding(.horizontal, Espaco.bloco)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
                 .padding(.top, Espaco.curto)
             } else {
                 TituloSecao(texto: "Criar ponto em")
@@ -198,7 +199,7 @@ struct VistaEvento: View {
                     }
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+            .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
         }
     }
 

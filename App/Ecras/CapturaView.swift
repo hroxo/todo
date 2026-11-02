@@ -139,6 +139,7 @@ struct CapturaView: View {
             }
         }
         .presentationDetents([.large])
+        .presentationBackground(Ceu.folha)
     }
 
     private func ficha(_ opcao: Lista) -> some View {
@@ -196,7 +197,7 @@ struct CapturaView: View {
                         .foregroundStyle(.white)
                         .frame(width: 24, height: 24)
                         .background(Circle().fill(Color(.darkGray)))
-                        .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+                        .overlay(Circle().stroke(Ceu.cartao, lineWidth: 2))
                 }
                 .buttonStyle(.plain)
                 .offset(x: 6, y: -6)

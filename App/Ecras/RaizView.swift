@@ -57,6 +57,7 @@ struct RaizView: View {
         )) {
             BoasVindasView()
                 .presentationDetents([.large])
+                .presentationBackground(Ceu.folha)
         }
         .onChange(of: estado.separador) { anterior, novo in
             if novo == .captura {

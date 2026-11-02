@@ -377,6 +377,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Dia ganho:** uma vez por dia, em qualquer ecrã, saem confettis com vibração; o Início ganha o cenário verde e um fundo esverdeado. Com "Reduzir movimento" não há grão, faíscas, saltos nem confettis.
 - "Expiram hoje" passa para cima do calendário, com o círculo de concluir na própria linha. As linhas da lista ganham um pouco da cor da lista.
 
+### 7.23 O céu do dia [Decidido 02/11/2026: substitui o fundo escuro por defeito]
+- O preto sai de todos os ecrãs. O fundo é o céu da hora, calculado com o sol real de cada dia (`CeuDoDia`), sem rede nem localização, com Lisboa como referência.
+- **Fases:** amanhecer (rosa, de 30 min antes a 45 min depois do nascer), dia (azul, com o sol a atravessar o céu), pôr do sol (alperce, de 45 min antes a 25 min depois do pôr), noite (índigo, com lua e estrelas). O dia ganho fica verde, exceto à noite.
+- O Início tem a cena com colinas; os outros ecrãs só a cor do céu; as listas e os detalhes mantêm o fundo na cor da lista.
+- A app fica em modo claro de dia e em modo escuro à noite, por isso a opção Aparência das Definições saiu.
+- A Ampulheta saúda conforme o momento: "Bom dia!", "Boa tarde! Olha o pôr do sol.", "Boa noite!".
+
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 
 - **Para que serve:** dá um identificador estável e privado, o mesmo em qualquer aparelho, que ligará os dados à pessoa se um dia houver outra forma de lá chegar (web, outra plataforma, um servidor). Não é o login que guarda os dados: isso é o iCloud (7.19).

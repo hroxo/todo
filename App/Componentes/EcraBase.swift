@@ -22,7 +22,7 @@ enum Espaco {
     static let fim: CGFloat = 24
 }
 
-/// Cabeçalho dos ecrãs de topo, igual ao do Início: uma linha pequena em maiúsculas (a data
+/// Cabeçalho dos ecrãs de topo, igual ao do Início: uma linha pequena (a data
 /// no Início; nos outros fica reservada, para o título ficar sempre à mesma altura) e o
 /// título grande. O acessório (por exemplo, um filtro) fica à direita do título.
 struct CabecalhoEcra<Acessorio: View>: View {
@@ -30,15 +30,19 @@ struct CabecalhoEcra<Acessorio: View>: View {
     var sobretitulo: String?
     @ViewBuilder var acessorio: () -> Acessorio
 
+    @Environment(\.ceu) private var ceu
+
     var body: some View {
+        let tinta = Ceu.paleta(ceu.fase).tinta
         VStack(alignment: .leading, spacing: Espaco.minimo) {
-            Text(sobretitulo?.uppercased() ?? " ")
+            Text(sobretitulo ?? " ")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(tinta.opacity(0.75))
                 .accessibilityHidden(sobretitulo == nil)
             HStack {
                 Text(titulo)
                     .font(.largeTitle.weight(.heavy))
+                    .foregroundStyle(tinta)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: Espaco.curto)
                 acessorio()
@@ -47,12 +51,14 @@ struct CabecalhoEcra<Acessorio: View>: View {
     }
 }
 
-/// Ecrã de topo com `ScrollView` (Início, Expirados): cabeçalho, margens laterais, fundo
-/// configurável e conteúdo que percorre por baixo da barra de separadores.
+/// Ecrã de topo com `ScrollView` (Início, Expirados): cabeçalho, margens laterais, o céu
+/// por trás e conteúdo que percorre por baixo da barra de separadores.
 struct EcraBase<Acessorio: View, Conteudo: View>: View {
     let titulo: String
     var sobretitulo: String?
-    var fundo: Color = Color(.systemGroupedBackground)
+    /// O Início mostra a cena do céu; `ganho` pinta-a de verde.
+    var cena = false
+    var ganho = false
     @ViewBuilder var acessorio: () -> Acessorio
     @ViewBuilder var conteudo: () -> Conteudo
 
@@ -65,15 +71,15 @@ struct EcraBase<Acessorio: View, Conteudo: View>: View {
             .padding(.horizontal, Espaco.margem)
             .padding(.bottom, Espaco.fim)
         }
-        .background(fundo.ignoresSafeArea())
+        .background { FundoCeu(cena: cena, ganho: ganho) }
         .navigationTitle(titulo)
         .toolbarVisibility(.hidden, for: .navigationBar)
     }
 }
 
 extension EcraBase where Acessorio == EmptyView {
-    init(titulo: String, sobretitulo: String? = nil, fundo: Color = Color(.systemGroupedBackground), @ViewBuilder conteudo: @escaping () -> Conteudo) {
-        self.init(titulo: titulo, sobretitulo: sobretitulo, fundo: fundo, acessorio: { EmptyView() }, conteudo: conteudo)
+    init(titulo: String, sobretitulo: String? = nil, cena: Bool = false, ganho: Bool = false, @ViewBuilder conteudo: @escaping () -> Conteudo) {
+        self.init(titulo: titulo, sobretitulo: sobretitulo, cena: cena, ganho: ganho, acessorio: { EmptyView() }, conteudo: conteudo)
     }
 }
 
@@ -82,7 +88,6 @@ extension EcraBase where Acessorio == EmptyView {
 struct EcraBaseLista<Acessorio: View, Conteudo: View>: View {
     let titulo: String
     var sobretitulo: String?
-    var fundo: Color = Color(.systemGroupedBackground)
     @ViewBuilder var acessorio: () -> Acessorio
     @ViewBuilder var conteudo: () -> Conteudo
 
@@ -93,7 +98,7 @@ struct EcraBaseLista<Acessorio: View, Conteudo: View>: View {
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets())
-            conteudo()
+            conteudo().listRowBackground(Ceu.cartao)
         }
         .listStyle(.insetGrouped)
         .listSectionSpacing(Espaco.bloco)
@@ -101,14 +106,14 @@ struct EcraBaseLista<Acessorio: View, Conteudo: View>: View {
         .contentMargins(.top, 0, for: .scrollContent)
         .contentMargins(.bottom, Espaco.fim, for: .scrollContent)
         .scrollContentBackground(.hidden)
-        .background(fundo.ignoresSafeArea())
+        .background { FundoCeu() }
         .navigationTitle(titulo)
         .toolbarVisibility(.hidden, for: .navigationBar)
     }
 }
 
 extension EcraBaseLista where Acessorio == EmptyView {
-    init(titulo: String, sobretitulo: String? = nil, fundo: Color = Color(.systemGroupedBackground), @ViewBuilder conteudo: @escaping () -> Conteudo) {
-        self.init(titulo: titulo, sobretitulo: sobretitulo, fundo: fundo, acessorio: { EmptyView() }, conteudo: conteudo)
+    init(titulo: String, sobretitulo: String? = nil, @ViewBuilder conteudo: @escaping () -> Conteudo) {
+        self.init(titulo: titulo, sobretitulo: sobretitulo, acessorio: { EmptyView() }, conteudo: conteudo)
     }
 }

@@ -185,7 +185,7 @@ struct ListaView: View {
                 concluir(item)
             }
         }
-        .listRowBackground(Color(.secondarySystemGroupedBackground).mix(with: cor.base, by: 0.14))
+        .listRowBackground(Ceu.cartao.mix(with: cor.base, by: 0.14))
         .swipeActions(edge: .leading) {
             if !item.fixado {
                 Button {
@@ -249,7 +249,7 @@ struct ListaView: View {
         }
         .padding(.horizontal, Espaco.margem)
         .frame(minHeight: 52)
-        .background(Color(.secondarySystemGroupedBackground), in: .capsule)
+        .background(Ceu.cartao, in: .capsule)
         .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
         .padding(.horizontal, Espaco.margem)
         .padding(.bottom, Espaco.curto)

@@ -58,11 +58,11 @@ struct PersonalizarListaView: View {
                         .multilineTextAlignment(.center)
                         .padding(.vertical, Espaco.grelha)
                         .padding(.horizontal, Espaco.bloco)
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14, style: .continuous))
+                        .background(Ceu.cartao, in: .rect(cornerRadius: 14, style: .continuous))
 
                     SeletorCor(selecao: $cor)
                         .padding(Espaco.grelha)
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                        .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
 
                     Picker("Tipo de ícone", selection: $separadorEmoji) {
                         Text("Símbolos").tag(false)
@@ -72,11 +72,11 @@ struct PersonalizarListaView: View {
 
                     SeletorIcone(cor: cor, emojis: separadorEmoji, icone: $icone, emoji: $emoji)
                         .padding(Espaco.grelha)
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18, style: .continuous))
+                        .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
                 }
                 .padding(Espaco.margem)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Ceu.folha)
             .navigationTitle(titulo)
             .navigationBarTitleDisplayMode(.inline)
             .tint(cor.tinta)
