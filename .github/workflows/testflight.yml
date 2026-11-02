@@ -111,6 +111,20 @@ jobs:
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
+      # Só nomes e grupos: mostra o que os perfis da Apple trazem quando a assinatura falha.
+      - name: Diagnóstico dos perfis
+        if: failure()
+        run: |
+          for perfil in "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"/* "$HOME/Library/MobileDevice/Provisioning Profiles"/*; do
+            [ -f "$perfil" ] || continue
+            security cms -D -i "$perfil" > "$RUNNER_TEMP/perfil.plist" 2>/dev/null || continue
+            nome=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$RUNNER_TEMP/perfil.plist")
+            criado=$(/usr/libexec/PlistBuddy -c 'Print :CreationDate' "$RUNNER_TEMP/perfil.plist")
+            grupos=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups' "$RUNNER_TEMP/perfil.plist" 2>/dev/null | tr -s ' \n' ' ')
+            echo "PERFIL: $nome | criado: $criado | grupos: ${grupos:-nenhum}"
+          done
+          rm -f "$RUNNER_TEMP/perfil.plist"
+
       - name: Limpar a chave
         if: always()
         run: rm -rf "$RUNNER_TEMP/chave"
