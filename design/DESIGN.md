@@ -376,10 +376,10 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Primeira abertura:** a Ampulheta a acenar, "Bem-vindo à ToDo", o botão do sistema "Iniciar sessão com a Apple" e "Agora não". Não volta a aparecer.
 - **Definições › Conta (no topo):** com sessão, a inicial, o nome e o email e "Terminar sessão" (não apaga nada); sem sessão, o botão.
 - **Técnica:**
-  - O identificador fica no Keychain; o nome e o email, que a Apple só dá na primeira vez, em UserDefaults.
-  - Ao abrir, a app verifica se o acesso foi revogado nos Ajustes.
-  - Sem a capacidade (Apple ID gratuito), o iOS recusa e a app diz "fica disponível quando a ToDo tiver a conta Apple Developer".
-- **No dia da conta:** juntar `com.apple.developer.applesignin` às entitlements (docs/CONTA-DEVELOPER.md).
+  - O identificador e o perfil (o nome e o email, que a Apple só dá na primeira vez) ficam no Keychain. "Terminar sessão" apaga só o identificador: o perfil volta quando a mesma conta entra outra vez. Uma conta diferente nunca herda o perfil da anterior.
+  - Ao abrir e ao voltar à app, verifica se o acesso foi revogado nos Ajustes. Revogado, a sessão termina e o perfil é apagado. Se a verificação falhar (sem rede), a sessão fica.
+  - Se o iOS não conseguir tratar do pedido, a app pede para confirmar nos Ajustes a conta Apple. Cancelar não mostra erro.
+- **Capacidade:** `com.apple.developer.applesignin` está ligada no `project.yml` desde a conta paga (docs/CONTA-DEVELOPER.md).
 
 ### 7.18 Ecrãs vazios com a Ampulheta [Decidido 28/10/2026]
 

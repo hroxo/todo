@@ -1,8 +1,8 @@
 import Foundation
 import Security
 
-/// Guarda os tokens das contas ligadas no Keychain do iPhone (nunca no UserDefaults nem no
-/// backup JSON).
+/// Guarda os tokens das contas ligadas e a conta Apple no Keychain do iPhone (nunca no
+/// UserDefaults nem no backup JSON).
 enum Keychain {
     private static let servico = "com.hugo.todo.contas"
 

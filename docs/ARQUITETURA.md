@@ -153,7 +153,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 
 ## Conta Apple (DESIGN.md 7.20)
 
-- **Opcional:** `ContaApple` (`@Observable`) faz o "Iniciar sessão com a Apple", guarda o utilizador no Keychain e confirma o estado da credencial ao abrir.
+- **Opcional:** `ContaApple` (`@Observable`) faz o "Iniciar sessão com a Apple", guarda o utilizador e o perfil (`PerfilApple`) no Keychain e confirma o estado da credencial ao abrir e ao voltar à app.
 - **Onde aparece:** `BoasVindasView` (uma vez, no primeiro arranque) e `SecaoConta` no topo das Definições.
 - Precisa da capacidade da conta paga para funcionar no iPhone.
 
