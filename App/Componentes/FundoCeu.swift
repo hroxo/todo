@@ -94,13 +94,15 @@ struct FundoCeu: View {
     /// Atravessa o céu durante o dia; ao nascer e ao pôr fica maior, laranja e baixo.
     private func sol(largura: CGFloat) -> some View {
         let baixo = ceu.fase == .amanhecer || ceu.fase == .porDoSol
-        let tamanho: CGFloat = baixo ? 96 : 64
+        let tamanho: CGFloat = baixo ? 88 : 64
         return Circle()
             .fill(baixo ? Color(red: 1, green: 0.54, blue: 0.24) : Color(red: 1, green: 0.82, blue: 0.25))
             .frame(width: tamanho, height: tamanho)
             .position(
-                x: largura * (0.1 + ceu.percurso * 0.8),
-                y: baixo ? 196 : 180 - sin(ceu.percurso * .pi) * 110
+                // Só na metade direita: à esquerda ficaria por trás do título.
+                x: largura * (0.5 + ceu.percurso * 0.42),
+                // Acima do balão da Ampulheta, que tapa o céu a partir daí.
+                y: baixo ? 92 : 110 - sin(ceu.percurso * .pi) * 45
             )
     }
 

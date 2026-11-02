@@ -65,7 +65,6 @@ struct CartaoLista: View {
             }
         }
         .background(cor.base, in: .rect(cornerRadius: 22, style: .continuous))
-        .shadow(color: cor.base.opacity(0.3), radius: 16, y: 6)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "\(lista.nome), " + (lista.ehCompras ? "\(ativos) por fazer" : (ativos == 1 ? "1 item ativo" : "\(ativos) itens ativos"))

@@ -166,21 +166,19 @@ struct InicioView: View {
                         LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
                             ForEach(paginas[indice]) { celula($0, agora: agora, altura: 128) }
                         }
-                        // Espaço para a sombra dos cartões, que a TabView cortaria.
-                        .padding(.vertical, Espaco.curto)
                         .frame(maxHeight: .infinity, alignment: .top)
                         .tag(indice)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(height: 128 * 2 + Espaco.grelha + 2 * Espaco.curto)
+                .frame(height: 128 * 2 + Espaco.grelha)
 
                 controlosPagina(total: paginas.count)
 
                 if listas.count >= Tarefas.maxListas {
                     Text("Máximo de \(Tarefas.maxListas) espaços")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Ceu.paleta(ceu.fase).tinta)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -240,13 +238,13 @@ struct InicioView: View {
                 HStack(spacing: Espaco.curto) {
                     ForEach(0..<total, id: \.self) { indice in
                         Circle()
-                            .fill(indice == pagina ? Color.primary : Color(.systemGray3))
+                            .fill(Ceu.paleta(ceu.fase).tinta.opacity(indice == pagina ? 1 : 0.3))
                             .frame(width: 8, height: 8)
                     }
                 }
                 Text(Espacos.rotuloPagina(pagina, espacos: listas.count))
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Ceu.paleta(ceu.fase).tinta)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Espacos.rotuloPagina(pagina, espacos: listas.count))
