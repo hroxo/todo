@@ -4,14 +4,24 @@ import ToDoCore
 
 @main
 struct ToDoApp: App {
+    /// A razão por que a base de dados real não abriu, por exemplo por causa do iCloud. A app
+    /// mostra-a em vez de se fechar, e nada corre até a base real voltar a abrir.
+    private(set) static var erroBaseDados: String?
+
     static let contentor: ModelContainer = {
         do {
             guard Demo.ativo else { return try BaseDados.contentor() }
+            if Demo.ecra == "erro-base" { throw CocoaError(.fileReadUnknown) }
             let contentor = try BaseDados.contentor(emMemoria: true)
             Demo.povoar(ModelContext(contentor))
             return contentor
         } catch {
-            fatalError("Não foi possível abrir a base de dados: \(error)")
+            erroBaseDados = String(reflecting: error)
+            // Uma base vazia, só para o resto da app poder arrancar: nunca toca no ficheiro real.
+            guard let vazia = try? BaseDados.contentor(emMemoria: true) else {
+                fatalError("Não foi possível abrir a base de dados: \(error)")
+            }
+            return vazia
         }
     }()
 
@@ -29,15 +39,21 @@ struct ToDoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // O céu muda com o sol de cada dia: claro de dia, escuro só à noite (DESIGN.md 7.23).
-            TimelineView(.periodic(from: .now, by: 60)) { linha in
-                let ceu = CeuDoDia(agora: Demo.agora ?? linha.date)
-                RaizView()
-                    .environment(estado)
-                    .environment(calendario)
-                    .environment(conta)
-                    .environment(\.ceu, ceu)
-                    .preferredColorScheme(ceu.fase == .noite ? .dark : .light)
+            Group {
+                if let erro = Self.erroBaseDados {
+                    ErroBaseDadosView(erro: erro)
+                } else {
+                    // O céu muda com o sol de cada dia: claro de dia, escuro só à noite (DESIGN.md 7.23).
+                    TimelineView(.periodic(from: .now, by: 60)) { linha in
+                        let ceu = CeuDoDia(agora: Demo.agora ?? linha.date)
+                        RaizView()
+                            .environment(estado)
+                            .environment(calendario)
+                            .environment(conta)
+                            .environment(\.ceu, ceu)
+                            .preferredColorScheme(ceu.fase == .noite ? .dark : .light)
+                    }
+                }
             }
                 .task {
                     if !Demo.ativo { Self.notificacoes.pedirPermissao() }
@@ -46,11 +62,15 @@ struct ToDoApp: App {
         }
         .modelContainer(Self.contentor)
         .onChange(of: fase) { anterior, nova in
+            // Sobre a base vazia, reagendar apagava os avisos e o widget ficava sem pontos.
+            guard Self.erroBaseDados == nil else { return }
             switch nova {
             case .active:
                 manutencao()
                 calendario.atualizar()
-            case .background where !Demo.ativo: Self.notificacoes.reagendar()
+            case .background where !Demo.ativo:
+                calendario.aoSairParaSegundoPlano()
+                Self.notificacoes.reagendar()
             default: break
             }
         }

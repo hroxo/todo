@@ -151,6 +151,42 @@ final class CalendarioTests: BaseTestes {
         XCTAssertNil(LigacaoReuniao.encontrar(url: nil, local: "Sala 3", notas: "Sem links"))
         XCTAssertNil(LigacaoReuniao.encontrar(url: URL(string: "mailto:a@b.pt"), local: nil, notas: nil))
     }
+
+    // MARK: - Só converter o que mudou
+
+    func testSoConverteOQueMudou() {
+        var conversoes: [String] = []
+        func ler(_ fontes: [(id: String, versao: String?)], anteriores: [String: Convertido<String>]) -> (valores: [String], convertidos: [String: Convertido<String>]) {
+            conversoes = []
+            return Diferencas.aplicar(fontes, anteriores: anteriores, chave: \.id, assinatura: \.versao) { fonte in
+                conversoes.append(fonte.id)
+                return "\(fonte.id)@\(fonte.versao ?? "?")"
+            }
+        }
+
+        let primeira = ler([("a", "1"), ("b", "1")], anteriores: [:])
+        XCTAssertEqual(conversoes, ["a", "b"])
+        XCTAssertEqual(primeira.valores, ["a@1", "b@1"])
+
+        let igual = ler([("a", "1"), ("b", "1")], anteriores: primeira.convertidos)
+        XCTAssertEqual(conversoes, [])
+        XCTAssertEqual(igual.valores, ["a@1", "b@1"])
+
+        // Só o que mudou se converte, e a ordem é a da leitura nova.
+        let mudou = ler([("b", "2"), ("a", "1")], anteriores: igual.convertidos)
+        XCTAssertEqual(conversoes, ["b"])
+        XCTAssertEqual(mudou.valores, ["b@2", "a@1"])
+
+        // O que desapareceu deixa de estar guardado.
+        let saiu = ler([("a", "1")], anteriores: mudou.convertidos)
+        XCTAssertEqual(conversoes, [])
+        XCTAssertEqual(Array(saiu.convertidos.keys), ["a"])
+
+        // Sem assinatura não se sabe se mudou: converte-se sempre.
+        let semVersao = ler([("c", nil)], anteriores: [:])
+        _ = ler([("c", nil)], anteriores: semVersao.convertidos)
+        XCTAssertEqual(conversoes, ["c"])
+    }
 }
 
 final class MigracaoV3Tests: XCTestCase {

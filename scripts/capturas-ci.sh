@@ -75,6 +75,8 @@ ECRAS=(
   "10-definicoes|definicoes|"
   "11-calendario|calendario|"
   "12-calendario-ligar|calendario|-calendario ligar"
+  "12b-calendario-falhou|calendario|-calendario falhou"
+  "12c-erro-base|erro-base|"
   "13-expirados-filtro|expirados-filtro|"
   "14-evento|evento|"
 )

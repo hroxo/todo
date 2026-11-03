@@ -385,7 +385,7 @@ struct CalendariosView: View {
     @Query(sort: \Lista.ordem) private var listas: [Lista]
 
     var body: some View {
-        let contas = Dictionary(grouping: calendario.calendarios, by: { $0.source.title })
+        let contas = Dictionary(grouping: calendario.calendarios, by: \.conta)
         let ligadas = Dictionary(grouping: calendario.contas.calendarios, by: \.fornecedor)
         ListaCeu {
             Section {
@@ -394,18 +394,18 @@ struct CalendariosView: View {
             }
             ForEach(contas.keys.sorted(), id: \.self) { conta in
                 Section(conta) {
-                    ForEach(contas[conta] ?? [], id: \.calendarIdentifier) { item in
+                    ForEach(contas[conta] ?? [], id: \.id) { item in
                         NavigationLink {
-                            EscolherEspacoView(calendarioId: item.calendarIdentifier, nome: item.title)
+                            EscolherEspacoView(calendarioId: item.id, nome: item.titulo)
                         } label: {
                             HStack(spacing: Espaco.curto) {
                                 Circle()
-                                    .fill(Color(cgColor: item.cgColor))
+                                    .fill(item.cor)
                                     .frame(width: 12, height: 12)
-                                Text(item.title)
+                                Text(item.titulo)
                                     .lineLimit(1)
                                 Spacer()
-                                RotuloDestino(destino: calendario.destino(de: item.calendarIdentifier), listas: listas)
+                                RotuloDestino(destino: calendario.destino(de: item.id), listas: listas)
                             }
                         }
                     }
@@ -488,7 +488,10 @@ struct ContasView: View {
             presenting: aDesligar
         ) { fornecedor in
             Button("Desligar", role: .destructive) {
-                withAnimation { contas.desligar(fornecedor) }
+                withAnimation {
+                    contas.desligar(fornecedor)
+                    calendario.atualizar()
+                }
             }
         } message: { _ in
             Text("Os eventos desta conta deixam de aparecer. Os pontos já criados ficam.")

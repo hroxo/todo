@@ -266,6 +266,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.12 Calendário no Início (mocks 7 e 8)
 
+**O calendário nunca impede a app de abrir:** se a app morrer durante a leitura dos eventos ou nos 10 segundos seguintes, na abertura seguinte não volta a ler e mostra o cartão "Não foi possível ler o calendário", com "Tentar outra vez" e "Agora não".
+
 **Revisão de 28/10/2026 [Decidido]:**
 - **Recolher o que passou:** os eventos que já acabaram ficam recolhidos numa linha "2 já passaram", que abre com um toque e mostra-os esbatidos. O cabeçalho diz "3 por vir".
 - **O que está a decorrer:** a barra na cor do evento fica mais grossa e pulsa devagar (fica parada com "Reduzir movimento"), com um fundo suave na mesma cor. Por baixo do título aparece "A decorrer · até 15:18 · local". Substitui a etiqueta vermelha "AGORA", que cortava o título.
@@ -348,6 +350,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.19 Backup e iCloud [Decidido 28/10/2026]
 
+- **Se os dados não abrirem:** a app não se fecha. Mostra "Não foi possível abrir os teus dados", diz que nada foi alterado e deixa partilhar o texto do erro.
 - **A cópia contínua é o iCloud:** a base de dados sincroniza sozinha com o iCloud privado da pessoa (SwiftData com CloudKit), sobrevive a apagar a app e passa para um iPhone novo. Precisa da conta Apple Developer paga.
   - **Pronto já:** o esquema V6, sem atributos únicos, com valores por defeito e relações opcionais, como o CloudKit exige, e o contentor em `.automatic`, que não sincroniza sem as entitlements.
   - **No dia da conta:** juntar as entitlements do iCloud e do CloudKit (comentadas no `project.yml`) e testar com dois aparelhos.

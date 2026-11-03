@@ -76,6 +76,8 @@ Nunca editar um esquema existente.
 
 O CloudKit só liga de facto com as capacidades da conta paga.
 
+Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma base vazia em memória só para arrancar e mostra `ErroBaseDadosView`. A manutenção, os avisos e o calendário não correm nesse estado, e o ficheiro real não é tocado.
+
 ## Regras principais
 
 ### Ciclo de vida do prazo
@@ -160,6 +162,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 ## Calendário
 
 - `Calendario` (`@Observable`) junta eventos do **EventKit** e das contas **Google/Microsoft**. Só lê: a app não cria eventos. `APICalendario` vai buscar os externos e `JuntarEventos` deduplica, ficando a versão externa, que tem mais detalhe.
+- **Leitura:** nunca bloqueia o ecrã. Só começa com a app ativa, junta as rajadas de `EKEventStoreChanged` e faz tudo fora da thread principal. A EventKit não diz o que mudou, por isso relê-se o dia, mas `Diferencas.aplicar` só converte os eventos que mudaram, e `eventos` só muda quando há diferenças. Uma marca em `UserDefaults` (`calendarioALer`) deteta que a app morreu a ler; aí não se lê mais até a pessoa pedir (`leituraFalhou`).
 - **Destinos:** cada calendário tem um destino: um espaço, "sem espaço" ou escondido (`DestinoCalendario`). `Espacos.associarPorNome` faz a associação inicial por nome.
 - **Pontos:** um evento vira ponto com `criarPontoDeEvento` (uma vez por `eventoId` + `eventoInicio`, por causa dos recorrentes).
 - **OAuth:**
@@ -177,7 +180,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 
 `ToDoApp.onOpenURL` trata `todo://captura` e os ficheiros `.todolista`.
 
-**Modo demo:** `-demo YES -ecra <nome>` abre um ecrã com dados de exemplo (`Demo.swift`). Ecrãs: `lista`, `detalhe`, `captura`, `personalizar`, `calendario`, `evento`, `expirados`, `concluidos`, `definicoes`, `compras` e `widget`. Serve o CI e o simulador.
+**Modo demo:** `-demo YES -ecra <nome>` abre um ecrã com dados de exemplo (`Demo.swift`). Ecrãs: `lista`, `detalhe`, `captura`, `personalizar`, `calendario`, `evento`, `expirados`, `concluidos`, `definicoes`, `compras`, `widget` e `erro-base`. Serve o CI e o simulador.
 
 ## Testes
 
@@ -197,6 +200,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 | `.github/workflows/ci.yml` | testes, build sem assinatura, `.ipa` na release `ultima` (para o iloader), capturas; não corre só com `.md` |
 | `.github/workflows/testflight.yml` | manual: assina com a chave da App Store Connect e envia para o TestFlight (precisa dos secrets, ver CONTA-DEVELOPER.md) |
 | `scripts/capturas-ci.sh` | no CI: arranca o simulador, abre cada ecrã em modo demo e fotografa em escuro e claro |
+| `scripts/arranque-real-ci.sh` | no CI: abre a app sem modo demo, com o calendário autorizado, e falha se ela morrer (sem assinatura, não cobre o iCloud) |
 | `scripts/capturas.sh` | local: descarrega as capturas de uma execução do CI (precisa do `gh`) |
 | `scripts/mocks.sh` | HTML dos mocks → PNG |
 | `scripts/readme-media.py` | gera as imagens e os GIFs do README a partir das capturas |

@@ -101,6 +101,10 @@ jobs:
         continue-on-error: true
         run: scripts/capturas-ci.sh build-sim/Build/Products/Debug-iphonesimulator/ToDo.app capturas
 
+      # Sem continue-on-error: se a app real não arrancar, o CI fica vermelho.
+      - name: Arranque real
+        run: bash scripts/arranque-real-ci.sh build-sim/Build/Products/Debug-iphonesimulator/ToDo.app capturas
+
       - uses: actions/upload-artifact@v4
         if: always() && hashFiles('capturas/**/*.png') != ''
         with:

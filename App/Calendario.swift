@@ -5,13 +5,13 @@ import SwiftUI
 import ToDoCore
 
 /// Um participante de um convite (Melhoria 6.2).
-struct Participante: Hashable {
+struct Participante: Hashable, Sendable {
     let nome: String
     let resposta: RespostaConvite
 }
 
 /// Um evento de hoje, já pronto para a interface.
-struct EventoHoje: Identifiable, Equatable {
+struct EventoHoje: Identifiable, Equatable, Sendable {
     let id: String
     /// Identificador externo do evento (o mesmo em todos os dispositivos), para o "+" só
     /// funcionar uma vez por ocorrência (Melhoria 6.4).
@@ -36,6 +36,14 @@ struct EventoHoje: Identifiable, Equatable {
     }
 }
 
+/// Um calendário do iPhone já em valores: sai da leitura em segundo plano e compara-se com o anterior.
+struct CalendarioLocal: Equatable, Sendable {
+    let id: String
+    let titulo: String
+    let conta: String
+    let cor: Color
+}
+
 /// Onde aparecem os eventos de um calendário no Início.
 enum DestinoCalendario: Equatable {
     case espaco(UUID)
@@ -57,9 +65,14 @@ final class Calendario {
     }
 
     private(set) var acesso: Acesso = .porPedir
-    /// Eventos de hoje do EventKit.
-    private(set) var locais: [EventoHoje] = []
-    private(set) var calendarios: [EKCalendar] = []
+    /// Eventos de hoje do iPhone e das contas ligadas, sem os repetidos (fica a versão da
+    /// conta ligada, que tem mais detalhes) nem os dos calendários escondidos. Guardados: os
+    /// ecrãs leem-nos várias vezes em cada desenho, e só mudam quando há diferenças.
+    private(set) var eventos: [EventoHoje] = []
+    private(set) var calendarios: [CalendarioLocal] = []
+    /// A app morreu durante a última leitura: não se lê outra vez sem a pessoa pedir, para o
+    /// calendário nunca impedir a app de abrir (DESIGN.md 7.12).
+    private(set) var leituraFalhou = false
     /// Contas Google e Outlook ligadas diretamente (Melhoria 7).
     let contas = ContasCalendario()
     /// Identificador do calendário → identificador do espaço (UUID da lista, em texto), ou
@@ -69,25 +82,17 @@ final class Calendario {
     /// Calendários já vistos: a associação automática por nome só se faz aos novos.
     @ObservationIgnored private var conhecidos: Set<String>
 
+    /// Eventos de hoje do EventKit e a conversão de cada um, para só converter os que mudam.
+    @ObservationIgnored private var locais: [EventoHoje] = []
+    @ObservationIgnored private var convertidos: [String: Convertido<EventoHoje>] = [:]
+
     @ObservationIgnored private let loja = EKEventStore()
     @ObservationIgnored private let contentor: ModelContainer
     @ObservationIgnored private var observador: NSObjectProtocol?
+    @ObservationIgnored private var leitura: Task<Void, Never>?
+    @ObservationIgnored private let chaveLeitura = "calendarioALer"
     @ObservationIgnored private let chaveEspacos = "calendariosEspacos"
     @ObservationIgnored private let chaveConhecidos = "calendariosConhecidos"
-
-    /// Eventos de hoje do iPhone e das contas ligadas, sem os repetidos (fica a versão da
-    /// conta ligada, que tem mais detalhes) nem os dos calendários escondidos.
-    var eventos: [EventoHoje] {
-        let externos = contas.eventos.filter { destino(de: $0.calendarioId) != .oculto }
-        let juntos = JuntarEventos.juntar(
-            locais: locais,
-            externos: externos,
-            chaveLocal: { ($0.eventoId, $0.inicio) },
-            chaveExterno: { ($0.id, $0.inicio) }
-        )
-        return (juntos.locais + juntos.externos.map(converterExterno))
-            .sorted { ($0.diaInteiro ? 0 : 1, $0.inicio) < ($1.diaInteiro ? 0 : 1, $1.inicio) }
-    }
 
     /// Mostra os eventos se o EventKit tiver acesso ou houver uma conta ligada.
     var mostraEventos: Bool {
@@ -103,7 +108,9 @@ final class Calendario {
             prepararDemo()
             return
         }
+        leituraFalhou = UserDefaults.standard.bool(forKey: chaveLeitura)
         lerAcesso()
+        // A primeira leitura vem de `ToDoApp`, ao ficar ativa: aqui atrasaria o primeiro ecrã.
         observador = NotificationCenter.default.addObserver(
             forName: .EKEventStoreChanged,
             object: loja,
@@ -111,13 +118,12 @@ final class Calendario {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.atualizar() }
         }
-        atualizar()
     }
 
     /// Fontes ligadas, para as Definições ("Gmail, iCloud").
     var fontes: String {
         let ligadas = contas.contas.keys.map(\.nome)
-        return Set(calendarios.map(\.source.title) + ligadas).sorted().joined(separator: ", ")
+        return Set(calendarios.map(\.conta) + ligadas).sorted().joined(separator: ", ")
     }
 
     func pedirAcesso() async {
@@ -131,29 +137,121 @@ final class Calendario {
     }
 
     func atualizar() {
-        guard !Demo.ativo else { return }
+        guard !Demo.ativo, ToDoApp.erroBaseDados == nil else { return }
         lerAcesso()
         atualizarContas()
-        guard acesso == .autorizado else {
+        leitura?.cancel()
+        guard acesso == .autorizado, !leituraFalhou else {
             calendarios = []
             locais = []
+            convertidos = [:]
+            juntarEventos()
             return
         }
-        calendarios = loja.calendars(for: .event).sorted {
-            ($0.source.title, $0.title) < ($1.source.title, $1.title)
+        juntarEventos()
+        leitura = Task {
+            // Os avisos do EventKit vêm em rajadas, sobretudo depois de dar acesso: só o último lê.
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            marcarLeitura(true)
+            await lerEventos()
+            // Os eventos ainda têm de se desenhar: só depois disso a leitura correu bem.
+            try? await Task.sleep(for: .seconds(10))
+            guard !Task.isCancelled else { return }
+            marcarLeitura(false)
         }
-        associarNovos(calendarios.map { ($0.calendarIdentifier, $0.title) })
-        let visiveis = calendarios.filter { destino(de: $0.calendarIdentifier) != .oculto }
-        guard !visiveis.isEmpty else {
-            locais = []
-            return
-        }
+    }
+
+    /// O EventKit não diz o que mudou, por isso relê-se o dia; tudo fora da thread principal, e
+    /// só o que tem diferenças se converte e chega aos ecrãs.
+    private func lerEventos() async {
+        let lidos = await Task.detached { [loja = self.loja] in Self.lerCalendarios(loja) }.value
+        guard !Task.isCancelled else { return }
+        if lidos != calendarios { calendarios = lidos }
+        associarNovos(lidos.map { ($0.id, $0.titulo) })
+        let ocultos = Set(espacos.filter { $0.value == marcaOculto }.keys)
+        let hoje = await Task.detached { [loja = self.loja, anteriores = convertidos] in
+            Self.lerEventosDeHoje(loja, ocultos: ocultos, anteriores: anteriores)
+        }.value
+        convertidos = hoje.convertidos
+        guard !Task.isCancelled, hoje.valores != locais else { return }
+        locais = hoje.valores
+        juntarEventos()
+    }
+
+    private func juntarEventos() {
+        let externos = contas.eventos.filter { espacos[$0.calendarioId] != marcaOculto }
+        let juntos = JuntarEventos.juntar(
+            locais: locais,
+            externos: externos,
+            chaveLocal: { ($0.eventoId, $0.inicio) },
+            chaveExterno: { ($0.id, $0.inicio) }
+        )
+        let novos = (juntos.locais + juntos.externos.map(converterExterno))
+            .sorted { ($0.diaInteiro ? 0 : 1, $0.inicio) < ($1.diaInteiro ? 0 : 1, $1.inicio) }
+        if novos != eventos { eventos = novos }
+    }
+
+    nonisolated private static func lerCalendarios(_ loja: EKEventStore) -> [CalendarioLocal] {
+        loja.calendars(for: .event)
+            .map { CalendarioLocal(id: $0.calendarIdentifier, titulo: $0.title, conta: $0.source.title, cor: Color(cgColor: $0.cgColor)) }
+            .sorted { ($0.conta, $0.titulo) < ($1.conta, $1.titulo) }
+    }
+
+    nonisolated private static func lerEventosDeHoje(
+        _ loja: EKEventStore,
+        ocultos: Set<String>,
+        anteriores: [String: Convertido<EventoHoje>]
+    ) -> (valores: [EventoHoje], convertidos: [String: Convertido<EventoHoje>]) {
+        let visiveis = loja.calendars(for: .event).filter { !ocultos.contains($0.calendarIdentifier) }
+        guard !visiveis.isEmpty else { return ([], [:]) }
         let inicioDoDia = Calendar.current.startOfDay(for: .now)
         let fimDoDia = Calendar.current.date(byAdding: .day, value: 1, to: inicioDoDia)!
         let pedido = loja.predicateForEvents(withStart: inicioDoDia, end: fimDoDia, calendars: visiveis)
-        locais = loja.events(matching: pedido)
+        let eventos = loja.events(matching: pedido)
             .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
-            .map(Self.converter)
+        return Diferencas.aplicar(
+            eventos,
+            anteriores: anteriores,
+            chave: { ($0.calendarItemExternalIdentifier ?? $0.calendarItemIdentifier) + "-\($0.startDate.timeIntervalSince1970)" },
+            assinatura: assinatura,
+            converter: converter
+        )
+    }
+
+    /// O que indica que um evento mudou, sem tocar nas partes caras de converter.
+    // shortcut: não inclui os participantes nem a cor, por serem caros ou raros; a diferença pode só aparecer ao reabrir a app.
+    nonisolated private static func assinatura(_ evento: EKEvent) -> String? {
+        guard let alterado = evento.lastModifiedDate else { return nil }
+        return [
+            "\(alterado.timeIntervalSince1970)",
+            "\(evento.endDate.timeIntervalSince1970)",
+            "\(evento.isAllDay)",
+            evento.title ?? "",
+            evento.location ?? "",
+            evento.calendar.calendarIdentifier,
+            evento.calendar.title,
+        ].joined(separator: "|")
+    }
+
+    /// Tentar outra vez, depois de a app ter morrido a ler.
+    func lerOutraVez() {
+        leituraFalhou = false
+        marcarLeitura(false)
+        atualizar()
+    }
+
+    /// Chegar ao segundo plano prova que a app sobreviveu à leitura.
+    func aoSairParaSegundoPlano() {
+        guard !leituraFalhou else { return }
+        leitura?.cancel()
+        marcarLeitura(false)
+    }
+
+    private func marcarLeitura(_ aLer: Bool) {
+        UserDefaults.standard.set(aLer, forKey: chaveLeitura)
+        // A marca tem de sobreviver a um crash logo a seguir.
+        UserDefaults.standard.synchronize()
     }
 
     /// Lê as contas ligadas em segundo plano; os calendários novos ficam associados por nome.
@@ -163,6 +261,7 @@ final class Calendario {
         Task {
             await contas.atualizar(ocultos: ocultos)
             associarNovos(contas.calendarios.map { ($0.id, $0.nome) })
+            juntarEventos()
         }
     }
 
@@ -188,7 +287,7 @@ final class Calendario {
         )
     }
 
-    private static func converter(_ evento: EKEvent) -> EventoHoje {
+    nonisolated private static func converter(_ evento: EKEvent) -> EventoHoje {
         let titulo = evento.title ?? ""
         let local = evento.location?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let notas = evento.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -212,14 +311,14 @@ final class Calendario {
         )
     }
 
-    private static func nomeParticipante(_ participante: EKParticipant) -> String {
+    nonisolated private static func nomeParticipante(_ participante: EKParticipant) -> String {
         if let nome = participante.name, !nome.isEmpty { return nome }
         // Sem nome, o endereço vem como "mailto:ana@exemplo.pt".
         let endereco = participante.url.absoluteString
         return endereco.hasPrefix("mailto:") ? String(endereco.dropFirst(7)) : endereco
     }
 
-    private static func resposta(de participante: EKParticipant) -> RespostaConvite {
+    nonisolated private static func resposta(de participante: EKParticipant) -> RespostaConvite {
         switch participante.participantStatus {
         case .accepted: .aceite
         case .declined: .recusado
@@ -228,15 +327,16 @@ final class Calendario {
         }
     }
 
-    /// O espaço de um calendário, se ainda existir.
+    /// O espaço guardado de um calendário. Corre por cada evento em cada desenho, por isso não
+    /// vai à base de dados: quem chama procura-o nas listas, e um espaço apagado não aparece.
     func espaco(de calendarioId: String) -> UUID? {
-        guard let texto = espacos[calendarioId], let id = UUID(uuidString: texto) else { return nil }
-        return idsDosEspacos().contains(id) ? id : nil
+        espacos[calendarioId].flatMap(UUID.init(uuidString:))
     }
 
     func destino(de calendarioId: String) -> DestinoCalendario {
         if espacos[calendarioId] == marcaOculto { return .oculto }
-        return espaco(de: calendarioId).map(DestinoCalendario.espaco) ?? .semEspaco
+        guard let id = espaco(de: calendarioId), idsDosEspacos().contains(id) else { return .semEspaco }
+        return .espaco(id)
     }
 
     /// Associa um calendário a um espaço, deixa-o sem espaço ou esconde-o.
@@ -253,7 +353,7 @@ final class Calendario {
 
     /// Nome de um calendário, para as Definições e a vista de um evento.
     func nome(de calendarioId: String) -> String {
-        calendarios.first { $0.calendarIdentifier == calendarioId }?.title
+        calendarios.first { $0.id == calendarioId }?.titulo
             ?? contas.calendarios.first { $0.id == calendarioId }?.nome
             ?? eventos.first { $0.calendarioId == calendarioId }?.calendarioNome
             ?? ""
@@ -287,13 +387,18 @@ final class Calendario {
         }
     }
 
-    /// Eventos de exemplo para as capturas de ecrã (`-calendario ligar` mostra o cartão).
+    /// Eventos de exemplo para as capturas de ecrã (`-calendario ligar` e `-calendario falhou`
+    /// mostram os cartões).
     private func prepararDemo() {
         guard UserDefaults.standard.string(forKey: "calendario") != "ligar" else {
             acesso = .porPedir
             return
         }
         acesso = .autorizado
+        guard UserDefaults.standard.string(forKey: "calendario") != "falhou" else {
+            leituraFalhou = true
+            return
+        }
         let agora = Date.now
         let hoje = Calendar.current.startOfDay(for: agora)
         func as_(_ hora: Int, _ minuto: Int) -> Date {
@@ -324,5 +429,6 @@ final class Calendario {
             evento("4", "Jantar com a Ana", as_(21, 0), as_(22, 30), "", .green, "Pessoal"),
         ].sorted { $0.inicio < $1.inicio }
         associarNovos(locais.map { ($0.calendarioId, $0.calendarioId) })
+        juntarEventos()
     }
 }

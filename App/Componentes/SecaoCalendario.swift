@@ -29,7 +29,9 @@ struct SecaoCalendario: View {
 
     var body: some View {
         Group {
-            if calendario.mostraEventos {
+            if calendario.acesso == .autorizado && calendario.leituraFalhou {
+                cartaoFalhou
+            } else if calendario.mostraEventos {
                 hoje
             } else if calendario.acesso == .recusado {
                 cartaoRecusado
@@ -135,6 +137,36 @@ struct SecaoCalendario: View {
             HStack {
                 Button("Abrir Ajustes") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { abrirURL(url) }
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                Spacer()
+                Button("Agora não") {
+                    withAnimation { mostrar = false }
+                }
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(Espaco.bloco)
+        .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
+    }
+
+    /// A app fechou-se a ler o calendário: abre sem ele e deixa a pessoa decidir (DESIGN.md 7.12).
+    private var cartaoFalhou: some View {
+        VStack(alignment: .leading, spacing: Espaco.grelha) {
+            HStack(spacing: Espaco.grelha) {
+                circuloCalendario
+                VStack(alignment: .leading, spacing: Espaco.minimo) {
+                    Text("Não foi possível ler o calendário")
+                        .font(.headline)
+                    Text("A app fechou-se enquanto lia os eventos. Os teus pontos não foram afetados.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            HStack {
+                Button("Tentar outra vez") {
+                    calendario.lerOutraVez()
                 }
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.capsule)

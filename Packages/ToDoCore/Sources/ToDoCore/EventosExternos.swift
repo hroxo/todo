@@ -345,6 +345,38 @@ public enum JuntarEventos {
     }
 }
 
+/// O resultado guardado de uma conversão, com a assinatura do que lhe deu origem.
+public struct Convertido<Valor: Sendable>: Sendable {
+    public let assinatura: String
+    public let valor: Valor
+}
+
+public enum Diferencas {
+    /// Converte só o que mudou desde a última leitura: o que mantém a assinatura reaproveita o
+    /// valor anterior. Sem assinatura não se sabe se mudou, por isso converte-se sempre.
+    public static func aplicar<Fonte, Valor>(
+        _ fontes: [Fonte],
+        anteriores: [String: Convertido<Valor>],
+        chave: (Fonte) -> String,
+        assinatura: (Fonte) -> String?,
+        converter: (Fonte) -> Valor
+    ) -> (valores: [Valor], convertidos: [String: Convertido<Valor>]) {
+        var convertidos: [String: Convertido<Valor>] = [:]
+        let valores = fontes.map { fonte -> Valor in
+            guard let atual = assinatura(fonte) else { return converter(fonte) }
+            let id = chave(fonte)
+            if let anterior = anteriores[id], anterior.assinatura == atual {
+                convertidos[id] = anterior
+                return anterior.valor
+            }
+            let valor = converter(fonte)
+            convertidos[id] = Convertido(assinatura: atual, valor: valor)
+            return valor
+        }
+        return (valores, convertidos)
+    }
+}
+
 /// Texto simples a partir do HTML das descrições dos convites.
 public enum TextoSimples {
     public static func de(_ html: String) -> String {
