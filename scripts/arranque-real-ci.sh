@@ -21,8 +21,10 @@ falhou=0
 
 abrir() {
   local nome="$1"
-  local saida pid tamanho
-  saida=$(xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE")
+  shift
+  local saida pid tamanho processos
+  # Os argumentos extra (-chave valor) sobrepõem-se às preferências só nesta abertura.
+  saida=$(xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" "$@")
   pid=${saida##*: }
   echo "$nome: pid $pid"
   sleep 15
@@ -33,7 +35,9 @@ abrir() {
   xcrun simctl spawn "$UDID" log show --last 1m --style compact \
     --predicate 'process == "ToDo"' > "$SAIDA/$nome-log.txt" 2>&1 || true
 
-  if ! xcrun simctl spawn "$UDID" launchctl list | grep -q "UIKitApplication:$BUNDLE"; then
+  # Lista guardada antes do grep -q: com pipefail, a pipe falhava com a app viva (SIGPIPE).
+  processos=$(xcrun simctl spawn "$UDID" launchctl list)
+  if ! grep -q "UIKitApplication:$BUNDLE" <<< "$processos"; then
     echo "::error::$nome: a app morreu no arranque real."
     falhou=1
     return
@@ -44,11 +48,21 @@ abrir() {
     echo "::error::$nome: sem interface ao fim de 40 s (bloqueada no ecrã de lançamento?)."
     falhou=1
   fi
+  # O tamanho não chega: o aviso das notificações enche a captura mesmo com a app em branco.
+  if grep -q "_firstCommitBlock" "$SAIDA/$nome-sample.txt"; then
+    echo "::error::$nome: bloqueada no primeiro desenho ao fim de 40 s."
+    falhou=1
+  fi
 }
 
 abrir sem-calendario
+# A segunda abertura sem calendário separa os dois suspeitos: reabrir a app ou dar o acesso.
+abrir sem-calendario-2
 xcrun simctl privacy "$UDID" grant calendar "$BUNDLE" || echo "Não foi possível autorizar o calendário"
 abrir com-calendario
+# O estado do iPhone: as boas-vindas já vistas. E sem a secção, para ver se é ela que bloqueia.
+abrir com-calendario-sem-boas-vindas -boasVindasVistas YES
+abrir com-calendario-sem-secao -mostrarCalendario NO
 
 cp "$HOME"/Library/Logs/DiagnosticReports/ToDo* "$SAIDA/" 2>/dev/null || true
 xcrun simctl terminate "$UDID" "$BUNDLE" || true
