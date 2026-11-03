@@ -106,6 +106,7 @@ jobs:
         run: bash scripts/arranque-real-ci.sh build-sim/Build/Products/Debug-iphonesimulator/ToDo.app capturas
 
       - uses: actions/upload-artifact@v4
+        # Também quando o arranque real falha: é aí que as pilhas e os registos fazem falta.
         if: always() && hashFiles('capturas/**/*.png') != ''
         with:
           name: capturas
