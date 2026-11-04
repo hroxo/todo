@@ -12,6 +12,7 @@ struct SecaoCalendario: View {
     @Environment(EstadoApp.self) private var estado
     @Environment(\.modelContext) private var contexto
     @Environment(\.openURL) private var abrirURL
+    @Environment(\.agora) private var agora
     @Query(sort: \Lista.ordem) private var listas: [Lista]
     @AppStorage("mostrarCalendario") private var mostrar = true
     @AppStorage("ultimaListaId") private var ultimaListaId = ""

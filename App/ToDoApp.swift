@@ -51,6 +51,7 @@ struct ToDoApp: App {
                             .environment(calendario)
                             .environment(conta)
                             .environment(\.ceu, ceu)
+                            .environment(\.agora, linha.date)
                             .preferredColorScheme(ceu.fase == .noite ? .dark : .light)
                     }
                 }
