@@ -2,14 +2,24 @@ import SwiftUI
 import ToDoCore
 
 extension EnvironmentValues {
-    /// O céu de agora, atualizado de minuto a minuto na raiz da app.
+    /// O céu de agora, posto na raiz da app por `CeuDoModo`.
     @Entry var ceu = CeuDoDia(agora: .now)
     /// A hora da raiz, o único relógio de minuto a minuto da app.
     @Entry var agora = Date.now
 }
 
-/// As cores do céu (DESIGN.md 7.23). A app fica em modo claro de dia e em modo escuro à noite,
-/// por isso os cartões e as folhas só têm de trocar o preto do sistema pelo índigo da noite.
+/// Põe o céu do modo do iPhone. Tem de ser uma vista: o `App` não recebe o `colorScheme`.
+struct CeuDoModo: ViewModifier {
+    let agora: Date
+    @Environment(\.colorScheme) private var esquema
+
+    func body(content: Content) -> some View {
+        content.environment(\.ceu, CeuDoDia(agora: agora, escuro: esquema == .dark))
+    }
+}
+
+/// As cores do céu (DESIGN.md 7.23). O modo escuro é sempre noite e o claro sempre dia, por isso
+/// os cartões e as folhas só têm de trocar o preto do sistema pelo índigo da noite.
 enum Ceu {
     private static func cor(_ hex: UInt32) -> Color {
         Color(uiColor: uiCor(hex))
@@ -44,16 +54,14 @@ enum Ceu {
 
     static func paleta(_ fase: CeuDoDia.Fase) -> Paleta {
         switch fase {
-        case .amanhecer: Paleta(ceu: cor(0xFFD1C7), tinta: cor(0x6A2A3A), colina: cor(0xF7B7AC), colinaFrente: cor(0xEFA39F))
         case .dia: Paleta(ceu: cor(0xBDE6FB), tinta: cor(0x0B3A5E), colina: cor(0xA8E09A), colinaFrente: cor(0x8BD083))
-        case .porDoSol: Paleta(ceu: cor(0xFFB27A), tinta: cor(0x5A1F0A), colina: cor(0xF09A7A), colinaFrente: cor(0xE58570))
         case .noite: Paleta(ceu: cor(0x2A2570), tinta: cor(0xF2F0FF), colina: cor(0x231F60), colinaFrente: cor(0x1C1950))
         }
     }
 }
 
 /// O fundo dos ecrãs: a cor do céu e, no Início, a cena com o sol ou a lua atrás das colinas.
-/// O dia ganho fica verde, exceto à noite: aí o texto é claro e continua o céu estrelado.
+/// O dia ganho fica verde, exceto no modo escuro: aí o texto é claro e continua o céu estrelado.
 struct FundoCeu: View {
     var cena = false
     var ganho = false
@@ -93,19 +101,12 @@ struct FundoCeu: View {
         .accessibilityHidden(true)
     }
 
-    /// Atravessa o céu durante o dia; ao nascer e ao pôr fica maior, laranja e baixo.
     private func sol(largura: CGFloat) -> some View {
-        let baixo = ceu.fase == .amanhecer || ceu.fase == .porDoSol
-        let tamanho: CGFloat = baixo ? 88 : 64
-        return Circle()
-            .fill(baixo ? Color(red: 1, green: 0.54, blue: 0.24) : Color(red: 1, green: 0.82, blue: 0.25))
-            .frame(width: tamanho, height: tamanho)
-            .position(
-                // Só na metade direita: à esquerda ficaria por trás do título.
-                x: largura * (0.5 + ceu.percurso * 0.42),
-                // Acima do balão da Ampulheta, que tapa o céu a partir daí.
-                y: baixo ? 92 : 110 - sin(ceu.percurso * .pi) * 45
-            )
+        Circle()
+            .fill(Color(red: 1, green: 0.82, blue: 0.25))
+            .frame(width: 64, height: 64)
+            // À direita, para não ficar atrás do título, e acima do balão do Glassy.
+            .position(x: largura * 0.71, y: 65)
     }
 
     private func lua(fundo: Color) -> some View {

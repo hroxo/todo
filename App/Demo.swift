@@ -11,11 +11,6 @@ import UIKit
 enum Demo {
     static var ativo: Bool { UserDefaults.standard.bool(forKey: "demo") }
     static var ecra: String? { UserDefaults.standard.string(forKey: "ecra") }
-    /// `-hora 17.5` mostra o céu a essa hora, para as capturas.
-    static var agora: Date? {
-        guard ativo, UserDefaults.standard.object(forKey: "hora") != nil else { return nil }
-        return Calendar.current.startOfDay(for: .now).addingTimeInterval(UserDefaults.standard.double(forKey: "hora") * 3600)
-    }
     static var faseManter: String? { ativo ? UserDefaults.standard.string(forKey: "manter") : nil }
 
     private struct RelogioDemo: Relogio {
@@ -196,7 +191,6 @@ enum Demo {
 enum Demo {
     static var ativo: Bool { false }
     static var ecra: String? { nil }
-    static var agora: Date? { nil }
     static var faseManter: String? { nil }
 }
 #endif

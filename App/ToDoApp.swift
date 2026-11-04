@@ -47,16 +47,14 @@ struct ToDoApp: App {
                 if let erro = Self.erroBaseDados {
                     ErroBaseDadosView(erro: erro)
                 } else {
-                    // O céu muda com o sol de cada dia: claro de dia, escuro só à noite (DESIGN.md 7.23).
+                    // De minuto a minuto, para a saudação e o calendário; o céu segue o modo do iPhone (DESIGN.md 7.23).
                     TimelineView(.periodic(from: .now, by: 60)) { linha in
-                        let ceu = CeuDoDia(agora: Demo.agora ?? linha.date)
                         RaizView()
                             .environment(estado)
                             .environment(calendario)
                             .environment(conta)
-                            .environment(\.ceu, ceu)
                             .environment(\.agora, linha.date)
-                            .preferredColorScheme(ceu.fase == .noite ? .dark : .light)
+                            .modifier(CeuDoModo(agora: linha.date))
                     }
                 }
             }

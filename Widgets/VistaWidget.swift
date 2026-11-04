@@ -122,10 +122,15 @@ struct VistaVazia: View {
     var nivelAreia: Double?
     var semDados = false
 
+    @Environment(\.colorScheme) private var esquema
+
+    /// O cenário que está por trás, que segue o modo do iPhone.
+    private var cena: PoseMascote { pose.cena(escuro: esquema == .dark) }
+
     /// Azul escuro nos cenários claros; no tema, a cor mais escura do cenário.
     private var corTexto: Color {
-        if pose.cenarioEscuro { return .white }
-        guard pose.doTema(tema) else { return Color(red: 0.05, green: 0.27, blue: 0.49) }
+        if cena.cenarioEscuro { return .white }
+        guard cena.doTema(tema) else { return Color(red: 0.05, green: 0.27, blue: 0.49) }
         switch tema.cenario {
         case .trabalho: return Color(red: 0.24, green: 0.2, blue: 0.54)
         case .pessoal: return Color(red: 0.09, green: 0.2, blue: 0.02)
@@ -134,8 +139,8 @@ struct VistaVazia: View {
     }
 
     var body: some View {
-        let claro = pose.cenarioEscuro
-        let naJanela = pose.doTema(tema) && tema == .viagem
+        let claro = cena.cenarioEscuro
+        let naJanela = cena.doTema(tema) && tema == .viagem
         HStack(spacing: 14) {
             if naJanela {
                 // A janela do avião está no cenário, à esquerda: a Ampulheta senta-se ao lado.

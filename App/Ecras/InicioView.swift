@@ -355,7 +355,7 @@ struct InicioView: View {
     /// O balão diz, por esta ordem: o "Boa!" do ponto acabado de concluir, a sugestão de "Para ti"
     /// ou a frase do dia.
     private func anfitria(progresso: ProgressoDia, sugestao: ParaTi?, agora: Date) -> some View {
-        let fraseDoDia = progresso.frase(saudacao: ceu.saudacaoDoMomento)
+        let fraseDoDia = progresso.frase(saudacao: ceu.saudacao)
         let frase: String
         let botoes: [CartaoAnfitria.Botao]
         if let acabado {

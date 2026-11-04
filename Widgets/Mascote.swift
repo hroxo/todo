@@ -53,6 +53,15 @@ enum PoseMascote: String, CaseIterable {
         }
     }
 
+    /// A pose cujo cenário se desenha: como na app, o céu segue o modo do iPhone (DESIGN.md 7.23).
+    /// O escuro é sempre noite e o claro sempre dia; dormir continua a ser pela hora, mas de dia
+    /// fica debaixo do céu claro. Só o ko mantém o seu cenário cinzento nos dois modos.
+    func cena(escuro: Bool) -> PoseMascote {
+        if self == .ko { return .ko }
+        if escuro { return .dormir }
+        return self == .dormir ? .areia : self
+    }
+
     /// Texto claro nos cenários escuros (festa, noite e ko).
     var cenarioEscuro: Bool { self == .celebrar || self == .dormir || self == .ko }
 
@@ -389,15 +398,18 @@ struct CenarioMascote: View {
     let pose: PoseMascote
     var tema: TemaMascote = .geral
 
+    @Environment(\.colorScheme) private var esquema
+
     var body: some View {
-        if pose.doTema(tema) {
+        let cena = pose.cena(escuro: esquema == .dark)
+        if cena.doTema(tema) {
             CenarioTema(tema: tema.cenario)
         } else {
-            cenarioDoDia
+            cenarioDoDia(cena)
         }
     }
 
-    private var cenarioDoDia: some View {
+    private func cenarioDoDia(_ pose: PoseMascote) -> some View {
         Canvas { c, t in
             let caixa = CGRect(origin: .zero, size: t)
             func cor(_ r: Double, _ g: Double, _ b: Double) -> Color { Color(red: r, green: g, blue: b) }
