@@ -197,6 +197,9 @@ struct Ampulheta: View {
                 c.translateBy(x: -Self.centro, y: -Self.recorte.maxY)
             }
             desenharTras(em: c, t)
+            // Sem isto, o céu passa pelo vidro e o Glassy mistura-se com o fundo. Por baixo da
+            // areia, para ela não perder a cor.
+            c.fill(Self.vidro, with: .color(.white.opacity(0.4)))
             desenharAreia(em: c, t)
             c.draw(c.resolve(Image("glassy_\(pose.imagem)_frente")), in: Self.recorte)
             desenharPalpebras(em: c, t)
