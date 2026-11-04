@@ -263,6 +263,8 @@ struct DefinicoesView: View {
             porRestaurar = PorRestaurar(backup: backup, resumo: resumo)
         } catch ErroBackup.versaoDesconhecida {
             erroBackup = "Este backup vem de uma versão mais recente da ToDo. Atualiza a app para o restaurar."
+        } catch ErroTarefas.limiteListas {
+            erroBackup = "As listas deste backup não cabem nas \(Tarefas.maxListas) que a ToDo permite. Apaga algumas e tenta de novo."
         } catch {
             erroBackup = "Este ficheiro não é um backup da ToDo."
         }
@@ -272,19 +274,26 @@ struct DefinicoesView: View {
         let b = escolhido.backup
         let r = escolhido.resumo
         let origem = "Backup de \(Formatos.dia(b.criadoEm, agora: .now)), com \(b.listas.count == 1 ? "1 lista" : "\(b.listas.count) listas") e \(b.totalItens == 1 ? "1 ponto" : "\(b.totalItens) pontos")."
-        guard !r.nadaMuda else { return origem + " Já tens tudo o que está nele." }
+        // As definições mudam também quando não entram pontos.
+        let definicoesMudam = " As definições passam a ser as do backup, sem encurtar quanto tempo se guardam os teus pontos."
+        guard !r.nadaMuda else { return origem + " Já tens tudo o que está nele." + definicoesMudam }
         var partes: [String] = []
         if r.listasNovas > 0 { partes.append(r.listasNovas == 1 ? "1 lista nova" : "\(r.listasNovas) listas novas") }
         if r.itensNovos > 0 { partes.append(r.itensNovos == 1 ? "1 ponto novo" : "\(r.itensNovos) pontos novos") }
         if r.itensAtualizados > 0 { partes.append(r.itensAtualizados == 1 ? "1 atualizado" : "\(r.itensAtualizados) atualizados") }
-        return origem + " Entram " + partes.joined(separator: ", ") + ". Nada é apagado."
+        let retiradas = switch r.listasVaziasRetiradas {
+        case 0: " Nada é apagado."
+        case 1: " Só sai 1 lista vazia, para as do backup caberem."
+        case let n: " Só saem \(n) listas vazias, para as do backup caberem."
+        }
+        return origem + " Entram " + partes.joined(separator: ", ") + "." + retiradas + definicoesMudam
     }
 
     private func restaurar(_ backup: Backup) {
         do {
             try Tarefas(contexto: contexto).restaurar(backup)
             try contexto.save()
-            definicoes = backup.definicoes
+            definicoes = definicoes.aoRestaurar(backup.definicoes)
             estado.reagendarAvisos()
             estado.avisoPartilha = "Backup restaurado."
         } catch {
@@ -639,13 +648,13 @@ struct PrazosView: View {
     var body: some View {
         ListaCeu {
             Section {
-                Stepper(value: $definicoes.diasExpiracao, in: 1...30) {
+                Stepper(value: $definicoes.diasExpiracao, in: Definicoes.intervaloExpiracao) {
                     rotulo("Expiram sem ações", dias: definicoes.diasExpiracao)
                 }
-                Stepper(value: $definicoes.diasManterCurto, in: 1...30) {
+                Stepper(value: $definicoes.diasManterCurto, in: Definicoes.intervaloManterCurto) {
                     rotulo("Manter (toque)", dias: definicoes.diasManterCurto)
                 }
-                Stepper(value: $definicoes.diasManterLongo, in: 1...90) {
+                Stepper(value: $definicoes.diasManterLongo, in: Definicoes.intervaloManterLongo) {
                     rotulo("Manter (arrastar)", dias: definicoes.diasManterLongo)
                 }
             } footer: {
@@ -653,10 +662,10 @@ struct PrazosView: View {
             }
 
             Section {
-                Stepper(value: $definicoes.diasRetencaoExpirados, in: 1...60) {
+                Stepper(value: $definicoes.diasRetencaoExpirados, in: Definicoes.intervaloRetencao) {
                     rotulo("Expirados", dias: definicoes.diasRetencaoExpirados)
                 }
-                Stepper(value: $definicoes.diasRetencaoConcluidos, in: 1...60) {
+                Stepper(value: $definicoes.diasRetencaoConcluidos, in: Definicoes.intervaloRetencao) {
                     rotulo("Concluídos", dias: definicoes.diasRetencaoConcluidos)
                 }
             } header: {

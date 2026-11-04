@@ -4,8 +4,12 @@
 #   <pose>_frente.png vidro vazio, cara e mãos (o que fica à frente da areia)
 # Mais as formas da areia (areia_cima, areia_monte, areia_fio). Escreve em Assets.xcassets/Glassy.
 # Uso: scripts/glassy-assets.ps1 (só é preciso voltar a correr se as imagens mudarem)
+# As imagens originais não estão no repositório: as camadas geradas é que são o que a app usa.
 $ErrorActionPreference = 'Stop'
 $raiz = Split-Path -Parent $PSScriptRoot
+if (-not (Test-Path (Join-Path $raiz 'Glassy2'))) {
+    throw "Faltam as imagens originais em Glassy2/, que não estão no repositório. As camadas em Assets.xcassets/Glassy continuam válidas."
+}
 $Saida = Join-Path $raiz 'App/Resources/Assets.xcassets/Glassy'
 $Largura = 490
 

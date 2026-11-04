@@ -79,6 +79,7 @@ ECRAS=(
   "12c-erro-base|erro-base|"
   "13-expirados-filtro|expirados-filtro|"
   "14-evento|evento|"
+  "15-widgets|widget|"
 )
 
 primeira=1

@@ -103,6 +103,8 @@ public struct ResumoRestauro: Equatable, Sendable {
     public var listasJuntas = 0
     public var itensNovos = 0
     public var itensAtualizados = 0
+    /// Listas locais vazias que saem para as do backup caberem nas `Tarefas.maxListas`.
+    public var listasVaziasRetiradas = 0
 
     public var nadaMuda: Bool { listasNovas == 0 && itensNovos == 0 && itensAtualizados == 0 }
 }
@@ -139,7 +141,9 @@ extension Tarefas {
     /// - cada item, subtópico ou foto entra se não existir; se existir, ganha a versão alterada
     ///   mais recentemente.
     /// Com `aplicar` falso só conta, para o resumo antes de confirmar. As definições do backup
-    /// ficam para a app aplicar (vivem fora da base de dados).
+    /// ficam para a app aplicar (vivem fora da base de dados, ver `Definicoes.aoRestaurar`).
+    /// Se as listas não couberem, recusa antes de mudar seja o que for (`limiteListas`); numa
+    /// instalação nova, as listas locais sem nada lá dentro dão lugar às do backup.
     @discardableResult
     public func restaurar(_ backup: Backup, aplicar: Bool = true) throws -> ResumoRestauro {
         var resumo = ResumoRestauro()
@@ -150,6 +154,23 @@ extension Tarefas {
         )
         let fotosIds = Set(try contexto.fetch(FetchDescriptor<Foto>()).map(\.id))
         let chave: (String) -> String = { $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) }
+        let correspondente: (Backup.ListaB) -> Lista? = { b in
+            existentes.first { $0.id == b.id } ?? existentes.first { chave($0.nome) == chave(b.nome) }
+        }
+
+        let novas = backup.listas.filter { correspondente($0) == nil }.count
+        let excesso = existentes.count + novas - Self.maxListas
+        if novas > 0 && excesso > 0 {
+            let usadas = Set(backup.listas.compactMap { correspondente($0)?.id })
+            let vazias = existentes.filter { $0.itens.isEmpty && !usadas.contains($0.id) }
+            guard vazias.count >= excesso else { throw ErroTarefas.limiteListas }
+            resumo.listasVaziasRetiradas = excesso
+            if aplicar {
+                for lista in vazias.prefix(excesso) {
+                    contexto.delete(lista)
+                }
+            }
+        }
 
         func restaurarItem(_ b: Backup.ItemB, lista: Lista?, pai: Item?) {
             let item: Item?
@@ -157,7 +178,10 @@ extension Tarefas {
                 item = local
                 if b.mudouEm > (local.alteradoEm ?? local.ultimaAcaoEm) {
                     resumo.itensAtualizados += 1
-                    if aplicar { copiar(b, para: local) }
+                    if aplicar {
+                        copiar(b, para: local)
+                        if pai == nil { darTempo(a: local) }
+                    }
                 }
             } else {
                 resumo.itensNovos += 1
@@ -169,6 +193,7 @@ extension Tarefas {
                         novo.pai = pai
                     } else {
                         novo.lista = lista
+                        darTempo(a: novo)
                     }
                     itensPorId[b.id] = novo
                     item = novo
@@ -189,8 +214,7 @@ extension Tarefas {
         }
 
         for listaB in backup.listas.sorted(by: { $0.ordem < $1.ordem }) {
-            var lista = existentes.first { $0.id == listaB.id }
-                ?? existentes.first { chave($0.nome) == chave(listaB.nome) }
+            var lista = correspondente(listaB)
             if lista == nil {
                 resumo.listasNovas += 1
                 if aplicar {
@@ -202,7 +226,8 @@ extension Tarefas {
                     nova.tipoRaw = listaB.tipo
                     nova.partilhaId = listaB.partilhaId
                     nova.permanente = listaB.permanente
-                    nova.vaziaDesde = listaB.vaziaDesde
+                    // A contagem recomeça: num backup antigo já teria passado, e a lista saía logo.
+                    nova.vaziaDesde = listaB.vaziaDesde == nil ? nil : relogio.agora
                     contexto.insert(nova)
                     lista = nova
                 }
@@ -214,6 +239,24 @@ extension Tarefas {
             }
         }
         return resumo
+    }
+
+    /// "Nada é apagado" tem de valer também na abertura seguinte: num backup antigo, os prazos e
+    /// as retenções já passaram, e sem isto `avaliar` apagava o que acabou de voltar. Só toca no
+    /// que já venceu; o resto fica com as datas do backup.
+    private func darTempo(a item: Item) {
+        let agora = relogio.agora
+        if item.estado == .ativo, !item.fixado, let limite = item.expiraEm, agora >= limite {
+            item.ultimaAcaoEm = agora
+            item.expiraEm = daquiA(definicoes.diasExpiracao, desde: agora)
+        }
+        if let fim = fimDaRetencao(de: item), agora >= fim {
+            if item.estado == .expirado {
+                item.expiradoEm = agora
+            } else {
+                item.concluidoEm = agora
+            }
+        }
     }
 
     private func copiar(_ b: Backup.ItemB, para item: Item) {

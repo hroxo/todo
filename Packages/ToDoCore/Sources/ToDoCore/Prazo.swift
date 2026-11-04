@@ -12,8 +12,12 @@ public struct Prazo: Equatable, Sendable {
     /// Nil para itens fixados, concluídos, expirados ou sem prazo.
     public init?(item: Item, agora: Date) {
         guard item.estado == .ativo, !item.fixado, let limite = item.expiraEm else { return nil }
+        self.init(limite: limite, ultimaAcao: item.ultimaAcaoEm, agora: agora)
+    }
+
+    init(limite: Date, ultimaAcao: Date, agora: Date) {
         restante = max(0, limite.timeIntervalSince(agora))
-        duracao = max(1, limite.timeIntervalSince(item.ultimaAcaoEm))
+        duracao = max(1, limite.timeIntervalSince(ultimaAcao))
     }
 
     /// Parte do anel ainda cheia, de 0 a 1.

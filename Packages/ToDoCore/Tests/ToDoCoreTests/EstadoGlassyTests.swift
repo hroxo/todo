@@ -7,11 +7,6 @@ final class EstadoGlassyTests: BaseTestes {
         let estado = EstadoGlassy(porFazer: 0, concluidos: 0, expirados: 0, totalAtivos: 0)
         XCTAssertEqual(estado.humor, .feliz)
         XCTAssertEqual(estado.nivelAreia, 0)
-        XCTAssertFalse(estado.celebrar)
-    }
-
-    func testCelebraSoDepoisDeConcluirAlgo() {
-        XCTAssertTrue(EstadoGlassy(porFazer: 0, concluidos: 2, expirados: 0, totalAtivos: 1).celebrar)
     }
 
     func testPoucosPontosCalmoEMuitosPreocupado() {

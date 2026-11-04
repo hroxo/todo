@@ -2,6 +2,7 @@ import AppIntents
 import Foundation
 import SwiftData
 import ToDoCore
+import UserNotifications
 import WidgetKit
 
 /// Concluir um ponto no widget, sem abrir a app (DESIGN.md 7.14). Corre na extensão: abre a
@@ -29,6 +30,8 @@ struct ConcluirPontoIntent: AppIntent {
         if let item = try contexto.fetch(pedido).first, item.estado == .ativo {
             tarefas.concluir(item)
             try contexto.save()
+            // O identificador do aviso é o id do ponto (Notificacoes.agendar): sem isto, tocava na mesma.
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [itemId.uuidString])
         }
         if let pasta = BaseDados.pastaPartilhada {
             try? tarefas.resumoWidget().gravar(em: pasta)

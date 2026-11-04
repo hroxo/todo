@@ -109,6 +109,152 @@ final class BackupTests: BaseTestes {
         }
     }
 
+    /// Um backup com dois meses: "Nada é apagado" tem de valer também na abertura seguinte.
+    func testBackupAntigoNaoApagaNadaNaAberturaSeguinte() throws {
+        try tarefas.criarListasIniciaisSeVazio()
+        let trabalho = try XCTUnwrap(tarefas.listas().first)
+        let esquecido = try tarefas.criarItem(titulo: "Esquecido", em: trabalho)
+        avancar(dias: 3)
+        try tarefas.avaliar()
+        XCTAssertEqual(esquecido.estado, .expirado)
+        try tarefas.criarItem(titulo: "Ativo", em: trabalho)
+        tarefas.concluir(try tarefas.criarItem(titulo: "Feito", em: trabalho))
+        let backup = try viaFicheiro(tarefas.criarBackup())
+
+        avancar(dias: 60)
+        let nova = try instalacaoNova()
+        try nova.restaurar(backup)
+        try nova.contexto.save()
+        let resultado = try nova.avaliar()
+
+        XCTAssertEqual(resultado.apagados, 0)
+        XCTAssertEqual(try nova.itens(.ativo).map(\.titulo), ["Ativo"])
+        XCTAssertEqual(try nova.itens(.ativo).first?.expiraEm, dias(3, desde: relogio.agora))
+        XCTAssertEqual(try nova.itens(.expirado).map(\.titulo), ["Esquecido"])
+        XCTAssertEqual(try nova.itens(.concluido).map(\.titulo), ["Feito"])
+
+        // A retenção recomeça: depois de ela acabar, a limpeza volta a fazer o seu trabalho.
+        avancar(dias: 15)
+        XCTAssertEqual(try nova.avaliar().apagados, 2)
+    }
+
+    /// Restaurar duas vezes o mesmo backup antigo não muda nada na segunda.
+    func testBackupAntigoRestauradoDuasVezesNaoRecomecaOPrazo() throws {
+        try povoar()
+        let backup = try tarefas.criarBackup()
+        avancar(dias: 60)
+        let nova = try instalacaoNova()
+        try nova.restaurar(backup)
+
+        avancar(dias: 1)
+        XCTAssertEqual(try nova.restaurar(backup).itensAtualizados, 0)
+    }
+
+    func testListaVaziaDeUmBackupAntigoNaoSaiLogo() throws {
+        let ideias = try tarefas.criarLista(nome: "Ideias", cor: .amarelo)
+        try tarefas.avaliar()
+        XCTAssertNotNil(ideias.vaziaDesde)
+        let backup = try tarefas.criarBackup()
+
+        avancar(dias: 60)
+        let nova = try instalacaoNova()
+        try nova.restaurar(backup)
+        try nova.avaliar()
+
+        XCTAssertTrue(try nova.listas().contains { $0.nome == "Ideias" })
+    }
+
+    /// Concluir, Manter e Fixar contam como alteração: senão o backup empata e perde.
+    func testRestauroReconheceConcluirManterEFixar() throws {
+        let (_, item) = try povoar()
+        let ideia = try XCTUnwrap(tarefas.itens(.ativo).first { $0.titulo == "App de receitas" })
+        let nova = try instalacaoNova()
+        try nova.restaurar(tarefas.criarBackup())
+
+        avancar(horas: 1)
+        tarefas.concluir(item)
+        tarefas.manter(ideia, longo: true)
+        try nova.restaurar(tarefas.criarBackup())
+
+        XCTAssertEqual(try nova.itens(.concluido).map(\.titulo), ["Preparar demo"])
+        XCTAssertEqual(try nova.itens(.ativo).first { $0.id == ideia.id }?.expiraEm, ideia.expiraEm)
+
+        avancar(horas: 1)
+        tarefas.definirFixado(ideia, true)
+        try nova.restaurar(tarefas.criarBackup())
+        XCTAssertEqual(try nova.itens(.ativo).first { $0.id == ideia.id }?.fixado, true)
+    }
+
+    func testListasAMaisRecusamSemMudarNada() throws {
+        for i in 0..<6 {
+            try tarefas.criarLista(nome: "Backup \(i)", cor: .azul)
+        }
+        let backup = try tarefas.criarBackup()
+        let nova = try instalacaoNova()
+        for i in 0..<6 {
+            let lista = try nova.criarLista(nome: "Local \(i)", cor: .verde)
+            try nova.criarItem(titulo: "Ponto \(i)", em: lista)
+        }
+
+        for aplicar in [false, true] {
+            XCTAssertThrowsError(try nova.restaurar(backup, aplicar: aplicar)) {
+                XCTAssertEqual($0 as? ErroTarefas, .limiteListas)
+            }
+        }
+        XCTAssertEqual(try nova.listas().count, 8)
+        XCTAssertFalse(try nova.listas().contains { $0.nome.hasPrefix("Backup") })
+    }
+
+    /// Mudar de iPhone: as listas iniciais, vazias, dão lugar às 8 do backup.
+    func testListasVaziasDaoLugarAoBackup() throws {
+        for i in 0..<8 {
+            let lista = try tarefas.criarLista(nome: "Espaço \(i)", cor: .azul)
+            try tarefas.criarItem(titulo: "Ponto \(i)", em: lista)
+        }
+        let backup = try tarefas.criarBackup()
+        let nova = try instalacaoNova()
+
+        XCTAssertEqual(try nova.restaurar(backup, aplicar: false).listasVaziasRetiradas, 2)
+        XCTAssertEqual(try nova.listas().count, 2)
+
+        try nova.restaurar(backup)
+        try nova.contexto.save()
+
+        XCTAssertEqual(try nova.listas().map(\.nome).sorted(), (0..<8).map { "Espaço \($0)" })
+        XCTAssertEqual(try nova.itens(.ativo).count, 8)
+    }
+
+    /// Um ficheiro não pode trazer valores que os ecrãs não deixam escolher.
+    func testDefinicoesForaDosLimitesFicamNoLimite() throws {
+        let lidas = try JSONDecoder().decode(
+            Definicoes.self,
+            from: Data(#"{"diasExpiracao":-3,"diasManterLongo":9999,"diasRetencaoExpirados":0,"diasListaVazia":0,"horaNotificacao":99,"minutoNotificacao":-1}"#.utf8)
+        )
+        XCTAssertEqual(lidas.diasExpiracao, 1)
+        XCTAssertEqual(lidas.diasManterLongo, 90)
+        XCTAssertEqual(lidas.diasRetencaoExpirados, 1)
+        XCTAssertEqual(lidas.diasListaVazia, 1)
+        XCTAssertEqual(lidas.horaNotificacao, 23)
+        XCTAssertEqual(lidas.minutoNotificacao, 0)
+        XCTAssertEqual(lidas.diasRetencaoConcluidos, 7)
+    }
+
+    func testRestaurarNaoEncurtaARetencao() {
+        var atuais = Definicoes()
+        atuais.diasRetencaoExpirados = 30
+        atuais.diasManterLongo = 20
+        var doBackup = Definicoes()
+        doBackup.diasRetencaoExpirados = 14
+        doBackup.diasRetencaoConcluidos = 45
+        doBackup.diasManterLongo = 40
+
+        let novas = atuais.aoRestaurar(doBackup)
+
+        XCTAssertEqual(novas.diasRetencaoExpirados, 30)
+        XCTAssertEqual(novas.diasRetencaoConcluidos, 45)
+        XCTAssertEqual(novas.diasManterLongo, 40)
+    }
+
     func testNomeDoFicheiro() {
         XCTAssertEqual(Backup.nomeFicheiro(data(2026, 10, 28, 9), calendario: calendario), "ToDo-backup-2026-10-28.json")
     }

@@ -154,9 +154,9 @@ public final class Tarefas {
         }
     }
 
-    /// Quantos itens principais (em qualquer estado) são apagados com a lista.
+    /// Quantos itens principais (em qualquer estado) são apagados com a lista, sem as lápides.
     public func contarItens(de lista: Lista) -> Int {
-        lista.itens.count
+        lista.itens.filter { $0.apagadoEm == nil }.count
     }
 
     public func apagar(_ lista: Lista) {
@@ -284,6 +284,7 @@ public final class Tarefas {
         guard !item.ehSubtopico, item.estado == .ativo, !item.fixado else { return }
         let agora = relogio.agora
         item.ultimaAcaoEm = agora
+        item.alteradoEm = agora
         let dias = longo ? definicoes.diasManterLongo : definicoes.diasManterCurto
         item.expiraEm = daquiA(dias, desde: agora)
     }
@@ -297,6 +298,7 @@ public final class Tarefas {
         if item.ehSubtopico {
             registarAcao(em: item)
         } else {
+            item.alteradoEm = relogio.agora
             item.expiraEm = nil
         }
         return antes
@@ -311,6 +313,7 @@ public final class Tarefas {
         item.concluidoEm = nil
         item.expiraEm = antes.expiraEm
         item.ultimaAcaoEm = antes.ultimaAcaoEm
+        item.alteradoEm = relogio.agora
     }
 
     public func reabrir(_ item: Item) {
@@ -338,6 +341,7 @@ public final class Tarefas {
         item.fixado = fixado
         if fixado {
             item.expiraEm = nil
+            item.alteradoEm = relogio.agora
         } else {
             registarAcao(em: item)
         }
@@ -372,13 +376,14 @@ public final class Tarefas {
         if let pai = item.pai {
             registarAcao(em: pai)
         }
-        for sub in item.subtopicos {
-            apagar(sub)
+        // Sem passar por `apagar`: apagar o pai não é uma ação sobre ele, e recomeçaria a contagem
+        // da lista vazia.
+        for alvo in item.subtopicos + [item] {
+            for foto in alvo.fotos {
+                contexto.delete(foto)
+            }
+            contexto.delete(alvo)
         }
-        for foto in item.fotos {
-            contexto.delete(foto)
-        }
-        contexto.delete(item)
     }
 
     // MARK: - Fotos
@@ -429,8 +434,8 @@ public final class Tarefas {
     }
 
     /// Uma lista não permanente sem pontos abertos começa a contar; ao fim de 5 dias
-    /// desaparece. Espera pelos itens em Expirados, que ainda podem voltar para ela (nada se
-    /// perde por engano).
+    /// desaparece. Espera pelos itens em Expirados e em Concluídos, que ainda podem voltar para
+    /// ela (nada se perde por engano).
     private func avaliarListasVazias() throws {
         let agora = relogio.agora
         for lista in try listas() where !lista.permanente {
@@ -442,7 +447,7 @@ public final class Tarefas {
                 lista.vaziaDesde = agora
                 continue
             }
-            if agora >= fim && !lista.itens.contains(where: { $0.estado == .expirado }) {
+            if agora >= fim && !lista.itens.contains(where: { $0.estado != .ativo && $0.apagadoEm == nil }) {
                 apagar(lista)
             }
         }
@@ -528,7 +533,7 @@ public final class Tarefas {
         try contexto.fetch(FetchDescriptor<Item>()).filter { !$0.ehSubtopico }
     }
 
-    private func fimDaRetencao(de item: Item) -> Date? {
+    func fimDaRetencao(de item: Item) -> Date? {
         switch item.estado {
         case .expirado:
             return item.expiradoEm.map { daquiA(definicoes.diasRetencaoExpirados, desde: $0) }
@@ -540,7 +545,7 @@ public final class Tarefas {
         }
     }
 
-    private func daquiA(_ dias: Int, desde data: Date) -> Date {
+    func daquiA(_ dias: Int, desde data: Date) -> Date {
         calendario.date(byAdding: .day, value: dias, to: data)!
     }
 

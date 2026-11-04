@@ -69,20 +69,7 @@ jobs:
           path: ToDo.ipa
           retention-days: 14
 
-      # Link fixo para descarregar no iPhone e abrir com o SideStore.
-      - name: Publicar na release "ultima"
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release delete ultima --yes --cleanup-tag || true
-          gh release create ultima ToDo.ipa \
-            --target "$GITHUB_SHA" \
-            --prerelease \
-            --title "Última compilação" \
-            --notes "Compilado a partir de ${GITHUB_SHA::7}."
-
       # Capturas de ecrã no simulador, em modo de demonstração (scripts/capturas.sh descarrega-as).
-      # Não bloqueiam o .ipa, que já foi publicado acima.
       - name: Compilar para o simulador
         continue-on-error: true
         run: |
@@ -104,6 +91,20 @@ jobs:
       # Sem continue-on-error: se a app real não arrancar, o CI fica vermelho.
       - name: Arranque real
         run: bash scripts/arranque-real-ci.sh build-sim/Build/Products/Debug-iphonesimulator/ToDo.app capturas
+
+      # Link fixo para descarregar no iPhone e abrir com o SideStore. Só depois do arranque real, e
+      # só do main: a release é apagada antes de criada, por isso nada menos provado a pode substituir.
+      - name: Publicar na release "ultima"
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima --yes --cleanup-tag || true
+          gh release create ultima ToDo.ipa \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Última compilação" \
+            --notes "Compilado a partir de ${GITHUB_SHA::7}."
 
       - uses: actions/upload-artifact@v4
         # Também quando o arranque real falha: é aí que as pilhas e os registos fazem falta.

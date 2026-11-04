@@ -77,6 +77,50 @@ final class ListasVaziasTests: BaseTestes {
         XCTAssertNil(ideias.vaziaDesde)
     }
 
+    /// Concluir promete 7 dias para reabrir: a lista não os pode levar ao fim de 5.
+    func testEsperaPelosItensEmConcluidos() throws {
+        let ideias = try tarefas.criarLista(nome: "Ideias", cor: .amarelo)
+        let item = try tarefas.criarItem(titulo: "Modo foco", em: ideias)
+        tarefas.concluir(item)
+        try tarefas.avaliar()
+
+        avancar(dias: 5)
+        try tarefas.avaliar()
+        XCTAssertTrue(try existe(ideias))
+        XCTAssertEqual(try tarefas.itens(.concluido).map(\.titulo), ["Modo foco"])
+
+        tarefas.reabrir(item)
+        XCTAssertEqual(item.lista, ideias)
+        tarefas.concluir(item)
+
+        // Acabada a retenção, o ponto sai; reabrir recomeçou a contagem da lista, que sai 5 dias depois.
+        avancar(dias: 7)
+        try tarefas.avaliar()
+        try contexto.save()
+        XCTAssertTrue(try tarefas.itens(.concluido).isEmpty)
+        avancar(dias: 5)
+        try tarefas.avaliar()
+        XCTAssertFalse(try existe(ideias))
+    }
+
+    /// A limpeza apagar um ponto com subtópicos não é uma ação na lista.
+    func testApagarPontoComSubtopicosNaoRecomecaAContagem() throws {
+        let ideias = try tarefas.criarLista(nome: "Ideias", cor: .amarelo)
+        let item = try tarefas.criarItem(titulo: "Modo foco", em: ideias)
+        try tarefas.adicionarSubtopico(titulo: "Ler", a: item)
+        tarefas.concluir(item)
+        try tarefas.avaliar()
+        let desde = ideias.vaziaDesde
+        XCTAssertNotNil(desde)
+
+        avancar(dias: 1)
+        tarefas.apagar(item)
+        try contexto.save()
+
+        XCTAssertEqual(ideias.vaziaDesde, desde)
+        XCTAssertEqual(try contarItens(), 0)
+    }
+
     func testManterListaRecomecaAContagem() throws {
         let ideias = try tarefas.criarLista(nome: "Ideias", cor: .amarelo)
         try tarefas.avaliar()

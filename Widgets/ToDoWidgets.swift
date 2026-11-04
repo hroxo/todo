@@ -24,21 +24,20 @@ struct FornecedorResumo: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (EntradaResumo) -> Void) {
-        let resumo = context.isPreview ? .exemplo() : lerResumo()
+        let resumo = context.isPreview ? .exemplo() : lerResumo()?.noMomento(.now)
         completion(EntradaResumo(date: .now, resumo: resumo ?? .exemplo()))
     }
 
     /// Uma entrada de 20 em 20 minutos durante 6 horas, alinhadas aos blocos da Ampulheta:
-    /// os anéis vão esvaziando e, sem pontos, a mascote muda de pose. A app pede um
-    /// recarregamento sempre que os pontos mudam.
+    /// os anéis vão esvaziando, e os pontos, os textos e o Glassy são os de cada hora, mesmo com
+    /// a app fechada. A app pede um recarregamento sempre que os pontos mudam.
     func getTimeline(in context: Context, completion: @escaping (Timeline<EntradaResumo>) -> Void) {
         let resumo = lerResumo()
         let agora = Date.now
         let bloco: TimeInterval = 20 * 60
         let proximo = (agora.timeIntervalSinceReferenceDate / bloco).rounded(.up) * bloco
-        let entradas = [EntradaResumo(date: agora, resumo: resumo)] + (0..<18).map { i in
-            EntradaResumo(date: Date(timeIntervalSinceReferenceDate: proximo + Double(i) * bloco), resumo: resumo)
-        }
+        let datas = [agora] + (0..<18).map { Date(timeIntervalSinceReferenceDate: proximo + Double($0) * bloco) }
+        let entradas = datas.map { EntradaResumo(date: $0, resumo: resumo?.noMomento($0)) }
         completion(Timeline(entries: entradas, policy: .after(agora.addingTimeInterval(6 * 3600))))
     }
 

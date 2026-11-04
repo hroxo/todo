@@ -85,6 +85,104 @@ final class WidgetTests: BaseTestes {
         XCTAssertTrue(ponto.ultimoDia(em: dias(2, desde: relogio.agora).addingTimeInterval(60)))
     }
 
+    // MARK: - O widget com a app fechada
+
+    /// O caso típico do ko: a app não abre e os pontos acabam o prazo.
+    func testChegaAoKoSemAAppAbrir() throws {
+        try tarefas.criarItem(titulo: "A", em: trabalho)
+        try tarefas.criarItem(titulo: "B", em: trabalho)
+        let resumo = try tarefas.resumoWidget()
+
+        let depois = resumo.noMomento(dias(3, desde: relogio.agora).addingTimeInterval(60), calendario: calendario)
+
+        XCTAssertEqual(depois.glassy?.humor, .ko)
+        XCTAssertEqual(depois.glassy?.nivelAreia, 1)
+        XCTAssertTrue(depois.pontos.isEmpty)
+        XCTAssertEqual(depois.totalAtivos, 0)
+        XCTAssertEqual(depois.expiramHoje, 0)
+        XCTAssertEqual(depois.frase, "Tudo em dia")
+    }
+
+    func testARazaoAcompanhaAHora() throws {
+        try tarefas.criarItem(titulo: "A", em: trabalho)
+        let resumo = try tarefas.resumoWidget()
+
+        let vespera = resumo.noMomento(data(2026, 10, 23, 11), calendario: calendario)
+        XCTAssertEqual(vespera.pontos.first?.razao, "Expira amanhã às 10:00")
+        XCTAssertEqual(vespera.glassy?.humor, .calmo)
+
+        let noDia = resumo.noMomento(data(2026, 10, 24, 8), calendario: calendario)
+        XCTAssertEqual(noDia.pontos.first?.razao, "Expira hoje às 10:00")
+
+        let depois = resumo.noMomento(data(2026, 10, 24, 10), calendario: calendario)
+        XCTAssertTrue(depois.pontos.isEmpty)
+    }
+
+    func testPontosDeReservaEntramQuandoOsPrimeirosExpiram() throws {
+        for titulo in ["A", "B", "C"] {
+            try tarefas.criarItem(titulo: titulo, em: trabalho)
+        }
+        let quando = dias(3, desde: relogio.agora).addingTimeInterval(60)
+        avancar(dias: 1)
+        try tarefas.criarItem(titulo: "Mais novo", em: trabalho)
+        let resumo = try tarefas.resumoWidget()
+        XCTAssertEqual(resumo.pontos.count, 3)
+
+        let depois = resumo.noMomento(quando, calendario: calendario)
+
+        XCTAssertEqual(depois.pontos.map(\.titulo), ["Mais novo"])
+        XCTAssertEqual(depois.totalAtivos, 1)
+    }
+
+    /// O widget, sem a app, tem de chegar ao mesmo que a app quando ela volta a abrir.
+    func testChegaAoMesmoQueAApp() throws {
+        let fixo = try tarefas.criarItem(titulo: "Fixo", em: trabalho)
+        tarefas.definirFixado(fixo, true)
+        try tarefas.criarItem(titulo: "Vai expirar", em: trabalho)
+        avancar(dias: 1)
+        let manter = try tarefas.criarItem(titulo: "Mantido", em: trabalho)
+        tarefas.manter(manter, longo: false)
+        tarefas.concluir(try tarefas.criarItem(titulo: "Feito", em: trabalho))
+        let resumo = try tarefas.resumoWidget()
+
+        for horas in [1, 20, 30, 49, 73, 120] {
+            let hora = calendario.date(byAdding: .hour, value: horas, to: resumo.geradoEm)!
+            relogio.agora = hora
+            let noWidget = resumo.noMomento(hora, calendario: calendario)
+            try tarefas.avaliar()
+            let naApp = try tarefas.resumoWidget()
+            XCTAssertEqual(noWidget.glassy, naApp.glassy, "\(horas) h")
+            XCTAssertEqual(noWidget.totalAtivos, naApp.totalAtivos, "\(horas) h")
+            XCTAssertEqual(noWidget.expiramHoje, naApp.expiramHoje, "\(horas) h")
+            XCTAssertEqual(noWidget.pontos.map(\.razao), naApp.pontos.map(\.razao), "\(horas) h")
+        }
+    }
+
+    func testAFraseDoModeloFicaEnquantoOsNumerosNaoMudam() throws {
+        try tarefas.criarItem(titulo: "A", em: trabalho)
+        var resumo = try tarefas.resumoWidget()
+        resumo.frase = "Dia calmo."
+
+        XCTAssertEqual(resumo.noMomento(relogio.agora.addingTimeInterval(3600), calendario: calendario).frase, "Dia calmo.")
+        XCTAssertEqual(resumo.noMomento(dias(2, desde: relogio.agora).addingTimeInterval(3600), calendario: calendario).frase, "1 ponto expira hoje")
+    }
+
+    /// Um resumo gravado pela versão anterior mostra-se como está, até a app o reescrever.
+    func testResumoAntigoFicaComoEsta() {
+        let antigo = ResumoWidget.exemplo(agora: relogio.agora)
+        XCTAssertEqual(antigo.noMomento(dias(30, desde: relogio.agora)), antigo)
+    }
+
+    func testFicheiroEstragadoNaoRebentaOWidget() throws {
+        let pasta = FileManager.default.temporaryDirectory.appendingPathComponent("resumo-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: pasta, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: pasta) }
+
+        XCTAssertNil(ResumoWidget.ler(de: pasta))
+        try Data("{ estragado".utf8).write(to: pasta.appendingPathComponent(ResumoWidget.nomeFicheiro))
+        XCTAssertNil(ResumoWidget.ler(de: pasta))
+    }
+
     func testResumoGravaELeNaPasta() throws {
         let pasta = FileManager.default.temporaryDirectory.appendingPathComponent("resumo-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: pasta, withIntermediateDirectories: true)

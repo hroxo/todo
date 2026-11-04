@@ -65,6 +65,11 @@ xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" -boasVindasVis
 sleep 6
 xcrun simctl terminate "$UDID" "$BUNDLE" || true
 abrir apos-abertura-interrompida -boasVindasVistas YES
+# O céu lê o modo do iPhone na raiz da app: tem de arrancar nos dois modos.
+xcrun simctl ui "$UDID" appearance dark
+abrir modo-escuro -boasVindasVistas YES
+xcrun simctl ui "$UDID" appearance light
+abrir modo-claro -boasVindasVistas YES
 
 cp "$HOME"/Library/Logs/DiagnosticReports/ToDo* "$SAIDA/" 2>/dev/null || true
 xcrun simctl terminate "$UDID" "$BUNDLE" || true

@@ -62,7 +62,7 @@ public enum ExportadorCSV {
     private static func ordenados(_ itens: [Item]) -> [Item] {
         let posicao: [EstadoItem: Int] = [.ativo: 0, .concluido: 1, .expirado: 2]
         return itens
-            .filter { !$0.ehSubtopico }
+            .filter { !$0.ehSubtopico && $0.apagadoEm == nil }
             .sorted { (posicao[$0.estado] ?? 0, $0.ordem) < (posicao[$1.estado] ?? 0, $1.ordem) }
     }
 

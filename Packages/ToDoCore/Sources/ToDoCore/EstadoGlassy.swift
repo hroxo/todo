@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Como está o Glassy (a mascote) em função do dia. A areia é a pressão do tempo: toda em cima
 /// quando não há nada a fechar, a descer à medida que se acumulam pontos no último dia, toda
@@ -27,8 +28,6 @@ public struct EstadoGlassy: Codable, Equatable, Sendable {
     public let humor: Humor
     /// 0 = areia toda em cima, 1 = toda em baixo.
     public let nivelAreia: Double
-    /// Dia ganho: feliz com algo concluído, para celebrar.
-    public let celebrar: Bool
 
     /// `concluidos` e `expirados` contam só os da `janela`.
     public init(porFazer: Int, concluidos: Int, expirados: Int, totalAtivos: Int) {
@@ -37,29 +36,66 @@ public struct EstadoGlassy: Codable, Equatable, Sendable {
         if falhou {
             humor = .ko
             nivelAreia = 1
-            celebrar = false
         } else if porFazer <= 0 {
             humor = .feliz
             nivelAreia = 0
-            celebrar = concluidos > 0
         } else {
             humor = pressao >= Self.limitePreocupado ? .preocupado : .calmo
             nivelAreia = pressao
-            celebrar = false
         }
     }
 }
 
+/// As datas de que o estado do Glassy depende. Com elas, o widget sabe o estado a qualquer hora
+/// sem abrir a base de dados: um ponto cujo prazo passou conta como expirado, mesmo que a app não
+/// abra há dias (ela é que os marca, em `avaliar`).
+public struct DatasGlassy: Codable, Equatable, Sendable {
+    /// O limite de cada ponto ativo com prazo.
+    public var prazos: [Date]
+    /// Pontos ativos que não expiram (fixados).
+    public var semPrazo: Int
+    public var concluidosEm: [Date]
+    public var expiradosEm: [Date]
+
+    public func totalAtivos(em data: Date) -> Int {
+        semPrazo + prazos.filter { $0 > data }.count
+    }
+
+    /// Pontos com menos de 24 horas, como `Prazo.ultimoDia`.
+    public func ultimoDia(em data: Date) -> Int {
+        prazos.filter { $0 > data && $0.timeIntervalSince(data) < 24 * 60 * 60 }.count
+    }
+
+    public func estado(em data: Date) -> EstadoGlassy {
+        let desde = data.addingTimeInterval(-EstadoGlassy.janela)
+        let passaram = prazos.filter { $0 <= data }
+        return EstadoGlassy(
+            porFazer: ultimoDia(em: data),
+            concluidos: concluidosEm.filter { $0 >= desde }.count,
+            expirados: (expiradosEm + passaram).filter { $0 >= desde }.count,
+            totalAtivos: totalAtivos(em: data)
+        )
+    }
+}
+
 extension Tarefas {
+    /// As datas de agora, sem as listas de compras, onde nada expira.
+    public func datasGlassy() throws -> DatasGlassy {
+        let desde = relogio.agora.addingTimeInterval(-EstadoGlassy.janela)
+        let itens = try contexto.fetch(FetchDescriptor<Item>())
+            .filter { !$0.ehSubtopico && $0.apagadoEm == nil && $0.lista?.ehCompras != true }
+        let ativos = itens.filter { $0.estado == .ativo }
+        let prazos = ativos.filter { !$0.fixado }.compactMap(\.expiraEm)
+        return DatasGlassy(
+            prazos: prazos,
+            semPrazo: ativos.count - prazos.count,
+            concluidosEm: itens.filter { $0.estado == .concluido }.compactMap(\.concluidoEm).filter { $0 >= desde },
+            expiradosEm: itens.filter { $0.estado == .expirado }.compactMap(\.expiradoEm).filter { $0 >= desde }
+        )
+    }
+
     /// O estado do Glassy agora, a partir dos pontos ativos e do que aconteceu na última janela.
     public func estadoGlassy() throws -> EstadoGlassy {
-        let agora = relogio.agora
-        let desde = agora.addingTimeInterval(-EstadoGlassy.janela)
-        let principais: (Item) -> Bool = { !$0.ehSubtopico && $0.apagadoEm == nil && $0.lista?.ehCompras != true }
-        let ativos = try itens(.ativo).filter(principais)
-        let concluidos = try itens(.concluido).filter(principais).filter { ($0.concluidoEm ?? .distantPast) >= desde }.count
-        let expirados = try itens(.expirado).filter(principais).filter { ($0.expiradoEm ?? .distantPast) >= desde }.count
-        let porFazer = ativos.filter { Prazo(item: $0, agora: agora)?.ultimoDia == true }.count
-        return EstadoGlassy(porFazer: porFazer, concluidos: concluidos, expirados: expirados, totalAtivos: ativos.count)
+        try datasGlassy().estado(em: relogio.agora)
     }
 }

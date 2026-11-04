@@ -17,6 +17,18 @@ final class ExportadorCSVTests: BaseTestes {
             .filter { !$0.isEmpty }
     }
 
+    /// O que se apagou numa lista de compras fica como lápide, mas não existe para a pessoa.
+    func testLapidesNaoEntramNemContam() throws {
+        let compras = try tarefas.criarLista(nome: "Compras", cor: .verde, tipo: .compras)
+        let apagada = try tarefas.criarItem(titulo: "IKEA", em: compras)
+        try tarefas.criarItem(titulo: "Continente", em: compras)
+        tarefas.apagar(apagada)
+
+        XCTAssertEqual(linhas([compras]).count, 2)
+        XCTAssertFalse(linhas([compras])[1].contains("IKEA"))
+        XCTAssertEqual(tarefas.contarItens(de: compras), 1)
+    }
+
     func testCabecalhoPelaOrdemCerta() {
         XCTAssertEqual(
             linhas([trabalho]).first,
