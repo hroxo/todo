@@ -26,6 +26,6 @@ struct ErroBaseDadosView: View {
             }
             .padding(Espaco.margem)
         }
-        .background(Color(.systemGroupedBackground))
+        .background { FundoCeu() }
     }
 }

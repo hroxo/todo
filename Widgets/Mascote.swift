@@ -453,8 +453,12 @@ struct CenarioMascote: View {
                 }
             case .dormir:
                 let lua = CGPoint(x: t.width - 48, y: 36)
-                c.fill(Path(ellipseIn: CGRect(x: lua.x - 20, y: lua.y - 20, width: 40, height: 40)), with: .color(cor(0.98, 0.93, 0.85)))
-                c.fill(Path(ellipseIn: CGRect(x: lua.x - 7, y: lua.y - 24, width: 34, height: 34)), with: .color(cor(0.17, 0.14, 0.40)))
+                // Recortada a sério: tapada com uma cor, via-se o disco sobre o gradiente.
+                c.drawLayer { camada in
+                    camada.fill(Path(ellipseIn: CGRect(x: lua.x - 20, y: lua.y - 20, width: 40, height: 40)), with: .color(cor(0.98, 0.93, 0.85)))
+                    camada.blendMode = .destinationOut
+                    camada.fill(Path(ellipseIn: CGRect(x: lua.x - 7, y: lua.y - 24, width: 34, height: 34)), with: .color(.black))
+                }
                 for (x, y, r) in [(0.5, 0.14, 1.6), (0.63, 0.29, 1.2), (0.72, 0.11, 1.8), (0.93, 0.6, 1.3), (0.41, 0.86, 1.2), (0.08, 0.11, 1.4)] {
                     c.fill(Path(ellipseIn: CGRect(x: t.width * x - r, y: t.height * y - r, width: r * 2, height: r * 2)), with: .color(.white))
                 }

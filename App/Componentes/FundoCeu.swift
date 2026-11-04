@@ -86,9 +86,9 @@ struct FundoCeu: View {
                                 .frame(width: 3, height: 3)
                                 .position(x: Self.estrelas[i].0 * g.size.width, y: Self.estrelas[i].1 * g.size.height)
                         }
-                        lua(fundo: paleta.ceu).position(x: g.size.width - 58, y: 86)
+                        lua.position(x: g.size.width - 58, y: 86)
                     } else {
-                        sol(largura: g.size.width)
+                        sol.position(x: g.size.width - 58, y: 86)
                     }
                     Colina(esquerda: 0.30, controloX: 0.35, controloY: 0.20, direita: 0.33).fill(paleta.colina)
                     Colina(esquerda: 0.40, controloX: 0.75, controloY: 0.26, direita: 0.36).fill(paleta.colinaFrente)
@@ -101,22 +101,22 @@ struct FundoCeu: View {
         .accessibilityHidden(true)
     }
 
-    private func sol(largura: CGFloat) -> some View {
+    /// O sol e a lua ficam no mesmo sítio: abaixo dos ícones de rede, acima do balão do Glassy.
+    private var sol: some View {
         Circle()
             .fill(Color(red: 1, green: 0.82, blue: 0.25))
             .frame(width: 64, height: 64)
-            // À direita, para não ficar atrás do título, e acima do balão do Glassy.
-            .position(x: largura * 0.71, y: 65)
     }
 
-    private func lua(fundo: Color) -> some View {
+    /// Recortada a sério, em vez de tapada com a cor do fundo, que deixava um fio à volta.
+    private var lua: some View {
         Circle()
             .fill(Color(red: 0.96, green: 0.94, blue: 0.85))
             .frame(width: 44, height: 44)
             .overlay {
-                Circle().fill(fundo).frame(width: 40, height: 40).offset(x: 13, y: -4)
+                Circle().frame(width: 40, height: 40).offset(x: 13, y: -4).blendMode(.destinationOut)
             }
-            .clipShape(.circle)
+            .compositingGroup()
     }
 
     /// Uma colina que enche o ecrã até ao fundo, para o céu nunca aparecer por baixo dela.

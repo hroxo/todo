@@ -46,6 +46,7 @@ struct ToDoApp: App {
             Group {
                 if let erro = Self.erroBaseDados {
                     ErroBaseDadosView(erro: erro)
+                        .modifier(CeuDoModo(agora: .now))
                 } else {
                     // De minuto a minuto, para a saudação e o calendário; o céu segue o modo do iPhone (DESIGN.md 7.23).
                     TimelineView(.periodic(from: .now, by: 60)) { linha in
