@@ -13,8 +13,8 @@ struct EstadoVazio: View {
 
     var body: some View {
         VStack(spacing: Espaco.grelha) {
-            Ampulheta(pose: pose)
-                .frame(width: pose == .dormir ? 116 : 92, height: 112)
+            Ampulheta(pose: pose, vivo: true)
+                .frame(width: 92, height: 112)
                 .phaseAnimator(reduzirMovimento ? [0.0] : [0.0, -5.0]) { ampulheta, subida in
                     ampulheta.offset(y: subida)
                 } animation: { _ in

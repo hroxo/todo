@@ -28,7 +28,7 @@ A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas p
 
 A 0.2 deu à ToDo uma identidade própria e um fluxo mais simples de usar todos os dias.
 
-- ⏳ **A Ampulheta.** A mascote da app aparece no widget, nos ecrãs vazios e no ícone novo, dentro do anel do prazo. Muda com a hora do dia (acena de manhã, celebra quando estás em dia, dorme à noite) e com o que andas a fazer (trabalho, tempo para ti, viagem).
+- ⏳ **O Glassy.** A mascote da app aparece no Início, nos widgets e nos ecrãs vazios, e na app está viva: respira, pisca e a areia corre. A areia desce quando os pontos se acumulam e ele fica preocupado; se perdes tudo fica ko, de vidro rachado; sem nada a fechar, festeja com a areia em cima. Muda também com a hora do dia e com o que andas a fazer (trabalho, tempo para ti, viagem).
 - 🧩 **Widgets.** O widget médio *O que importa agora* mostra os 3 pontos mais urgentes, que concluis com um toque no anel. No ecrã bloqueado, um **+** abre a captura, e há um controlo *Nova nota* para o Centro de Controlo e o Action Button.
 - ✨ **Para ti.** Um cartão no topo do Início diz numa frase o que importa agora, com o botão certo ao lado (Abrir, Manter +5, Tornar permanente…). Quando não há nada a dizer, não aparece.
 - 🧠 **Inteligência no iPhone.** Os avisos e o *Para ti* têm contexto ("2 subtópicos por fazer · sem mexer desde segunda"), escritos pelo modelo da Apple no próprio telemóvel. Nada sai do iPhone, e tudo se desliga nas Definições.
@@ -77,7 +77,7 @@ Um toque dá **+5 dias**. Prime e arrasta: a gota de vidro divide-se em **+5** e
 <td valign="top">
 
 ### ⏳ Widgets com a Ampulheta
-*O que importa agora* no ecrã principal: o número do dia e os 3 pontos mais urgentes, que concluis no anel sem abrir a app. Sem nada pendente, a Ampulheta acena, celebra, trabalha, lê no parque, viaja ou dorme, conforme a hora e o que andas a fazer.
+*O que importa agora* no ecrã principal: o número do dia e os 3 pontos mais urgentes, que concluis no anel sem abrir a app. O Glassy mostra como vai o dia, com a areia no nível certo. Sem nada pendente, acena, celebra, trabalha, lê no parque, viaja ou dorme, conforme a hora e o que andas a fazer.
 
 </td>
 <td align="center"><img src="docs/media/fluxo-widgets.gif" width="240" alt="O widget O que importa agora e a Ampulheta em várias poses"></td>
@@ -297,7 +297,7 @@ A app tem um **modo de demonstração** (`-demo YES -ecra <nome>`), com dados de
 
 ## Design
 
-O guia de UI está em [`design/DESIGN.md`](design/DESIGN.md) e os mocks em [`design/mocks/`](design/mocks). O ícone junta as duas assinaturas da app: **a Ampulheta dentro do anel do prazo**, três quartos cheio. É gerado a partir do mesmo código da mascote do widget, nas versões clara, escura e tingida.
+O guia de UI está em [`design/DESIGN.md`](design/DESIGN.md) e os mocks em [`design/mocks/`](design/mocks). O ícone junta as duas assinaturas da app: **a ampulheta dentro do anel do prazo**, três quartos cheio, nas versões clara, escura e tingida.
 
 <p align="center"><img src="design/icone/icone-preview.png" width="520" alt="O ícone nas versões clara, escura e tingida"></p>
 

@@ -14,7 +14,7 @@ struct DemoWidgetsView: View {
                     cartao(VistaPontos(resumo: resumo, data: .now))
                         .environment(\.colorScheme, esquema)
                 }
-                // Sem pontos: a Ampulheta nas quatro poses e, de dia, nos três temas.
+                // Sem pontos: o Glassy em todas as poses e, de dia, nos três temas.
                 ForEach(PoseMascote.allCases, id: \.self) { pose in
                     vazio(pose, .geral)
                 }

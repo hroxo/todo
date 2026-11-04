@@ -316,13 +316,15 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - No canto, o "+" abre a captura (`todo://captura`).
   - Fundo em gradiente da cor de fundo da lista do primeiro ponto para o fundo do sistema.
   - Uma entrada por hora, para os anéis esvaziarem com animação; os pontos trocam com `push` de baixo.
-- **Sem pontos, a mascote [Decidido 28/10/2026]:** a **Ampulheta** (`Widgets/Mascote.swift`), com olhos escuros brilhantes de um só reflexo (sem branco, contorno nem sobrancelhas, para não ficar cartoon), bochechas coradas e tampas de madeira. Tem 4 poses, cada uma com o seu cenário em vez de fundo liso. A areia conta o dia:
-  - **manhã:** acena, com a areia quase toda em cima, em céu quente com sol;
+- **A mascote, o Glassy [Decidido 04/11/2026, substitui o desenho de 28/10/2026]:** ampulheta 3D de vidro e madeira (`Widgets/Mascote.swift`), feita por camadas das imagens originais em `Glassy2/` (`scripts/glassy-assets.ps1`), com a areia desenhada entre elas. A areia é a pressão do tempo (`EstadoGlassy`): em cima sem nada a fechar, a descer com os pontos no último dia. Cada pose tem o seu cenário:
+  - **manhã:** acena, em céu quente com sol;
   - **tarde:** vê a areia cair, em céu com nuvens;
-  - **tudo em dia:** braços no ar e areia toda em baixo, em verde com confettis;
-  - **noite (23h–7h):** deitada a dormir, porque o tempo pára enquanto dormes, com lua e estrelas.
+  - **tudo em dia:** braços no ar e areia em cima, em verde com confettis;
+  - **noite (23h–7h):** de pé, de olhos fechados, com os "z" e a areia parada, porque o tempo pára enquanto dormes, com lua e estrelas;
+  - **preocupado:** metade da areia em baixo ou mais (3 pontos no último dia), mãos ao peito, em céu âmbar;
+  - **ko:** expirou tudo, nada concluído em 24 horas e nenhum ponto ativo: vidro rachado, olho negro e areia toda em baixo, em cinzento. Vence a noite.
 
-  Ao lado, um título e uma linha ("Bom dia! / Nada pendente por agora."), e "+ Nova nota" no canto. O widget não toca animações contínuas: tem uma entrada da timeline de 20 em 20 minutos, a pose muda e o WidgetKit anima a troca.
+  Ao lado, um título e uma linha ("Bom dia! / Nada pendente por agora."), e "+ Nova nota" no canto. Com pontos, fica pequeno ao lado do número, só no modo a cores. O widget não toca animações contínuas (regra do iOS): tem uma entrada da timeline de 20 em 20 minutos, a pose e a areia mudam e o WidgetKit anima a troca. Na app está vivo: respira, pisca, mexe os braços e a areia corre, exceto com "Reduzir movimento".
 - **A Ampulheta conhece a pessoa [Decidido 28/10/2026]:** de dia, as poses mudam de tema conforme o uso (`Tarefas.temaMascote`, tudo no iPhone):
   - **Tema de cada lista:** vem do ícone, do emoji ou do nome (maleta é trabalho; avião é viagem; haltere é desporto; pessoa, casa, livro ou coração é vida pessoal).
   - **Tema do widget:** o das listas com mais atividade nos últimos 7 dias. Uma viagem com pontos abertos ganha sempre.
@@ -375,8 +377,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.22 A Ampulheta anfitriã no Início [Decidido 02/11/2026: direção A, com o final da B]
 - A Ampulheta fica no topo do Início, com um balão no lugar do antigo cartão "Para ti". O balão diz, por esta ordem: "Boa! Menos um." com Anular durante 4 s, a sugestão de "Para ti", ou a frase do dia.
-- **A areia conta o dia:** concluídos hoje a dividir por concluídos hoje mais os pontos no último dia do prazo (`ProgressoDia`). Sem pontos para hoje, fica toda em cima e não há festa.
-- **Concluir:** o círculo salta, com faíscas; no Início, um grão de areia voa até à Ampulheta, que salta ao recebê-lo. Tocar nela também a faz saltar.
+- **A areia é a pressão do tempo [Alterado 04/11/2026]:** desce com os pontos no último dia do prazo (`EstadoGlassy`). Sem pontos para hoje, fica toda em cima. A festa continua a depender de `ProgressoDia`: só com algo concluído.
+- **Concluir:** o círculo salta, com faíscas; no Início, um grão de areia voa até ao bolbo de cima do Glassy, que salta ao recebê-lo, e a areia sobe. Tocar nele também o faz saltar.
 - **Dia ganho:** uma vez por dia, em qualquer ecrã, saem confettis com vibração; o Início ganha o cenário verde e um fundo esverdeado. Com "Reduzir movimento" não há grão, faíscas, saltos nem confettis.
 - "Expiram hoje" passa para cima do calendário, com o círculo de concluir na própria linha. As linhas da lista ganham um pouco da cor da lista.
 
@@ -445,7 +447,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - **Claro:** o gradiente roxo (#A050E0) → azul (#0A60EE) de sempre, com um brilho no canto.
   - **Escuro:** noite índigo com estrelas.
   - **Tingido:** cinzentos sobre preto.
-- Gerado a partir do mesmo código da mascote (`Widgets/Mascote.swift`, `Ampulheta(semBracos:)`), com um script SwiftUI `ImageRenderer` a 1024 px. Para mudar o desenho, muda-se a mascote e volta-se a gerar.
+- Gerado a partir do desenho anterior da mascote, com um script SwiftUI `ImageRenderer` a 1024 px. Ainda não foi atualizado para o Glassy (7.14): esse desenho já não existe no código.
 - **Ícone anterior (B2, substituído):**
 
 
