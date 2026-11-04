@@ -56,6 +56,8 @@ struct ToDoApp: App {
                 }
             }
                 .task {
+                    // Corre antes do primeiro desenho acabar: se ele bloquear, a abertura seguinte salta os eventos.
+                    calendario.marcarAbertura()
                     if !Demo.ativo { Self.notificacoes.pedirPermissao() }
                 }
                 .onOpenURL { abrirFicheiro($0) }

@@ -56,13 +56,12 @@ abrir() {
 }
 
 abrir sem-calendario
-# A segunda abertura sem calendário separa os dois suspeitos: reabrir a app ou dar o acesso.
-abrir sem-calendario-2
 xcrun simctl privacy "$UDID" grant calendar "$BUNDLE" || echo "Não foi possível autorizar o calendário"
-abrir com-calendario
-# O estado do iPhone: as boas-vindas já vistas. E sem a secção, para ver se é ela que bloqueia.
-abrir com-calendario-sem-boas-vindas -boasVindasVistas YES
-abrir com-calendario-sem-secao -mostrarCalendario NO
+# Com o aviso das notificações a app não fica ativa e a marca de abertura fica posta: sem limpar,
+# a abertura seguinte mostrava o cartão em vez dos eventos. A última testa esse cartão.
+abrir com-calendario -calendarioALer NO
+abrir com-calendario-sem-boas-vindas -boasVindasVistas YES -calendarioALer NO
+abrir apos-abertura-interrompida -boasVindasVistas YES
 
 cp "$HOME"/Library/Logs/DiagnosticReports/ToDo* "$SAIDA/" 2>/dev/null || true
 xcrun simctl terminate "$UDID" "$BUNDLE" || true

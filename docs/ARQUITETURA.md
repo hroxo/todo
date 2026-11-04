@@ -200,7 +200,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 | `.github/workflows/ci.yml` | testes, build sem assinatura, `.ipa` na release `ultima` (para o iloader), capturas; não corre só com `.md` |
 | `.github/workflows/testflight.yml` | manual: assina com a chave da App Store Connect e envia para o TestFlight (precisa dos secrets, ver CONTA-DEVELOPER.md) |
 | `scripts/capturas-ci.sh` | no CI: arranca o simulador, abre cada ecrã em modo demo e fotografa em escuro e claro |
-| `scripts/arranque-real-ci.sh` | no CI: abre a app sem modo demo, sem e com o calendário autorizado; falha se ela morrer ou não desenhar a interface e guarda a pilha e os registos (sem assinatura, não cobre o iCloud) |
+| `scripts/arranque-real-ci.sh` | no CI: abre a app sem modo demo, sem e com o calendário autorizado; falha se ela morrer, não desenhar a interface ou ficar presa no primeiro desenho, e guarda a pilha e os registos (sem assinatura, não cobre o iCloud) |
 | `scripts/capturas.sh` | local: descarrega as capturas de uma execução do CI (precisa do `gh`) |
 | `scripts/mocks.sh` | HTML dos mocks → PNG |
 | `scripts/readme-media.py` | gera as imagens e os GIFs do README a partir das capturas |

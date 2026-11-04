@@ -69,8 +69,33 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      # Assinatura automática na nuvem: com a chave (papel Admin), o Xcode cria ou reutiliza o
-      # certificado de distribuição e os perfis da app e do widget.
+      # Cada runner novo cria um certificado Apple Development para arquivar, e a chave privada
+      # morre com o runner. Sem limpeza, a conta chega ao limite ("Choose a certificate to
+      # revoke"). Só toca nos de desenvolvimento criados pela chave: os do Mac têm outro nome e
+      # a distribuição é gerida na nuvem. O grupo de concorrência garante um runner de cada vez.
+      - name: Revogar certificados de execuções anteriores
+        continue-on-error: true
+        shell: bash
+        run: |
+          CHAVE="$RUNNER_TEMP/chave/AuthKey_$ASC_KEY_ID.p8"
+          b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
+          agora=$(date +%s)
+          msg="$(printf '{"alg":"ES256","kid":"%s","typ":"JWT"}' "$ASC_KEY_ID" | b64url).$(printf '{"iss":"%s","iat":%s,"exp":%s,"aud":"appstoreconnect-v1"}' "$ASC_ISSUER_ID" "$agora" "$((agora + 600))" | b64url)"
+          # A API quer a assinatura em bruto (r e s, 32 bytes cada); o openssl dá-a em DER.
+          assinatura=$(printf '%s' "$msg" | openssl dgst -sha256 -sign "$CHAVE" | openssl asn1parse -inform DER | awk -F: '/INTEGER/ {printf "%64s", $NF}' | tr ' ' 0 | xxd -r -p | b64url)
+          JWT="$msg.$assinatura"
+          API=https://api.appstoreconnect.apple.com/v1/certificates
+          lista=$(curl -fsSg --max-time 30 -H "Authorization: Bearer $JWT" "$API?filter%5BcertificateType%5D=DEVELOPMENT,IOS_DEVELOPMENT&limit=200")
+          ids=$(jq -r '.data[] | select(((.attributes.name // "") + " " + (.attributes.displayName // "")) | contains("Created via API")) | .id' <<<"$lista")
+          n=0
+          for id in $ids; do
+            curl -fsS --max-time 30 -X DELETE -H "Authorization: Bearer $JWT" "$API/$id"
+            n=$((n + 1))
+          done
+          echo "Revogados $n certificados de desenvolvimento de execuções anteriores."
+
+      # Arquivar assina com um certificado de desenvolvimento novo (ver o passo anterior); a
+      # exportação assina para distribuição, com o certificado gerido na nuvem, e cria os perfis.
       - name: Arquivar
         run: |
           xcodebuild archive \

@@ -151,7 +151,7 @@ struct SecaoCalendario: View {
         .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
     }
 
-    /// A app fechou-se a ler o calendário: abre sem ele e deixa a pessoa decidir (DESIGN.md 7.12).
+    /// A app morreu ou bloqueou com o calendário: abre sem ele e deixa a pessoa decidir (DESIGN.md 7.12).
     private var cartaoFalhou: some View {
         VStack(alignment: .leading, spacing: Espaco.grelha) {
             HStack(spacing: Espaco.grelha) {
@@ -159,7 +159,7 @@ struct SecaoCalendario: View {
                 VStack(alignment: .leading, spacing: Espaco.minimo) {
                     Text("Não foi possível ler o calendário")
                         .font(.headline)
-                    Text("A app fechou-se enquanto lia os eventos. Os teus pontos não foram afetados.")
+                    Text("Da última vez, a app não abriu bem com o calendário. Os teus pontos não foram afetados.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -205,62 +205,60 @@ struct SecaoCalendario: View {
 
     /// Os eventos que já acabaram ficam recolhidos numa linha ("2 já passaram"), que se abre
     /// com um toque; os outros mostram-se sempre (DESIGN.md 7.12).
-    private var hoje: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { contexto in
-            let agora = contexto.date
-            let passados = calendario.eventos.filter { !$0.diaInteiro && $0.fim <= agora }
-            let porVir = calendario.eventos.filter { $0.diaInteiro || $0.fim > agora }
-            VStack(alignment: .leading, spacing: Espaco.curto) {
-                HStack {
-                    TituloSecao(texto: "Hoje no calendário")
-                    Spacer()
-                    if !calendario.eventos.isEmpty {
-                        Text(porVir.isEmpty ? "Todos passaram" : (porVir.count == 1 ? "1 por vir" : "\(porVir.count) por vir"))
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .contentTransition(.numericText())
-                    }
-                }
-
-                if let confirmacao {
-                    Label(confirmacao, systemImage: "checkmark.circle.fill")
+    // Sem TimelineView própria: aninhada na da raiz, dá um ciclo de layout que deixa a app em branco ao abrir (History.md).
+    @ViewBuilder private var hoje: some View {
+        let passados = calendario.eventos.filter { !$0.diaInteiro && $0.fim <= agora }
+        let porVir = calendario.eventos.filter { $0.diaInteiro || $0.fim > agora }
+        VStack(alignment: .leading, spacing: Espaco.curto) {
+            HStack {
+                TituloSecao(texto: "Hoje no calendário")
+                Spacer()
+                if !calendario.eventos.isEmpty {
+                    Text(porVir.isEmpty ? "Todos passaram" : (porVir.count == 1 ? "1 por vir" : "\(porVir.count) por vir"))
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(CoresEstado.concluido)
-                        .transition(.opacity)
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
                 }
-
-                VStack(spacing: 0) {
-                    if calendario.eventos.isEmpty {
-                        Text("Nada no calendário hoje. Em Definições › Calendários escolhes o espaço de cada calendário.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
-                            .padding(.horizontal, Espaco.bloco)
-                            .padding(.vertical, Espaco.curto)
-                    }
-                    if !passados.isEmpty {
-                        linhaPassados(passados.count)
-                        if mostrarPassados {
-                            ForEach(passados) { evento in
-                                Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
-                                linha(evento, agora: agora)
-                                    .opacity(0.45)
-                            }
-                        }
-                        if !porVir.isEmpty {
-                            Divider()
-                        }
-                    }
-                    ForEach(porVir) { evento in
-                        linha(evento, agora: agora)
-                        if evento != porVir.last {
-                            Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
-                        }
-                    }
-                }
-                .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
-                .clipShape(.rect(cornerRadius: 18, style: .continuous))
             }
+
+            if let confirmacao {
+                Label(confirmacao, systemImage: "checkmark.circle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(CoresEstado.concluido)
+                    .transition(.opacity)
+            }
+
+            VStack(spacing: 0) {
+                if calendario.eventos.isEmpty {
+                    Text("Nada no calendário hoje. Em Definições › Calendários escolhes o espaço de cada calendário.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                        .padding(.horizontal, Espaco.bloco)
+                        .padding(.vertical, Espaco.curto)
+                }
+                if !passados.isEmpty {
+                    linhaPassados(passados.count)
+                    if mostrarPassados {
+                        ForEach(passados) { evento in
+                            Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
+                            linha(evento, agora: agora)
+                                .opacity(0.45)
+                        }
+                    }
+                    if !porVir.isEmpty {
+                        Divider()
+                    }
+                }
+                ForEach(porVir) { evento in
+                    linha(evento, agora: agora)
+                    if evento != porVir.last {
+                        Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
+                    }
+                }
+            }
+            .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
+            .clipShape(.rect(cornerRadius: 18, style: .continuous))
         }
     }
 

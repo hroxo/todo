@@ -70,7 +70,7 @@ final class Calendario {
     /// ecrãs leem-nos várias vezes em cada desenho, e só mudam quando há diferenças.
     private(set) var eventos: [EventoHoje] = []
     private(set) var calendarios: [CalendarioLocal] = []
-    /// A app morreu durante a última leitura: não se lê outra vez sem a pessoa pedir, para o
+    /// A app morreu ou bloqueou com o calendário: não se mostra outra vez sem a pessoa pedir, para o
     /// calendário nunca impedir a app de abrir (DESIGN.md 7.12).
     private(set) var leituraFalhou = false
     /// Contas Google e Outlook ligadas diretamente (Melhoria 7).
@@ -239,6 +239,12 @@ final class Calendario {
         leituraFalhou = false
         marcarLeitura(false)
         atualizar()
+    }
+
+    /// Um bloqueio ao desenhar não é um crash nem chega à leitura: a marca tem de vir antes dela.
+    func marcarAbertura() {
+        guard !Demo.ativo, ToDoApp.erroBaseDados == nil, acesso == .autorizado, !leituraFalhou else { return }
+        marcarLeitura(true)
     }
 
     /// Chegar ao segundo plano prova que a app sobreviveu à leitura.

@@ -4,6 +4,8 @@ import ToDoCore
 extension EnvironmentValues {
     /// O céu de agora, atualizado de minuto a minuto na raiz da app.
     @Entry var ceu = CeuDoDia(agora: .now)
+    /// A hora da raiz, o único relógio de minuto a minuto da app.
+    @Entry var agora = Date.now
 }
 
 /// As cores do céu (DESIGN.md 7.23). A app fica em modo claro de dia e em modo escuro à noite,

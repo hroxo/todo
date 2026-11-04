@@ -266,7 +266,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.12 Calendário no Início (mocks 7 e 8)
 
-**O calendário nunca impede a app de abrir:** se a app morrer durante a leitura dos eventos ou nos 10 segundos seguintes, na abertura seguinte não volta a ler e mostra o cartão "Não foi possível ler o calendário", com "Tentar outra vez" e "Agora não".
+**O calendário nunca impede a app de abrir:** se a app morrer ou ficar bloqueada ao abrir com os eventos, durante a leitura ou nos 10 segundos seguintes, na abertura seguinte não volta a ler e mostra o cartão "Não foi possível ler o calendário", com "Tentar outra vez" e "Agora não".
 
 **Revisão de 28/10/2026 [Decidido]:**
 - **Recolher o que passou:** os eventos que já acabaram ficam recolhidos numa linha "2 já passaram", que abre com um toque e mostra-os esbatidos. O cabeçalho diz "3 por vir".
