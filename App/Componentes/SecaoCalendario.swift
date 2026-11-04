@@ -61,11 +61,13 @@ struct SecaoCalendario: View {
         } message: { item in
             Text(item.estado == .concluido ? "Este evento já foi adicionado e concluído." : "Este evento já foi adicionado.")
         }
+        #if DEBUG
         .onChange(of: estado.abrirEventoDemo, initial: true) { _, abrir in
             guard abrir else { return }
             estado.abrirEventoDemo = false
             aberto = calendario.eventos.first { !$0.participantes.isEmpty }
         }
+        #endif
     }
 
     // MARK: - Por ligar

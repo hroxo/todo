@@ -104,10 +104,12 @@ final class Calendario {
         // Na demonstração as listas mudam a cada arranque: nada se lê nem grava.
         espacos = Demo.ativo ? [:] : UserDefaults.standard.dictionary(forKey: chaveEspacos) as? [String: String] ?? [:]
         conhecidos = Demo.ativo ? [] : Set(UserDefaults.standard.stringArray(forKey: chaveConhecidos) ?? [])
+        #if DEBUG
         if Demo.ativo {
             prepararDemo()
             return
         }
+        #endif
         leituraFalhou = UserDefaults.standard.bool(forKey: chaveLeitura)
         lerAcesso()
         // A primeira leitura vem de `ToDoApp`, ao ficar ativa: aqui atrasaria o primeiro ecrã.
@@ -393,6 +395,7 @@ final class Calendario {
         }
     }
 
+    #if DEBUG
     /// Eventos de exemplo para as capturas de ecrã (`-calendario ligar` e `-calendario falhou`
     /// mostram os cartões).
     private func prepararDemo() {
@@ -437,4 +440,5 @@ final class Calendario {
         associarNovos(locais.map { ($0.calendarioId, $0.calendarioId) })
         juntarEventos()
     }
+    #endif
 }

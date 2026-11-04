@@ -50,7 +50,9 @@ struct RaizView: View {
         .alert(estado.avisoPartilha ?? "", isPresented: Binding(presente: $estado.avisoPartilha)) {
             Button("OK", role: .cancel) {}
         }
+        #if DEBUG
         .fullScreenCover(isPresented: $estado.demoWidgets) { DemoWidgetsView() }
+        #endif
         .sheet(isPresented: Binding(
             get: { !boasVindasVistas && !Demo.ativo },
             set: { if !$0 { boasVindasVistas = true } }
@@ -65,11 +67,13 @@ struct RaizView: View {
                 estado.mostrarCaptura = true
             }
         }
+        #if DEBUG
         .task {
             guard Demo.ativo else { return }
             try? await Task.sleep(for: .milliseconds(600))
             Demo.abrir(estado: estado, contexto: contexto)
         }
+        #endif
         .sheet(isPresented: $estado.mostrarCaptura) {
             CapturaView()
                 .environment(estado)

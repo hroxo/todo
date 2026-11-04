@@ -10,11 +10,15 @@ struct ToDoApp: App {
 
     static let contentor: ModelContainer = {
         do {
-            guard Demo.ativo else { return try BaseDados.contentor() }
-            if Demo.ecra == "erro-base" { throw CocoaError(.fileReadUnknown) }
-            let contentor = try BaseDados.contentor(emMemoria: true)
-            Demo.povoar(ModelContext(contentor))
-            return contentor
+            #if DEBUG
+            if Demo.ativo {
+                if Demo.ecra == "erro-base" { throw CocoaError(.fileReadUnknown) }
+                let contentor = try BaseDados.contentor(emMemoria: true)
+                Demo.povoar(ModelContext(contentor))
+                return contentor
+            }
+            #endif
+            return try BaseDados.contentor()
         } catch {
             erroBaseDados = String(reflecting: error)
             // Uma base vazia, só para o resto da app poder arrancar: nunca toca no ficheiro real.

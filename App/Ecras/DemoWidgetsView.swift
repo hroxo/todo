@@ -1,3 +1,4 @@
+#if DEBUG
 import SwiftUI
 import ToDoCore
 
@@ -61,3 +62,4 @@ struct DemoWidgetsView: View {
         .environment(\.colorScheme, .dark)
     }
 }
+#endif

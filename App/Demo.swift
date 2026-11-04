@@ -3,6 +3,7 @@ import SwiftUI
 import ToDoCore
 import UIKit
 
+#if DEBUG
 /// Modo de demonstração para as capturas de ecrã do CI. Só se liga com o argumento de
 /// arranque `-demo YES`: base de dados em memória com dados parecidos com os dos mocks, sem
 /// notificações. `-ecra <nome>` abre um ecrã, `-manter <fase>` mostra um estado do Manter e
@@ -189,3 +190,13 @@ enum Demo {
         }
     }
 }
+#else
+/// Na versão de produto (Release) não há modo de demonstração: nem dados de exemplo, nem
+/// argumentos de arranque. Isto só existe para o resto da app compilar sem mais condições.
+enum Demo {
+    static var ativo: Bool { false }
+    static var ecra: String? { nil }
+    static var agora: Date? { nil }
+    static var faseManter: String? { nil }
+}
+#endif

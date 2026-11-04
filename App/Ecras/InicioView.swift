@@ -113,20 +113,24 @@ struct InicioView: View {
                 }
                 .onAppear { festejar(progresso) }
                 .onChange(of: progresso.completo) { festejar(progresso) }
+                #if DEBUG
                 .onChange(of: estado.rolarParaCalendario) { _, rolar in
                     guard rolar else { return }
                     estado.rolarParaCalendario = false
                     withAnimation { rolagem.scrollTo("calendario", anchor: .bottom) }
                 }
+                #endif
             }
             .navigationDestination(for: Lista.self) { ListaView(lista: $0) }
             .navigationDestination(for: Item.self) { DetalheNavegavel(item: $0) }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
+            #if DEBUG
             .onChange(of: estado.abrirPersonalizar) { _, abrir in
                 guard abrir, let lista = listas.first else { return }
                 estado.abrirPersonalizar = false
                 formulario = .editar(lista)
             }
+            #endif
             .confirmationDialog(
                 "Apagar a lista «\(aApagar?.nome ?? "")»?",
                 isPresented: Binding(presente: $aApagar),
