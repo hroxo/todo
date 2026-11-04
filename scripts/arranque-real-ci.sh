@@ -57,10 +57,13 @@ abrir() {
 
 abrir sem-calendario
 xcrun simctl privacy "$UDID" grant calendar "$BUNDLE" || echo "Não foi possível autorizar o calendário"
-# Com o aviso das notificações a app não fica ativa e a marca de abertura fica posta: sem limpar,
-# a abertura seguinte mostrava o cartão em vez dos eventos. A última testa esse cartão.
-abrir com-calendario -calendarioALer NO
-abrir com-calendario-sem-boas-vindas -boasVindasVistas YES -calendarioALer NO
+abrir com-calendario
+abrir com-calendario-sem-boas-vindas -boasVindasVistas YES
+# Fechar antes de a marca de abertura se limpar faz de bloqueio: a abertura seguinte tem de
+# abrir com o cartão "Não foi possível ler o calendário" (ver a captura).
+xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" -boasVindasVistas YES > /dev/null
+sleep 6
+xcrun simctl terminate "$UDID" "$BUNDLE" || true
 abrir apos-abertura-interrompida -boasVindasVistas YES
 
 cp "$HOME"/Library/Logs/DiagnosticReports/ToDo* "$SAIDA/" 2>/dev/null || true
