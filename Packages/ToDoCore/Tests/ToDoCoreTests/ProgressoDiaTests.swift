@@ -31,12 +31,9 @@ final class ProgressoDiaTests: BaseTestes {
         XCTAssertTrue(progresso.completo)
     }
 
-    func testFracaoECompleto() {
-        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 0).fracao, 0)
+    func testCompleto() {
         XCTAssertFalse(ProgressoDia(concluidos: 0, porFazer: 0).completo)
-        XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 3).fracao, 0.25)
         XCTAssertFalse(ProgressoDia(concluidos: 1, porFazer: 3).completo)
-        XCTAssertEqual(ProgressoDia(concluidos: 2, porFazer: 0).fracao, 1)
         XCTAssertTrue(ProgressoDia(concluidos: 2, porFazer: 0).completo)
     }
 

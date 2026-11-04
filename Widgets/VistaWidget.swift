@@ -18,14 +18,14 @@ struct VistaPontos: View {
     /// A pose da Ampulheta quando não há pontos: "tudo em dia" só quando a app disse que não
     /// há nenhum ponto ativo.
     static func pose(_ resumo: ResumoWidget?, _ data: Date) -> PoseMascote {
-        .para(data, tudoEmDia: resumo?.totalAtivos == 0)
+        .para(data, tudoEmDia: resumo?.totalAtivos == 0, estado: resumo?.glassy)
     }
 
     var body: some View {
         if let pontos = resumo?.pontos, !pontos.isEmpty {
             comPontos
         } else {
-            VistaVazia(pose: Self.pose(resumo, data), tema: resumo?.tema ?? .geral, semDados: resumo == nil)
+            VistaVazia(pose: Self.pose(resumo, data), tema: resumo?.tema ?? .geral, nivelAreia: resumo?.glassy?.nivelAreia, semDados: resumo == nil)
         }
     }
 
@@ -35,12 +35,24 @@ struct VistaPontos: View {
         let legenda = hoje > 0 ? (hoje == 1 ? "expira hoje" : "expiram hoje") : (numero == 1 ? "ponto ativo" : "pontos ativos")
         return HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(numero)")
-                    .font(.system(size: 44, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(hoje > 0 && modo == .fullColor ? CoresEstado.expira : .primary)
-                    .contentTransition(.numericText(value: Double(numero)))
-                    .widgetAccentable()
+                HStack(alignment: .bottom, spacing: 4) {
+                    Text("\(numero)")
+                        .font(.system(size: 44, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(hoje > 0 && modo == .fullColor ? CoresEstado.expira : .primary)
+                        .contentTransition(.numericText(value: Double(numero)))
+                        .widgetAccentable()
+                    // Também com pontos, para se ver a preocupação; só a cores, porque tingido
+                    // ficaria uma mancha. Mudar de id faz o WidgetKit animar ao concluir.
+                    if modo == .fullColor {
+                        let pose = Self.pose(resumo, data)
+                        let nivel = resumo?.glassy?.nivelAreia
+                        Ampulheta(pose: pose, tema: .geral, nivelAreia: nivel)
+                            .frame(width: 40, height: 50)
+                            .id("\(pose)-\(nivel ?? -1)")
+                            .transition(.opacity)
+                    }
+                }
                 Text(legenda)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
@@ -107,6 +119,7 @@ struct VistaPontos: View {
 struct VistaVazia: View {
     let pose: PoseMascote
     var tema: TemaMascote = .geral
+    var nivelAreia: Double?
     var semDados = false
 
     /// Azul escuro nos cenários claros; no tema, a cor mais escura do cenário.
@@ -128,9 +141,9 @@ struct VistaVazia: View {
                 // A janela do avião está no cenário, à esquerda: a Ampulheta senta-se ao lado.
                 Color.clear.frame(width: 112)
             }
-            Ampulheta(pose: pose, tema: tema)
-                .frame(width: pose == .dormir ? 118 : (naJanela ? 70 : 92), height: 118)
-                .id("\(pose)-\(tema)")
+            Ampulheta(pose: pose, tema: tema, nivelAreia: nivelAreia)
+                .frame(width: naJanela ? 70 : 92, height: 118)
+                .id("\(pose)-\(tema)-\(nivelAreia ?? -1)")
                 .transition(.scale(scale: 0.7).combined(with: .opacity))
             VStack(alignment: .leading, spacing: 3) {
                 Text(pose.titulo(tema))

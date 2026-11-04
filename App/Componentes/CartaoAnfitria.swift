@@ -11,7 +11,7 @@ struct CartaoAnfitria: View {
         var id: String { rotulo }
     }
 
-    let progresso: ProgressoDia
+    let nivelAreia: Double
     let pose: PoseMascote
     let frase: String
     let botoes: [Botao]
@@ -24,7 +24,7 @@ struct CartaoAnfitria: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: Espaco.curto) {
-            AmpulhetaDia(pose: pose, nivel: progresso.fracao)
+            AmpulhetaDia(pose: pose, nivel: nivelAreia)
                 .frame(width: 70, height: 84)
                 .modifier(Salto(gatilho: reduzirMovimento ? 0 : saltos + toques))
                 .contentShape(Rectangle())
@@ -96,7 +96,7 @@ private struct AmpulhetaDia: View, Animatable {
     }
 
     var body: some View {
-        Ampulheta(pose: pose, nivelAreia: nivel)
+        Ampulheta(pose: pose, nivelAreia: nivel, vivo: true)
     }
 }
 

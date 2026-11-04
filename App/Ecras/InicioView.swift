@@ -364,9 +364,11 @@ struct InicioView: View {
             frase = fraseDoDia
             botoes = []
         }
+        // Vai à base e não às @Query daqui, para contar o mesmo que o widget (com os fixados).
+        let glassy = try? Tarefas(contexto: contexto).estadoGlassy()
         return CartaoAnfitria(
-            progresso: progresso,
-            pose: progresso.completo ? .celebrar : .para(agora, tudoEmDia: false),
+            nivelAreia: glassy?.nivelAreia ?? 0,
+            pose: progresso.completo ? .celebrar : .para(agora, tudoEmDia: false, estado: glassy),
             frase: frase,
             botoes: botoes,
             dispensar: acabado == nil ? sugestao.map { sugestao in
@@ -376,7 +378,8 @@ struct InicioView: View {
         )
         .onGeometryChange(for: CGPoint.self) { proxy in
             let moldura = proxy.frame(in: .named(Self.espacoEcra))
-            return CGPoint(x: moldura.minX + 35, y: moldura.midY + 20)
+            // No bolbo de cima: concluir dá tempo, e a areia sobe.
+            return CGPoint(x: moldura.minX + 35, y: moldura.midY - 14)
         } action: { posicaoAmpulheta = $0 }
         .task(id: acabado?.id) {
             guard acabado != nil else { return }

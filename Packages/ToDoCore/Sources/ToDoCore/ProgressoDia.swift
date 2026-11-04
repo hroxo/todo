@@ -1,7 +1,7 @@
 import Foundation
 
-/// O dia contado pela Ampulheta no Início (DESIGN.md 7.22): os pontos concluídos hoje e os que
-/// ainda estão no último dia do prazo. A areia desce com os concluídos.
+/// O dia contado pelo Glassy no Início (DESIGN.md 7.22): os pontos concluídos hoje e os que
+/// ainda estão no último dia do prazo. A areia vem de `EstadoGlassy`.
 public struct ProgressoDia: Equatable, Sendable {
     public let concluidos: Int
     public let porFazer: Int
@@ -16,12 +16,6 @@ public struct ProgressoDia: Equatable, Sendable {
             item.concluidoEm.map { calendario.isDate($0, inSameDayAs: agora) } ?? false
         }.count
         porFazer = ativos.filter { Prazo(item: $0, agora: agora)?.ultimoDia == true }.count
-    }
-
-    /// Parte do dia feita, de 0 a 1. Sem pontos para hoje, a areia fica toda em cima.
-    public var fracao: Double {
-        let total = concluidos + porFazer
-        return total == 0 ? 0 : Double(concluidos) / Double(total)
     }
 
     /// O dia só está ganho depois de concluir alguma coisa: um dia sem pontos não dá festa.

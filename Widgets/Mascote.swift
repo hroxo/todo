@@ -1,11 +1,9 @@
 import SwiftUI
 import ToDoCore
 
-/// A Ampulheta, a mascote da app (DESIGN.md 7.14). Aparece no widget quando não há nada a
-/// pedir atenção e muda de pose ao longo do dia (o WidgetKit anima a passagem). A areia conta
-/// o dia: de manhã está quase toda em cima, cai devagar à tarde, fica toda em baixo quando está
-/// tudo feito, e à noite a ampulheta deita-se: o tempo pára enquanto dormes. Desenhada em
-/// código (Canvas), para ficar nítida em qualquer tamanho.
+/// O Glassy, a mascote da app (DESIGN.md 7.14). Muda de pose com a hora e com o estado do dia
+/// (`EstadoGlassy`). A areia é a pressão do tempo: em cima quando não há nada a fechar, a descer
+/// quando os pontos se acumulam, toda em baixo no ko.
 enum PoseMascote: String, CaseIterable {
     /// De manhã, a acenar.
     case acenar
@@ -13,14 +11,21 @@ enum PoseMascote: String, CaseIterable {
     case areia
     /// Tudo em dia: braços no ar.
     case celebrar
-    /// À noite, deitada a dormir.
+    /// À noite, de olhos fechados.
     case dormir
+    /// Muitos pontos por fechar.
+    case preocupado
+    /// Perdeu tudo: vidro rachado e olho negro.
+    case ko
 
-    /// Dorme à noite; de dia acena (manhã) ou vê a areia (tarde) e, com tudo feito, celebra
-    /// de 20 em 20 minutos, para estar sempre a fazer outra coisa quando se olha para ela.
-    static func para(_ data: Date, tudoEmDia: Bool, calendario: Calendar = .current) -> PoseMascote {
+    /// O ko vence tudo e o sono vence a preocupação: à noite ninguém é incomodado. De dia acena
+    /// (manhã) ou vê a areia (tarde) e, com tudo feito, celebra de 20 em 20 minutos, para estar
+    /// sempre a fazer outra coisa quando se olha para ele.
+    static func para(_ data: Date, tudoEmDia: Bool, estado: EstadoGlassy? = nil, calendario: Calendar = .current) -> PoseMascote {
+        if estado?.humor == .ko { return .ko }
         let hora = calendario.component(.hour, from: data)
         if hora >= 23 || hora < 7 { return .dormir }
+        if estado?.humor == .preocupado { return .preocupado }
         let bloco = (hora * 60 + calendario.component(.minute, from: data)) / 20
         let doDia: PoseMascote = hora < 12 ? .acenar : .areia
         return tudoEmDia && bloco.isMultiple(of: 2) ? .celebrar : doDia
@@ -32,6 +37,8 @@ enum PoseMascote: String, CaseIterable {
         case .areia: "Tudo calmo."
         case .celebrar: "Tudo em dia."
         case .dormir: "Boa noite."
+        case .preocupado: "Está a apertar."
+        case .ko: "Ai. Foi tudo."
         }
     }
 
@@ -41,14 +48,16 @@ enum PoseMascote: String, CaseIterable {
         case .areia: "O tempo corre a teu favor."
         case .celebrar: "Bom trabalho!"
         case .dormir: "O tempo pára enquanto dormes."
+        case .preocupado: "Há pontos a acabar o prazo."
+        case .ko: "Ainda podes recuperá-los em Expirados."
         }
     }
 
-    /// Texto claro nos cenários escuros (festa e noite).
-    var cenarioEscuro: Bool { self == .celebrar || self == .dormir }
+    /// Texto claro nos cenários escuros (festa, noite e ko).
+    var cenarioEscuro: Bool { self == .celebrar || self == .dormir || self == .ko }
 
     /// Com um tema (trabalho, vida pessoal, viagem), as poses de dia mudam de cenário, de
-    /// objetos e de frase; celebrar e dormir são iguais em todos os temas.
+    /// objetos e de frase; as outras são iguais em todos os temas.
     func doTema(_ tema: TemaMascote) -> Bool {
         (self == .acenar || self == .areia) && tema.cenario != .geral
     }
@@ -76,6 +85,29 @@ enum PoseMascote: String, CaseIterable {
         default: return subtitulo
         }
     }
+
+    /// As camadas desta pose (geradas por `scripts/glassy-assets.ps1`).
+    fileprivate var imagem: String {
+        switch self {
+        case .acenar, .areia, .dormir: "feliz"
+        case .celebrar: "celebrar"
+        case .preocupado: "preocupado"
+        case .ko: "ko"
+        }
+    }
+
+    /// A areia quando não há estado do dia para a decidir (ecrãs vazios, pré-visualizações).
+    fileprivate var nivel: Double {
+        switch self {
+        case .acenar, .celebrar: 0
+        case .areia, .dormir: 0.3
+        case .preocupado: 0.6
+        case .ko: 1
+        }
+    }
+
+    /// No celebrar os olhos já estão fechados a sorrir, e o ko fica atordoado, sem piscar.
+    fileprivate var pisca: Bool { self != .celebrar && self != .ko }
 }
 
 extension TemaMascote {
@@ -83,15 +115,46 @@ extension TemaMascote {
     var cenario: TemaMascote { self == .desporto ? .pessoal : self }
 }
 
-/// A Ampulheta numa pose. Desenhada num espaço de 100 × 120 (deitada, 120 × 100).
+/// O Glassy numa pose: as camadas das imagens originais, com a areia desenhada entre elas. Tudo
+/// em coordenadas das imagens originais (1194 × 1600; o recorte começa em 130, 170). Com `vivo`,
+/// respira, pisca, mexe os braços e a areia corre; sem ele (widgets, que não animam em contínuo,
+/// e "Reduzir movimento") desenha-se o mesmo quadro, parado.
 struct Ampulheta: View {
     let pose: PoseMascote
     var tema: TemaMascote = .geral
-    /// Sem braços: no ícone da app ficam a mais.
-    var semBracos = false
-    /// A areia conta o dia (DESIGN.md 7.22): de 0, toda em cima, a 1, toda em baixo. Nil usa a
-    /// areia da pose.
+    /// De 0, toda em cima, a 1, toda em baixo. Nil usa a areia da pose.
     var nivelAreia: Double?
+    var vivo = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
+    @State private var tempo: Double?
+
+    private static let recorte = CGRect(x: 130, y: 170, width: 980, height: 1205)
+    private static let centro: CGFloat = 620
+    /// Meia largura interior do vidro por linha; a mesma tabela de `scripts/glassy-assets.ps1`.
+    private static let perfil: [(y: CGFloat, meia: CGFloat)] = [
+        (306, 301), (350, 301), (400, 303), (450, 298), (500, 285), (550, 263), (600, 228), (650, 185),
+        (700, 150), (750, 95), (775, 62), (800, 100), (850, 150), (900, 200), (950, 240), (1000, 265),
+        (1050, 280), (1100, 287), (1150, 297), (1200, 301), (1240, 301),
+    ]
+    private static let vidro = Path { p in
+        p.addLines(perfil.map { CGPoint(x: centro - $0.meia, y: $0.y) } + perfil.reversed().map { CGPoint(x: centro + $0.meia, y: $0.y) })
+        p.closeSubpath()
+    }
+    // Os braços separam-se da madeira e das bochechas por zonas: nenhuma pose os põe lá.
+    private static let bracoEsquerdo = Path { p in
+        p.addRect(CGRect(x: 0, y: 320, width: 360, height: 905))
+        p.addRect(CGRect(x: 360, y: 680, width: 260, height: 545))
+    }
+    private static let bracoDireito = Path { p in
+        p.addRect(CGRect(x: 880, y: 320, width: 314, height: 905))
+        p.addRect(CGRect(x: 620, y: 680, width: 260, height: 545))
+    }
+    private static let semBracos = Path { p in
+        p.addRect(CGRect(x: 0, y: 0, width: 1194, height: 320))
+        p.addRect(CGRect(x: 360, y: 320, width: 520, height: 360))
+        p.addRect(CGRect(x: 0, y: 1225, width: 1194, height: 375))
+    }
 
     /// No trabalho e na vida pessoal, de dia, segura um objeto à frente: o portátil e o café,
     /// ou um livro.
@@ -100,236 +163,173 @@ struct Ampulheta: View {
         return tema.cenario
     }
 
-    private static let madeira = Color(red: 0.88, green: 0.54, blue: 0.31)
-    private static let madeiraClara = Color(red: 0.94, green: 0.65, blue: 0.42)
-    private static let areia = Color(red: 0.96, green: 0.73, blue: 0.35)
-    private static let areiaClara = Color(red: 0.99, green: 0.84, blue: 0.54)
-    private static let escuro = Color(red: 0.16, green: 0.08, blue: 0.03)
-    private static let rosa = Color(red: 0.96, green: 0.64, blue: 0.75)
-
     var body: some View {
-        let deitada = pose == .dormir
-        Canvas { contexto, tamanho in
-            let espaco = deitada ? CGSize(width: 120, height: 100) : CGSize(width: 100, height: 120)
-            let escala = min(tamanho.width / espaco.width, tamanho.height / espaco.height)
-            contexto.translateBy(
-                x: (tamanho.width - espaco.width * escala) / 2,
-                y: (tamanho.height - espaco.height * escala) / 2
-            )
-            contexto.scaleBy(x: escala, y: escala)
-            if deitada {
-                var corpo = contexto
-                // Roda à volta do centro: o bolbo de cima fica à esquerda.
-                corpo.translateBy(x: 60, y: 50)
-                corpo.rotate(by: .degrees(-90))
-                corpo.translateBy(x: -50, y: -60)
-                desenharCorpo(em: &corpo)
-                // A cara deita-se com o corpo, como quem dorme de lado na almofada.
-                desenharRostoDeitado(em: &corpo)
-                desenharSono(em: &contexto)
-            } else {
-                desenharCorpo(em: &contexto)
-                desenharRosto(em: &contexto)
-                if let objeto {
-                    desenharObjeto(objeto, em: &contexto)
+        let anima = vivo && !reduzirMovimento
+        quadro(anima ? tempo : nil)
+            .aspectRatio(Self.recorte.width / Self.recorte.height, contentMode: .fit)
+            .accessibilityHidden(true)
+            // Sem TimelineView: aninhada na da raiz, deixa a app em branco ao abrir (History.md).
+            // Isto só redesenha o Glassy e cancela-se quando ele sai do ecrã.
+            .task(id: anima) {
+                guard anima else { return }
+                while !Task.isCancelled {
+                    tempo = Date.timeIntervalSinceReferenceDate
+                    try? await Task.sleep(for: .milliseconds(33))
                 }
             }
-        }
-        .aspectRatio(deitada ? 1.2 : 100.0 / 120, contentMode: .fit)
-        .accessibilityHidden(true)
     }
 
-    // MARK: - Corpo
-
-    private func desenharCorpo(em c: inout GraphicsContext) {
-        let traco = StrokeStyle(lineWidth: 8, lineCap: .round)
-        for braco in bracos {
-            c.stroke(braco, with: .color(Self.madeira), style: traco)
-        }
-
-        let vidro = Path { p in
-            p.move(to: CGPoint(x: 22, y: 14))
-            p.addLine(to: CGPoint(x: 78, y: 14))
-            p.addQuadCurve(to: CGPoint(x: 54, y: 60), control: CGPoint(x: 78, y: 44))
-            p.addQuadCurve(to: CGPoint(x: 78, y: 106), control: CGPoint(x: 78, y: 76))
-            p.addLine(to: CGPoint(x: 22, y: 106))
-            p.addQuadCurve(to: CGPoint(x: 46, y: 60), control: CGPoint(x: 22, y: 76))
-            p.addQuadCurve(to: CGPoint(x: 22, y: 14), control: CGPoint(x: 22, y: 44))
-            p.closeSubpath()
-        }
-        c.fill(vidro, with: .color(Color(red: 0.96, green: 0.98, blue: 1).opacity(0.94)))
-
-        let gradienteAreia = GraphicsContext.Shading.linearGradient(
-            Gradient(colors: [Self.areiaClara, Self.areia]),
-            startPoint: CGPoint(x: 50, y: 14),
-            endPoint: CGPoint(x: 50, y: 106)
-        )
-        if let nivelAreia, pose != .dormir {
-            var dentro = c
-            dentro.clip(to: vidro)
-            dentro.fill(Path(CGRect(x: 0, y: 20 + nivelAreia * 40, width: 100, height: 40 - nivelAreia * 40)), with: gradienteAreia)
-            dentro.fill(Path(CGRect(x: 0, y: 100 - nivelAreia * 34, width: 100, height: 6 + nivelAreia * 34)), with: gradienteAreia)
-        } else {
-            for monte in areia {
-                c.fill(monte, with: gradienteAreia)
+    /// `t` em segundos; nil desenha o Glassy parado.
+    private func quadro(_ t: Double?) -> some View {
+        Canvas { c, tamanho in
+            let escala = min(tamanho.width / Self.recorte.width, tamanho.height / Self.recorte.height)
+            c.translateBy(
+                x: (tamanho.width - Self.recorte.width * escala) / 2,
+                y: (tamanho.height - Self.recorte.height * escala) / 2
+            )
+            c.scaleBy(x: escala, y: escala)
+            c.translateBy(x: -Self.recorte.minX, y: -Self.recorte.minY)
+            if let t {
+                // Respira a partir da base; no ko, cambaleia.
+                c.translateBy(x: Self.centro, y: Self.recorte.maxY)
+                if pose == .ko { c.rotate(by: .degrees(sin(t * 0.9) * 1.2)) }
+                c.scaleBy(x: 1, y: 1 + 0.012 * sin(t * 1.7))
+                c.translateBy(x: -Self.centro, y: -Self.recorte.maxY)
             }
-        }
-        if pose == .areia && (nivelAreia ?? 0) < 1 {
-            // O fio de areia a cair.
-            var fio = Path()
-            fio.move(to: CGPoint(x: 50, y: 56))
-            fio.addLine(to: CGPoint(x: 50, y: 88))
-            c.stroke(fio, with: .color(Self.areia), style: StrokeStyle(lineWidth: 1.6, dash: [2, 3]))
-        }
+            desenharTras(em: c, t)
+            desenharAreia(em: c, t)
+            c.draw(c.resolve(Image("glassy_\(pose.imagem)_frente")), in: Self.recorte)
+            desenharPalpebras(em: c, t)
 
-        c.stroke(vidro, with: .color(.white), style: StrokeStyle(lineWidth: 2.5, lineJoin: .round))
-        var reflexo = Path()
-        reflexo.move(to: CGPoint(x: 28, y: 20))
-        reflexo.addQuadCurve(to: CGPoint(x: 36, y: 44), control: CGPoint(x: 28, y: 36))
-        c.stroke(reflexo, with: .color(.white.opacity(0.9)), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-
-        for y in [4.0, 105.0] {
-            let tampa = Path(roundedRect: CGRect(x: 12, y: y, width: 76, height: 11), cornerRadius: 5.5)
-            c.fill(tampa, with: .linearGradient(
-                Gradient(colors: [Self.madeiraClara, Self.madeira]),
-                startPoint: CGPoint(x: 0, y: y),
-                endPoint: CGPoint(x: 0, y: y + 11)
-            ))
-            c.stroke(tampa, with: .color(.white), lineWidth: 2)
+            // O que vem do desenho antigo está num espaço de 100 × 120.
+            var antigo = c
+            antigo.translateBy(x: Self.recorte.minX, y: Self.recorte.minY)
+            antigo.scaleBy(x: 9.8, y: 9.8)
+            if let objeto { desenharObjeto(objeto, em: &antigo) }
+            if pose == .dormir { desenharSono(em: antigo, t) }
         }
     }
 
-    private var bracos: [Path] {
-        guard !semBracos else { return [] }
-        func braco(_ de: CGPoint, _ controlo: CGPoint, _ ate: CGPoint) -> Path {
-            Path { p in
-                p.move(to: de)
-                p.addQuadCurve(to: ate, control: controlo)
-            }
-        }
-        // Os braços saem da cintura e do bolbo de baixo (o corpo), nunca do de cima, onde
-        // está a cara: daí pareciam sair da cabeça. A raiz fica por baixo do vidro.
-        if objeto != nil {
-            // Os dois braços à frente, a segurar o objeto.
-            return [
-                braco(CGPoint(x: 38, y: 72), CGPoint(x: 22, y: 80), CGPoint(x: 32, y: 88)),
-                braco(CGPoint(x: 62, y: 72), CGPoint(x: 78, y: 80), CGPoint(x: 68, y: 88)),
-            ]
-        }
-        switch pose {
-        case .acenar:
-            return [
-                braco(CGPoint(x: 62, y: 72), CGPoint(x: 90, y: 66), CGPoint(x: 94, y: 46)),
-                braco(CGPoint(x: 38, y: 74), CGPoint(x: 16, y: 80), CGPoint(x: 14, y: 94)),
-            ]
-        case .areia:
-            return [
-                braco(CGPoint(x: 38, y: 74), CGPoint(x: 16, y: 80), CGPoint(x: 12, y: 94)),
-                braco(CGPoint(x: 62, y: 74), CGPoint(x: 84, y: 80), CGPoint(x: 88, y: 94)),
-            ]
-        case .celebrar:
-            return [
-                braco(CGPoint(x: 36, y: 70), CGPoint(x: 12, y: 64), CGPoint(x: 10, y: 44)),
-                braco(CGPoint(x: 64, y: 70), CGPoint(x: 88, y: 64), CGPoint(x: 90, y: 44)),
-            ]
-        case .dormir:
-            return []
-        }
-    }
+    // MARK: - Camadas
 
-    private var areia: [Path] {
-        switch pose {
-        case .acenar:
-            return [
-                Path { p in
-                    p.move(to: CGPoint(x: 27, y: 20))
-                    p.addLine(to: CGPoint(x: 73, y: 20))
-                    p.addQuadCurve(to: CGPoint(x: 54, y: 55), control: CGPoint(x: 71, y: 40))
-                    p.addLine(to: CGPoint(x: 46, y: 55))
-                    p.addQuadCurve(to: CGPoint(x: 27, y: 20), control: CGPoint(x: 29, y: 40))
-                },
-                Path { p in
-                    p.move(to: CGPoint(x: 38, y: 104))
-                    p.addQuadCurve(to: CGPoint(x: 62, y: 104), control: CGPoint(x: 50, y: 98))
-                },
-            ]
-        case .areia:
-            return [
-                Path { p in
-                    p.move(to: CGPoint(x: 33, y: 34))
-                    p.addLine(to: CGPoint(x: 67, y: 34))
-                    p.addQuadCurve(to: CGPoint(x: 54, y: 55), control: CGPoint(x: 64, y: 46))
-                    p.addLine(to: CGPoint(x: 46, y: 55))
-                    p.addQuadCurve(to: CGPoint(x: 33, y: 34), control: CGPoint(x: 36, y: 46))
-                },
-                Path { p in
-                    p.move(to: CGPoint(x: 30, y: 104))
-                    p.addQuadCurve(to: CGPoint(x: 70, y: 104), control: CGPoint(x: 50, y: 86))
-                },
-            ]
-        case .celebrar:
-            return [
-                Path { p in
-                    p.move(to: CGPoint(x: 25, y: 104))
-                    p.addQuadCurve(to: CGPoint(x: 46, y: 68), control: CGPoint(x: 26, y: 80))
-                    p.addLine(to: CGPoint(x: 54, y: 68))
-                    p.addQuadCurve(to: CGPoint(x: 75, y: 104), control: CGPoint(x: 74, y: 80))
-                },
-            ]
-        case .dormir:
-            // Deitada, a areia assenta no lado esquerdo de cada bolbo (que fica em baixo).
-            return [
-                Path { p in
-                    p.move(to: CGPoint(x: 23, y: 15))
-                    p.addLine(to: CGPoint(x: 34, y: 15))
-                    p.addLine(to: CGPoint(x: 34, y: 50))
-                    p.addQuadCurve(to: CGPoint(x: 23, y: 15), control: CGPoint(x: 26, y: 42))
-                },
-                Path { p in
-                    p.move(to: CGPoint(x: 23, y: 105))
-                    p.addLine(to: CGPoint(x: 34, y: 105))
-                    p.addLine(to: CGPoint(x: 34, y: 70))
-                    p.addQuadCurve(to: CGPoint(x: 23, y: 105), control: CGPoint(x: 26, y: 78))
-                },
-            ]
-        }
-    }
-
-    // MARK: - Rosto
-
-    /// Olhos brilhantes (estilo A): ovais escuros com um só reflexo. A ver a areia, olham
-    /// para baixo.
-    private func desenharRosto(em c: inout GraphicsContext) {
-        bochechas(em: &c, centros: [CGPoint(x: 33, y: 46), CGPoint(x: 67, y: 46)])
-        if pose == .celebrar {
-            for x in [34.0, 56.0] {
-                var arco = Path()
-                arco.move(to: CGPoint(x: x, y: 34))
-                arco.addQuadCurve(to: CGPoint(x: x + 10, y: 34), control: CGPoint(x: x + 5, y: 27))
-                c.stroke(arco, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
-            }
-            var boca = Path()
-            boca.move(to: CGPoint(x: 43, y: 43))
-            boca.addQuadCurve(to: CGPoint(x: 57, y: 43), control: CGPoint(x: 50, y: 54))
-            boca.closeSubpath()
-            c.fill(boca, with: .color(Self.escuro))
+    private func desenharTras(em c: GraphicsContext, _ t: Double?) {
+        let imagem = c.resolve(Image("glassy_\(pose.imagem)_tras"))
+        guard let t else {
+            c.draw(imagem, in: Self.recorte)
             return
         }
-        let baixo: CGFloat = pose == .areia ? 2 : 0
-        for x in [40.0, 60.0] {
-            let olho = Path(ellipseIn: CGRect(x: x - 4.2, y: 27 + baixo, width: 8.4, height: 12))
-            c.fill(olho, with: .radialGradient(
-                Gradient(colors: [Color(red: 0.29, green: 0.16, blue: 0.08), Self.escuro]),
-                center: CGPoint(x: x - 1, y: 30 + baixo),
-                startRadius: 0,
-                endRadius: 7
-            ))
-            c.fill(Path(ellipseIn: CGRect(x: x - 0.2, y: 29 + baixo, width: 3.2, height: 3.2)), with: .color(.white))
+        // Graus de cada braço; negativo levanta o direito e positivo levanta o esquerdo.
+        let (esquerdo, direito): (Double, Double) = switch pose {
+        case .acenar: (sin(t * 1.2) * 1.5, -9 + sin(t * 5.5) * 9)
+        case .areia: (sin(t * 1.3) * 1.5, -sin(t * 1.3) * 1.5)
+        case .celebrar: (sin(t * 7) * 6, -sin(t * 7) * 6)
+        case .preocupado: (sin(t * 22) * 1.2, sin(t * 22) * 1.2)
+        case .ko: (sin(t * 1.1) * 0.8, -sin(t * 1.1) * 0.8)
+        case .dormir: (0, 0)
         }
-        var sorriso = Path()
-        sorriso.move(to: CGPoint(x: 46, y: 46))
-        sorriso.addQuadCurve(to: CGPoint(x: 54, y: 46), control: CGPoint(x: 50, y: 49.5))
-        c.stroke(sorriso, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        var corpo = c
+        corpo.clip(to: Self.semBracos)
+        corpo.draw(imagem, in: Self.recorte)
+        for (zona, ombro, graus) in [
+            (Self.bracoEsquerdo, CGPoint(x: 440, y: 860), esquerdo),
+            (Self.bracoDireito, CGPoint(x: 800, y: 860), direito),
+        ] {
+            var braco = c
+            braco.translateBy(x: ombro.x, y: ombro.y)
+            braco.rotate(by: .degrees(graus))
+            braco.translateBy(x: -ombro.x, y: -ombro.y)
+            braco.clip(to: zona)
+            braco.draw(imagem, in: Self.recorte)
+        }
+    }
+
+    /// O cone encolhe para o gargalo (o volume de um cone varia com o cubo), o monte sobe a
+    /// partir da base e o fio liga os dois.
+    private func desenharAreia(em contexto: GraphicsContext, _ t: Double?) {
+        var c = contexto
+        c.clip(to: Self.vidro)
+        let nivel = CGFloat(min(1, max(0, nivelAreia ?? pose.nivel)))
+        let meio = Self.centro
+        let alturaMonte: CGFloat = 340 * (0.06 + 0.94 * nivel)
+        let topoMonte: CGFloat = 1245 - alturaMonte
+        let cone: CGFloat = pow(1 - nivel, 1.0 / 3)
+        // À noite o tempo pára, e sem areia de um dos lados não há o que cair.
+        let corre = nivel > 0.01 && nivel < 0.99 && pose != .dormir
+
+        if corre {
+            let fio = CGRect(x: meio - 65, y: 770, width: 130, height: topoMonte - 770 + 12)
+            var coluna = c
+            coluna.clip(to: Path(fio))
+            let imagem = c.resolve(Image("glassy_areia_fio"))
+            let desvio = t.map { CGFloat(($0 * 140).truncatingRemainder(dividingBy: Double(fio.height))) } ?? 0
+            coluna.draw(imagem, in: fio.offsetBy(dx: 0, dy: desvio))
+            coluna.draw(imagem, in: fio.offsetBy(dx: 0, dy: desvio - fio.height))
+        }
+        if cone > 0.02 {
+            let caixa = CGRect(x: meio - 315 * cone, y: 775 - 440 * cone, width: 640 * cone, height: 440 * cone)
+            c.draw(c.resolve(Image("glassy_areia_cima")), in: caixa)
+        }
+        c.draw(c.resolve(Image("glassy_areia_monte")), in: CGRect(x: meio - 310, y: topoMonte, width: 620, height: alturaMonte))
+
+        guard let t else { return }
+        let dourado = Color(red: 0.87, green: 0.63, blue: 0.33)
+        if corre {
+            // Grãos soltos a cair, mais depressa à medida que descem.
+            for i in 0..<10 {
+                let fase = (t * 0.7 + Double(i) * 0.137).truncatingRemainder(dividingBy: 1)
+                let x = meio + CGFloat(sin(Double(i) * 12.9) * 38 * fase)
+                let y = 780 + (topoMonte - 780) * CGFloat(fase * fase)
+                let raio = CGFloat(3 + i % 3)
+                c.fill(Path(ellipseIn: CGRect(x: x - raio, y: y - raio, width: raio * 2, height: raio * 2)), with: .color(dourado))
+            }
+        }
+        // Os brilhos da areia acendem e apagam, cada um no seu tempo.
+        for i in 0..<8 {
+            let brilho = pow(max(0, sin(t * 2 + Double(i) * 1.7)), 8)
+            guard brilho > 0.01 else { continue }
+            let emCima = i.isMultiple(of: 2)
+            if emCima && cone <= 0.2 { continue }
+            let lugar = CGFloat(i)
+            let x: CGFloat = meio + (lugar - 4) * (emCima ? 42 * cone : 58)
+            let y: CGFloat = emCima ? 775 - 300 * cone + lugar * 8 : topoMonte + alturaMonte * (0.3 + 0.08 * lugar)
+            let raio = 5 * CGFloat(brilho)
+            c.fill(Path(ellipseIn: CGRect(x: x - raio, y: y - raio, width: raio * 2, height: raio * 2)), with: .color(.white.opacity(0.9)))
+        }
+    }
+
+    /// As imagens só têm os olhos abertos: a pálpebra desenha-se por cima. A dormir fica fechada.
+    private func desenharPalpebras(em c: GraphicsContext, _ t: Double?) {
+        guard pose.pisca else { return }
+        var fechado = pose == .dormir ? 1.0 : 0.0
+        if let t, pose != .dormir {
+            let momento = t.truncatingRemainder(dividingBy: 4.3)
+            if momento < 0.16 { fechado = sin(.pi * momento / 0.16) }
+        }
+        guard fechado > 0 else { return }
+        let castanho = Color(red: 0.25, green: 0.12, blue: 0.06)
+        for centro in [CGPoint(x: 506, y: 520), CGPoint(x: 734, y: 520)] {
+            let olho = CGRect(x: centro.x - 65, y: centro.y - 66, width: 130, height: 132)
+            let aba = olho.minY + olho.height * fechado
+            var palpebra = c
+            palpebra.clip(to: Path(ellipseIn: olho))
+            palpebra.fill(Path(CGRect(x: olho.minX, y: olho.minY, width: olho.width, height: aba - olho.minY)), with: .color(Color(red: 0.94, green: 0.89, blue: 0.84)))
+            // A pestana desce com a pálpebra e, fechada, curva como a do olho a dormir.
+            var pestana = Path()
+            pestana.move(to: CGPoint(x: olho.minX + 6, y: aba - olho.height * 0.5 * fechado))
+            pestana.addQuadCurve(
+                to: CGPoint(x: olho.maxX - 6, y: aba - olho.height * 0.5 * fechado),
+                control: CGPoint(x: centro.x, y: aba + 12)
+            )
+            c.stroke(pestana, with: .color(castanho), style: StrokeStyle(lineWidth: 11, lineCap: .round))
+        }
+    }
+
+    /// Os "z" do sono, a subir devagar.
+    private func desenharSono(em c: GraphicsContext, _ t: Double?) {
+        let lilas = Color(red: 0.69, green: 0.66, blue: 0.93)
+        let sobe = t.map { CGFloat(sin($0 * 0.9) * 2) } ?? 0
+        c.draw(Text("z").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 84, y: 22 + sobe))
+        c.draw(Text("z").font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 93, y: 12 - sobe))
     }
 
     /// O portátil e a chávena de café (trabalho), ou um livro aberto (vida pessoal).
@@ -378,37 +378,6 @@ struct Ampulheta: View {
             c.stroke(linhas, with: .color(.white.opacity(0.75)), lineWidth: 1.1)
         }
     }
-
-    /// A cara a dormir, desenhada no referencial do corpo deitado (rodado): olhos fechados em
-    /// arcos suaves, as bochechas e a boca num "o" pequenino. Deitada, os olhos ficam um por
-    /// cima do outro.
-    private func desenharRostoDeitado(em c: inout GraphicsContext) {
-        // Mais para dentro do que de pé: deitada, o vidro estreita junto às bochechas.
-        bochechas(em: &c, centros: [CGPoint(x: 36, y: 40), CGPoint(x: 64, y: 40)])
-        for x in [40.0, 60.0] {
-            var palpebra = Path()
-            palpebra.move(to: CGPoint(x: x - 5.5, y: 32))
-            palpebra.addQuadCurve(to: CGPoint(x: x + 5.5, y: 32), control: CGPoint(x: x, y: 38))
-            c.stroke(palpebra, with: .color(Self.escuro), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
-        }
-        c.fill(Path(ellipseIn: CGRect(x: 47.6, y: 43.6, width: 4.8, height: 3.8)), with: .color(Self.escuro))
-    }
-
-    /// Os "z" do sono, por cima da ampulheta deitada (fora do referencial rodado).
-    private func desenharSono(em c: inout GraphicsContext) {
-        let lilas = Color(red: 0.69, green: 0.66, blue: 0.93)
-        c.draw(Text("z").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 100, y: 16))
-        c.draw(Text("z").font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(lilas), at: CGPoint(x: 110, y: 7))
-    }
-
-    private func bochechas(em c: inout GraphicsContext, centros: [CGPoint]) {
-        for centro in centros {
-            c.fill(
-                Path(ellipseIn: CGRect(x: centro.x - 4.6, y: centro.y - 2.6, width: 9.2, height: 5.2)),
-                with: .color(Self.rosa.opacity(0.85))
-            )
-        }
-    }
 }
 
 /// O cenário de cada pose, atrás da Ampulheta: manhã com sol, dia com nuvens, festa com
@@ -434,6 +403,8 @@ struct CenarioMascote: View {
             case .areia: (cor(0.81, 0.91, 0.98), cor(0.92, 0.96, 0.99))
             case .celebrar: (cor(0.36, 0.79, 0.65), cor(0.11, 0.62, 0.46))
             case .dormir: (cor(0.24, 0.20, 0.54), cor(0.11, 0.09, 0.25))
+            case .preocupado: (cor(1, 0.86, 0.62), cor(0.98, 0.70, 0.50))
+            case .ko: (cor(0.42, 0.45, 0.55), cor(0.20, 0.22, 0.31))
             }
             c.fill(Path(caixa), with: .linearGradient(
                 Gradient(colors: [de, ate]),
@@ -472,6 +443,8 @@ struct CenarioMascote: View {
                 for (x, y, r) in [(0.5, 0.14, 1.6), (0.63, 0.29, 1.2), (0.72, 0.11, 1.8), (0.93, 0.6, 1.3), (0.41, 0.86, 1.2), (0.08, 0.11, 1.4)] {
                     c.fill(Path(ellipseIn: CGRect(x: t.width * x - r, y: t.height * y - r, width: r * 2, height: r * 2)), with: .color(.white))
                 }
+            case .preocupado, .ko:
+                break
             }
         }
     }

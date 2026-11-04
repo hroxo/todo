@@ -12,7 +12,7 @@ struct BoasVindasView: View {
     var body: some View {
         VStack(spacing: Espaco.margem) {
             Spacer(minLength: 0)
-            Ampulheta(pose: .acenar)
+            Ampulheta(pose: .acenar, vivo: true)
                 .frame(width: 110, height: 132)
             VStack(spacing: Espaco.curto) {
                 Text("Bem-vindo à ToDo")
