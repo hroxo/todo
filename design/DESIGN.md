@@ -316,13 +316,17 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - No canto, o "+" abre a captura (`todo://captura`).
   - Fundo em gradiente da cor de fundo da lista do primeiro ponto para o fundo do sistema.
   - Uma entrada por hora, para os anéis esvaziarem com animação; os pontos trocam com `push` de baixo.
-- **A mascote, o Glassy [Decidido 04/11/2026, substitui o desenho de 28/10/2026]:** ampulheta 3D de vidro e madeira (`Widgets/Mascote.swift`), feita por camadas das imagens originais em `Glassy2/` (`scripts/glassy-assets.ps1`), com a areia desenhada entre elas. A areia é a pressão do tempo (`EstadoGlassy`): em cima sem nada a fechar, a descer com os pontos no último dia. Cada pose tem o seu cenário:
+- **A mascote, o Glassy [Decidido 04/11/2026, substitui o desenho de 28/10/2026]:** ampulheta 3D de vidro e madeira (`Widgets/Mascote.swift`), feita por camadas das imagens originais, que ficam fora do repositório, em `Glassy2/` (`scripts/glassy-assets.ps1`), com a areia desenhada entre elas. A areia é a pressão do tempo (`EstadoGlassy`): em cima sem nada a fechar, a descer com os pontos no último dia. Cada pose tem o seu cenário:
   - **manhã:** acena, em céu quente com sol;
   - **tarde:** vê a areia cair, em céu com nuvens;
   - **tudo em dia:** braços no ar e areia em cima, em verde com confettis;
   - **noite (23h–7h):** de pé, de olhos fechados, com os "z" e a areia parada, porque o tempo pára enquanto dormes, com lua e estrelas;
   - **preocupado:** metade da areia em baixo ou mais (3 pontos no último dia), mãos ao peito, em céu âmbar;
   - **ko:** expirou tudo, nada concluído em 24 horas e nenhum ponto ativo: vidro rachado, olho negro e areia toda em baixo, em cinzento. Vence a noite.
+
+  A pose segue o dia, mas o cenário segue o modo do iPhone, como o céu da app (7.23): no modo escuro é sempre a noite com lua e estrelas, e no claro nunca é noite (o sono acontece debaixo do céu de nuvens). Só o ko mantém o cinzento nos dois.
+
+  Com a app fechada, o widget continua certo: o resumo leva as datas de todos os prazos (`DatasGlassy`), e cada entrada da timeline calcula os pontos, as razões, os números e o Glassy dessa hora (`ResumoWidget.noMomento`). Assim chega ao ko sem a app abrir.
 
   Ao lado, um título e uma linha ("Bom dia! / Nada pendente por agora."), e "+ Nova nota" no canto. Com pontos, fica pequeno ao lado do número, só no modo a cores. O widget não toca animações contínuas (regra do iOS): tem uma entrada da timeline de 20 em 20 minutos, a pose e a areia mudam e o WidgetKit anima a troca. Na app está vivo: respira, pisca, mexe os braços e a areia corre, exceto com "Reduzir movimento".
 - **A Ampulheta conhece a pessoa [Decidido 28/10/2026]:** de dia, as poses mudam de tema conforme o uso (`Tarefas.temaMascote`, tudo no iPhone):
@@ -359,6 +363,9 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Cópia manual em JSON** (`Backup`, Definições › Backup):
   - **Exportar:** tudo (listas, itens, subtópicos, fotos e definições) para onde a pessoa quiser: iCloud Drive, Ficheiros ou AirDrop.
   - **Restaurar:** de um ficheiro, com um resumo antes de confirmar ("Entram 1 lista nova, 4 pontos novos… Nada é apagado"). Junta por id, e numa instalação nova junta as listas pelo nome. Ganha a alteração mais recente.
+  - **Um backup antigo não apaga nada na abertura seguinte:** o que já venceu entra com tempo novo (um ponto ativo ganha um prazo novo; um expirado ou concluído recomeça a retenção; uma lista vazia recomeça a contagem).
+  - **As definições passam a ser as do backup**, dentro dos limites dos ecrãs e sem encurtar as retenções nem o tempo das listas vazias.
+  - **Máximo de 8 listas:** as listas locais vazias dão lugar às do backup, e o resumo diz quantas saem. Se mesmo assim não couberem, o restauro é recusado antes de mudar seja o que for.
   - Serve para mudar de instalação sem perder nada, por exemplo antes de reinstalar com a conta paga.
 - Não há backup automático semanal: no iPhone, ia-se com a app; com o iCloud, deixa de ser preciso.
 - As **listas de compras partilhadas ao vivo** precisam da partilha do CloudKit (`CKShare`), que o SwiftData ainda não faz sozinho: é trabalho à parte.
@@ -382,12 +389,11 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Dia ganho:** uma vez por dia, em qualquer ecrã, saem confettis com vibração; o Início ganha o cenário verde e um fundo esverdeado. Com "Reduzir movimento" não há grão, faíscas, saltos nem confettis.
 - "Expiram hoje" passa para cima do calendário, com o círculo de concluir na própria linha. As linhas da lista ganham um pouco da cor da lista.
 
-### 7.23 O céu do dia [Decidido 02/11/2026: substitui o fundo escuro por defeito]
-- O preto sai de todos os ecrãs. O fundo é o céu da hora, calculado com o sol real de cada dia (`CeuDoDia`), sem rede nem localização, com Lisboa como referência.
-- **Fases:** amanhecer (rosa, de 30 min antes a 45 min depois do nascer), dia (azul, com o sol a atravessar o céu), pôr do sol (alperce, de 45 min antes a 25 min depois do pôr), noite (índigo, com lua e estrelas). O dia ganho fica verde, exceto à noite.
+### 7.23 O céu [Decidido 02/11/2026; alterado 04/11/2026: segue o modo do iPhone, não a hora]
+- O preto sai de todos os ecrãs. O fundo é um céu (`CeuDoDia`) que depende só do modo do iPhone: o **claro é sempre dia** (azul, com sol) e o **escuro é sempre noite** (índigo, com lua e estrelas). O dia ganho fica verde, exceto no modo escuro.
 - O Início tem a cena com colinas; os outros ecrãs só a cor do céu; as listas e os detalhes mantêm o fundo na cor da lista.
-- A app fica em modo claro de dia e em modo escuro à noite, por isso a opção Aparência das Definições saiu.
-- A Ampulheta saúda conforme o momento: "Bom dia!", "Boa tarde! Olha o pôr do sol.", "Boa noite!".
+- A app não tem opção de Aparência: usa a do sistema.
+- O Glassy saúda pelo relógio, em qualquer modo: "Bom dia!" das 6h às 12h, "Boa tarde!" até às 20h e "Boa noite!" depois.
 
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 
@@ -409,13 +415,13 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.17 Listas que desaparecem e listas permanentes [Decidido 28/10/2026 · Proposta: detalhes]
 
-- No máximo 8 listas. Uma lista **sem pontos abertos** durante 5 dias (`Definicoes.diasListaVazia`) desaparece do Início, com o que lá estiver concluído.
+- No máximo 8 listas. Uma lista **sem pontos abertos** durante 5 dias (`Definicoes.diasListaVazia`) desaparece do Início. [Alterado 04/11/2026: já não leva o que lá estiver concluído, porque Concluir promete 7 dias para reabrir; a lista espera por eles.]
 - **Aviso 24 h antes**, com a mesma regra da noite: título "«Ideias» vai desaparecer", corpo "Sem pontos abertos há 4 dias. Sai amanhã às 15:30, a não ser que a mantenhas." Ações:
   - **Manter mais 5 dias**: a contagem recomeça;
   - **Tornar permanente**: com as 4 ocupadas, mantém mais 5 dias.
 - **Permanentes:** até 4, no menu "…" da lista ("Tornar permanente", símbolo `infinity`). Nunca desaparecem.
 - **No cartão do Início**, numa lista vazia que vai sair, o número grande passa a ser os dias que faltam ("3 dias para sair") e o anel esvazia ao longo dos 5 dias. Com a lista aberta e vazia, o ecrã diz quando sai e como a guardar.
-- **[Proposta]** Itens em Expirados seguram a lista até serem recuperados ou apagados, porque nada se perde por engano. Trabalho e Pessoal nascem permanentes. Ao atualizar a app, as 4 primeiras listas existentes ficam permanentes.
+- **[Proposta]** Itens em Expirados e em Concluídos seguram a lista até voltarem ou serem apagados, porque nada se perde por engano. Trabalho e Pessoal nascem permanentes. Ao atualizar a app, as 4 primeiras listas existentes ficam permanentes.
 
 ### 7.16 Inteligência no iPhone [Decidido 28/10/2026 · Proposta: forma]
 

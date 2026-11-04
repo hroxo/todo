@@ -138,7 +138,7 @@ E ainda:
 - **Captura rápida**, com subtópicos, fotos e escolha do espaço.
 - **Concluídos** durante 7 dias, para reabrir se for preciso, com **filtros** por espaço e por data (também em Expirados).
 - **Exportar CSV** de um espaço ou de tudo, pronto a abrir no Excel ou no Numbers.
-- **Backup em JSON**: exportar e restaurar tudo, com fotos e definições, sem apagar nada.
+- **Backup em JSON**: exportar e restaurar tudo, com fotos e definições. Mesmo um backup antigo entra sem perder pontos: o que já venceu ganha tempo novo.
 - **Listas que se arrumam**: uma lista vazia sai ao fim de 5 dias (com aviso na véspera); até 4 podem ser permanentes.
 - **Ecrãs vazios com a Ampulheta**: a celebrar quando nada expirou.
 - **Notificações** 24 horas antes de um ponto expirar (nunca durante a noite).
@@ -268,9 +268,10 @@ ToDo
 flowchart LR
   A[push] --> B[GitHub Actions<br/>macOS]
   B --> C[testes do núcleo]
-  B --> D[.ipa na release 'ultima']
-  B --> E[capturas no simulador<br/>escuro + claro]
+  C --> E[capturas no simulador<br/>escuro + claro]
   E --> F[scripts/capturas.sh]
+  E --> H[arranque real]
+  H --> D[.ipa na release 'ultima'<br/>só do main]
   D --> G[iloader → iPhone]
 ```
 
