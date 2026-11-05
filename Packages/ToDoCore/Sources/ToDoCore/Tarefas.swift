@@ -81,16 +81,38 @@ public final class Tarefas {
         try contexto.fetch(FetchDescriptor<Lista>(sortBy: [SortDescriptor(\.ordem)]))
     }
 
-    /// Cria Trabalho e Pessoal se ainda não houver listas. Devolve verdadeiro se criou.
+    /// Cria Trabalho e Pessoal se ainda não houver listas. Devolve as que criou (vazio se já
+    /// havia), para a app saber quais nasceram neste aparelho (`juntarListasIniciaisRepetidas`).
     @discardableResult
-    public func criarListasIniciaisSeVazio() throws -> Bool {
-        guard try contexto.fetchCount(FetchDescriptor<Lista>()) == 0 else { return false }
-        for (ordem, inicial) in Self.listasIniciais.enumerated() {
+    public func criarListasIniciaisSeVazio() throws -> [Lista] {
+        guard try contexto.fetchCount(FetchDescriptor<Lista>()) == 0 else { return [] }
+        return Self.listasIniciais.enumerated().map { ordem, inicial in
             let lista = Lista(nome: inicial.nome, cor: inicial.cor, ordem: ordem, icone: inicial.icone)
             lista.permanente = true
             contexto.insert(lista)
+            return lista
         }
-        return true
+    }
+
+    /// Num aparelho novo a app cria Trabalho e Pessoal antes de o iCloud trazer as que já
+    /// existiam, e ficavam repetidas. Cada aparelho só apaga as cópias que ele próprio criou
+    /// (`criadasAqui`) e só quando aqui estão vazias e há outra com o mesmo nome: é o único que
+    /// sabe se a sua cópia tem pontos, e nunca apaga a de outro aparelho nem uma com pontos.
+    /// Caso raro aceite: dois aparelhos novos ao mesmo tempo podem apagar os dois a sua; eram
+    /// vazias, nada se perde. Devolve os ids apagados.
+    @discardableResult
+    public func juntarListasIniciaisRepetidas(criadasAqui: Set<UUID>) throws -> Set<UUID> {
+        guard !criadasAqui.isEmpty else { return [] }
+        let nomes = Set(Self.listasIniciais.map(\.nome))
+        let iniciais = try listas().filter { $0.permanente && nomes.contains($0.nome) }
+        var apagadas = Set<UUID>()
+        for lista in iniciais where criadasAqui.contains(lista.id) && lista.itens.isEmpty {
+            let haOutra = iniciais.contains { $0.nome == lista.nome && $0.id != lista.id && !apagadas.contains($0.id) }
+            guard haOutra else { continue }
+            contexto.delete(lista)
+            apagadas.insert(lista.id)
+        }
+        return apagadas
     }
 
     @discardableResult
@@ -414,7 +436,6 @@ public final class Tarefas {
     /// e apaga o que já ficou tempo suficiente em Expirados ou Concluídos.
     @discardableResult
     public func avaliar() throws -> (expirados: Int, apagados: Int) {
-        try juntarListasIniciaisRepetidas()
         let agora = relogio.agora
         var expirados = 0
         var apagados = 0
@@ -433,21 +454,6 @@ public final class Tarefas {
         }
         try avaliarListasVazias()
         return (expirados, apagados)
-    }
-
-    /// Num aparelho novo a app cria Trabalho e Pessoal antes de o iCloud trazer as que já
-    /// existiam, e ficavam repetidas. Das iniciais com o mesmo nome sai a vazia; se estiverem
-    /// todas vazias fica a de menor id, para todos os aparelhos apagarem a mesma. Nunca apaga
-    /// uma lista com pontos.
-    private func juntarListasIniciaisRepetidas() throws {
-        let nomes = Set(Self.listasIniciais.map(\.nome))
-        let iniciais = try listas().filter { $0.permanente && nomes.contains($0.nome) }
-        for repetidas in Dictionary(grouping: iniciais, by: \.nome).values where repetidas.count > 1 {
-            let fica = repetidas.first { !$0.itens.isEmpty } ?? repetidas.min { $0.id.uuidString < $1.id.uuidString }!
-            for lista in repetidas where lista.id != fica.id && lista.itens.isEmpty {
-                contexto.delete(lista)
-            }
-        }
     }
 
     /// Uma lista não permanente sem pontos abertos começa a contar; ao fim de 5 dias

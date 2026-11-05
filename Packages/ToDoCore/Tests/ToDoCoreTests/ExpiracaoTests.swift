@@ -356,6 +356,25 @@ final class ExpiracaoTests: BaseTestes {
         XCTAssertEqual(Formatos.dia(data(2026, 10, 2, 9, 0), agora: agora, calendario: calendario), "02/10")
     }
 
+    /// Com o calendário hebraico nos Ajustes, 1/9/2026 cai em Elul, o mês 13: o cabeçalho
+    /// fechava a app. Continua em português e gregoriano.
+    func testCabecalhoComCalendarioNaoGregoriano() {
+        var hebraico = Calendar(identifier: .hebrew)
+        hebraico.timeZone = calendario.timeZone
+        let primeiroSetembro = data(2026, 9, 1, 10, 0)
+        XCTAssertEqual(hebraico.component(.month, from: primeiroSetembro), 13)
+
+        XCTAssertEqual(Formatos.cabecalho(primeiroSetembro, calendario: hebraico), "Terça, 1 set")
+    }
+
+    func testNomeDeFicheiroSemCaracteresProibidos() {
+        XCTAssertEqual(Formatos.nomeFicheiro("Casa/Férias"), "Casa-Férias")
+        XCTAssertEqual(Formatos.nomeFicheiro("Notas: 2026"), "Notas- 2026")
+        XCTAssertEqual(Formatos.nomeFicheiro("  Compras  "), "Compras")
+        XCTAssertEqual(Formatos.nomeFicheiro("///"), "---")
+        XCTAssertEqual(Formatos.nomeFicheiro("   "), "lista")
+    }
+
     // MARK: - Definições
 
     func testDefinicoesGuardadas() throws {

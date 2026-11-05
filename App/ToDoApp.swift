@@ -130,7 +130,15 @@ struct ToDoApp: App {
     private func manutencao(soSeMudou: Bool = false) {
         let contexto = Self.contentor.mainContext
         let tarefas = Tarefas(contexto: contexto)
-        _ = try? tarefas.criarListasIniciaisSeVazio()
+        // Que listas iniciais nasceram neste aparelho: só essas podem sair se o iCloud as repetir.
+        // Criam-se uma só vez por aparelho, para dois aparelhos não as recriarem um ao outro.
+        let chave = "listasIniciaisDesteAparelho"
+        var criadasAqui = Set((UserDefaults.standard.stringArray(forKey: chave) ?? []).compactMap(UUID.init(uuidString:)))
+        if criadasAqui.isEmpty, let novas = try? tarefas.criarListasIniciaisSeVazio(), !novas.isEmpty {
+            criadasAqui.formUnion(novas.map(\.id))
+            UserDefaults.standard.set(criadasAqui.map(\.uuidString), forKey: chave)
+        }
+        _ = try? tarefas.juntarListasIniciaisRepetidas(criadasAqui: criadasAqui)
         let mudou = (try? tarefas.avaliar()).map { $0.expirados + $0.apagados > 0 } ?? false
         try? contexto.save()
         guard mudou || !soSeMudou else { return }

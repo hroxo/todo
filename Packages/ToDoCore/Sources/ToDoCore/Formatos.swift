@@ -5,10 +5,12 @@ public enum Formatos {
     private static let diasSemana = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
     private static let meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
-    /// "Quarta, 21 out", para o topo do Início. Sempre gregoriano: com o calendário hebraico
-    /// dos Ajustes há um mês 13, e os nomes acabam no 12.
-    public static func cabecalho(_ data: Date, calendario: Calendar = Calendar(identifier: .gregorian)) -> String {
-        let c = calendario.dateComponents([.weekday, .day, .month], from: data)
+    /// "Quarta, 21 out", para o topo do Início. Sempre gregoriano, só com o fuso do calendário
+    /// dado: com o calendário hebraico dos Ajustes há um mês 13, e os nomes acabam no 12.
+    public static func cabecalho(_ data: Date, calendario: Calendar = .current) -> String {
+        var gregoriano = Calendar(identifier: .gregorian)
+        gregoriano.timeZone = calendario.timeZone
+        let c = gregoriano.dateComponents([.weekday, .day, .month], from: data)
         return "\(diasSemana[c.weekday! - 1]), \(c.day!) \(meses[c.month! - 1])"
     }
 

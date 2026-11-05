@@ -6,8 +6,8 @@ final class TarefasTests: BaseTestes {
     // MARK: - Listas
 
     func testListasIniciaisCriadasUmaSoVez() throws {
-        XCTAssertTrue(try tarefas.criarListasIniciaisSeVazio())
-        XCTAssertFalse(try tarefas.criarListasIniciaisSeVazio())
+        XCTAssertEqual(try tarefas.criarListasIniciaisSeVazio().map(\.nome), ["Trabalho", "Pessoal"])
+        XCTAssertTrue(try tarefas.criarListasIniciaisSeVazio().isEmpty)
 
         let listas = try tarefas.listas()
         XCTAssertEqual(listas.map(\.nome), ["Trabalho", "Pessoal"])
@@ -166,6 +166,21 @@ final class TarefasTests: BaseTestes {
         // Já reaberto: anular não mexe no prazo novo.
         tarefas.anular(item, para: antes)
         XCTAssertEqual(item.expiraEm, prazo)
+    }
+
+    /// O aviso "Anular" guarda o item 4 s; entretanto pode ser apagado (por exemplo, noutro
+    /// aparelho). Anular não pode ler o item apagado: não faz nada.
+    func testAnularItemJaApagadoNaoFazNada() throws {
+        let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
+        let item = try tarefas.criarItem(titulo: "Pagar a luz", em: lista)
+        let antes = tarefas.concluir(item)
+        tarefas.apagar(item)
+        try contexto.save()
+        XCTAssertTrue(item.foiApagado)
+
+        tarefas.anular(item, para: antes)
+
+        XCTAssertEqual(try contarItens(), 0)
     }
 
     func testFixarEDesafixar() throws {

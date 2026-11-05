@@ -169,29 +169,73 @@ final class ListasVaziasTests: BaseTestes {
         )
     }
 
-    /// Num aparelho novo, o iCloud traz as listas iniciais depois de a app já as ter criado.
-    func testListasIniciaisRepetidasJuntamSemPerderPontos() throws {
-        try tarefas.criarListasIniciaisSeVazio()
-        let pessoalLocal = try XCTUnwrap(try tarefas.listas().first { $0.nome == "Pessoal" })
-        // As que chegam do outro aparelho: o Trabalho tem pontos, o Pessoal está vazio.
-        let trabalho = Lista(nome: "Trabalho", cor: .azul, ordem: 2)
-        let pessoal = Lista(nome: "Pessoal", cor: .roxo, ordem: 3)
+    // MARK: - Listas iniciais repetidas pelo iCloud
+
+    /// As listas iniciais de outro aparelho, como chegam pelo iCloud.
+    private func doOutroAparelho() -> (trabalho: Lista, pessoal: Lista) {
+        let trabalho = Lista(nome: "Trabalho", cor: .azul, ordem: 0)
+        let pessoal = Lista(nome: "Pessoal", cor: .roxo, ordem: 1)
         for lista in [trabalho, pessoal] {
             lista.permanente = true
             contexto.insert(lista)
         }
-        try tarefas.criarItem(titulo: "Relatório", em: trabalho)
+        return (trabalho, pessoal)
+    }
 
-        try tarefas.avaliar()
+    /// O caso normal: aparelho novo, e o iCloud traz as listas antigas (uma com pontos, outra
+    /// vazia) depois de a app já ter criado as suas.
+    func testAparelhoNovoApagaAsSuasCopiasVazias() throws {
+        let minhas = try tarefas.criarListasIniciaisSeVazio()
+        let antigas = doOutroAparelho()
+        try tarefas.criarItem(titulo: "Relatório", em: antigas.trabalho)
+
+        let apagadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)))
         try contexto.save()
 
-        let nomes = try tarefas.listas().map(\.nome).sorted()
-        XCTAssertEqual(nomes, ["Pessoal", "Trabalho"])
-        XCTAssertTrue(try existe(trabalho))
+        XCTAssertEqual(apagadas, Set(minhas.map(\.id)))
+        XCTAssertEqual(Set(try tarefas.listas().map(\.id)), [antigas.trabalho.id, antigas.pessoal.id])
         XCTAssertEqual(try contarItens(), 1)
-        // Duas vazias: fica a de menor id, a mesma em todos os aparelhos.
-        let esperado = [pessoal, pessoalLocal].min { $0.id.uuidString < $1.id.uuidString }!.id
-        XCTAssertEqual(try tarefas.listas().first { $0.nome == "Pessoal" }?.id, esperado)
+    }
+
+    /// Escreveste logo na lista do aparelho novo: ela tem pontos e fica, mesmo repetida.
+    func testCopiaPropriaComPontosNuncaSai() throws {
+        let minhas = try tarefas.criarListasIniciaisSeVazio()
+        let meuTrabalho = try XCTUnwrap(minhas.first { $0.nome == "Trabalho" })
+        try tarefas.criarItem(titulo: "Ponto do primeiro dia", em: meuTrabalho)
+        let antigas = doOutroAparelho()
+
+        try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)))
+        try contexto.save()
+
+        XCTAssertTrue(try existe(meuTrabalho))
+        XCTAssertTrue(try existe(antigas.trabalho))
+        XCTAssertEqual(try tarefas.listas().filter { $0.nome == "Pessoal" }.map(\.id), [antigas.pessoal.id])
+        XCTAssertEqual(try contarItens(), 1)
+    }
+
+    /// O aparelho antigo vê as cópias vazias do novo, mas não as criou: não lhes toca, mesmo que
+    /// do lado de lá já tenham pontos por sincronizar.
+    func testNuncaApagaACopiaDeOutroAparelho() throws {
+        let novas = doOutroAparelho()
+        let minhaLista = try tarefas.criarLista(nome: "Trabalho", cor: .azul)
+        try tarefas.definirPermanente(minhaLista, true)
+
+        let apagadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: [UUID()])
+
+        XCTAssertTrue(apagadas.isEmpty)
+        XCTAssertTrue(try existe(novas.trabalho))
+        XCTAssertTrue(try existe(novas.pessoal))
+        XCTAssertTrue(try existe(minhaLista))
+    }
+
+    /// Sem repetidas não sai nada, mesmo vazias.
+    func testListasIniciaisSemRepetidasFicam() throws {
+        let minhas = try tarefas.criarListasIniciaisSeVazio()
+
+        let apagadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)))
+
+        XCTAssertTrue(apagadas.isEmpty)
+        XCTAssertEqual(try tarefas.listas().count, 2)
     }
 
     func testListaApagadaFicaMarcada() throws {

@@ -76,15 +76,20 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         let maximo = UIApplication.shared.applicationState == .background ? Self.maxEscritosFundo : Self.maxEscritos
         let porEscrever = avisos.prefix(maximo).filter { escritos[Self.chave($0)] == nil }
         guard !porEscrever.isEmpty else { return }
+        // O tempo extra pede-se já, antes de a app poder ser suspensa, e devolve-se quando acaba:
+        // sem o bloco de expiração, o iOS matava a app (para quem volta, parece um crash).
+        nonisolated(unsafe) var tarefa = UIBackgroundTaskIdentifier.invalid
+        let terminar = {
+            guard tarefa != .invalid else { return }
+            UIApplication.shared.endBackgroundTask(tarefa)
+            tarefa = .invalid
+        }
+        tarefa = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.escrita?.cancel()
+            terminar()
+        }
         escrita = Task { @MainActor in
-            // Sem isto, quando o tempo extra acaba o iOS mata a app (parece um crash ao voltar).
-            nonisolated(unsafe) var tarefa = UIBackgroundTaskIdentifier.invalid
-            tarefa = UIApplication.shared.beginBackgroundTask { [weak self] in
-                self?.escrita?.cancel()
-                UIApplication.shared.endBackgroundTask(tarefa)
-                tarefa = .invalid
-            }
-            defer { if tarefa != .invalid { UIApplication.shared.endBackgroundTask(tarefa) } }
+            defer { terminar() }
             for aviso in porEscrever {
                 guard !Task.isCancelled else { return }
                 guard let corpo = await Inteligencia.corpoAviso(aviso, base: TextoAviso.corpo(aviso)) else { continue }
