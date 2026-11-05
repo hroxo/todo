@@ -4,7 +4,8 @@ import SwiftUI
 import ToDoCore
 
 /// Captura rápida (mock "Captura rápida", DESIGN.md 7.6): o teclado abre logo; escrever e
-/// tocar em Guardar chega. Por cima do teclado: foto da biblioteca, subtópico e fixar.
+/// tocar em Guardar chega. Descrição e fotos ficam à vista logo abaixo do texto; por cima do
+/// teclado: foto da biblioteca, subtópico e fixar.
 struct CapturaView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(\.dismiss) private var dismiss
@@ -14,10 +15,12 @@ struct CapturaView: View {
 
     private enum Campo: Hashable {
         case texto
+        case descricao
         case subtopico(Int)
     }
 
     @State private var texto = ""
+    @State private var descricao = ""
     @State private var listaId: UUID?
     @State private var subtopicos: [String] = []
     @State private var fixado = false
@@ -46,6 +49,20 @@ struct CapturaView: View {
                             .lineLimit(1...8)
                             .focused($foco, equals: .texto)
                             .tint(cor.base)
+                        // Descrição curta já na criação, como no Detalhe (DESIGN.md 7.6).
+                        TituloSecao(texto: "Descrição")
+                            .padding(.top, Espaco.curto)
+                        TextField("Acrescentar descrição", text: $descricao, axis: .vertical)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1...3)
+                            .focused($foco, equals: .descricao)
+                            .tint(cor.base)
+                            .onChange(of: descricao) { _, novo in
+                                if novo.count > Tarefas.maxDescricao {
+                                    descricao = String(novo.prefix(Tarefas.maxDescricao))
+                                }
+                            }
                     }
 
                     if !subtopicos.isEmpty {
@@ -56,10 +73,14 @@ struct CapturaView: View {
                         }
                     }
 
-                    if !fotos.isEmpty {
-                        HStack(spacing: Espaco.curto) {
-                            ForEach(fotos.indices, id: \.self) { indice in
-                                miniatura(indice)
+                    // Fotos sempre à vista: o quadrado "Biblioteca" não depende do teclado aberto.
+                    HStack(spacing: Espaco.curto) {
+                        ForEach(fotos.indices, id: \.self) { indice in
+                            miniatura(indice)
+                        }
+                        if fotos.count < Tarefas.maxFotos {
+                            seletorFotos {
+                                BotaoBiblioteca(cor: cor.tinta, tamanho: 72)
                             }
                         }
                     }
@@ -95,15 +116,10 @@ struct CapturaView: View {
                         .disabled(!podeGuardar)
                 }
                 ToolbarItemGroup(placement: .keyboard) {
-                    PhotosPicker(
-                        selection: $selecaoFotos,
-                        maxSelectionCount: max(1, Tarefas.maxFotos - fotos.count),
-                        matching: .images
-                    ) {
+                    seletorFotos {
                         Image(systemName: "photo.on.rectangle")
                     }
                     .disabled(fotos.count >= Tarefas.maxFotos)
-                    .accessibilityLabel("Adicionar foto da biblioteca")
 
                     Button {
                         subtopicos.append("")
@@ -140,6 +156,17 @@ struct CapturaView: View {
         }
         .presentationDetents([.large])
         .presentationBackground(Ceu.folha)
+    }
+
+    /// O mesmo seletor serve o quadrado "Biblioteca" e o botão por cima do teclado.
+    private func seletorFotos<Rotulo: View>(@ViewBuilder _ rotulo: @escaping () -> Rotulo) -> some View {
+        PhotosPicker(
+            selection: $selecaoFotos,
+            maxSelectionCount: max(1, Tarefas.maxFotos - fotos.count),
+            matching: .images,
+            label: rotulo
+        )
+        .accessibilityLabel("Adicionar foto da biblioteca")
     }
 
     private func ficha(_ opcao: Lista) -> some View {
@@ -215,6 +242,7 @@ struct CapturaView: View {
         for dados in fotos {
             _ = try? tarefas.adicionarFoto(dados, a: item)
         }
+        tarefas.definirNota(item, descricao)
         if fixado {
             tarefas.definirFixado(item, true)
         }

@@ -211,6 +211,7 @@ Regras:
 
 - `.sheet` de altura total, aberta pelo "+". O teclado abre logo (`@FocusState`).
 - Campo de texto grande (`.title2`), várias linhas, com o cursor na cor da lista escolhida.
+- Logo abaixo, título de secção "Descrição" e o campo "Acrescentar descrição" (até 3 linhas, como no Detalhe) e a fila de fotos com o quadrado tracejado "Biblioteca" de 72 pt, sempre à vista mesmo sem teclado.
 - Fichas de lista, cada uma com o círculo do ícone. A selecionada enche-se com a cor base. Vem pré-selecionada a última usada.
 - Barra de vidro por cima do teclado (`.toolbar { ToolbarItemGroup(placement: .keyboard) }`) com: Foto da biblioteca, Tirar foto, Subtópico e Fixar.
 - Fotos anexadas aparecem como miniaturas de 72 pt com um botão para remover.

@@ -135,7 +135,7 @@ E ainda:
 - **Passar de ponto em ponto** no detalhe, com ˄ ˅ ou puxando nas pontas do ecrã.
 - **Descrição curta** e até **4 fotos** em cada ponto.
 - **Fixar** o que nunca deve expirar.
-- **Captura rápida**, com subtópicos, fotos e escolha do espaço.
+- **Captura rápida**, com descrição, fotos, subtópicos e escolha do espaço logo ao criar.
 - **Concluídos** durante 7 dias, para reabrir se for preciso, com **filtros** por espaço e por data (também em Expirados).
 - **Exportar CSV** de um espaço ou de tudo, pronto a abrir no Excel ou no Numbers.
 - **Backup em JSON**: exportar e restaurar tudo, com fotos e definições. Mesmo um backup antigo entra sem perder pontos: o que já venceu ganha tempo novo.

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<title>Captura com descrição e fotos</title>
+<!-- Melhoria 28: descrição e fotos à vista logo ao criar (DESIGN.md 7.6). Claro à esquerda, escuro à direita. -->
+<style>
+body{margin:0;background:#D9DEE8;display:flex;gap:24px;padding:24px;font-family:-apple-system,'SF Pro Display','Inter','Segoe UI',system-ui,sans-serif}
+.tel{width:390px;height:844px;border-radius:48px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.claro{--fundo:#E4F0FF;--folha:#F2F2F7;--texto:#000;--sec:#6C6C70;--ter:#3C3C4399;--ficha:#E3E3E8;--vidro:rgba(255,255,255,.7);--borda:rgba(255,255,255,.95);--tinta:#0062CC;--anel:#F2F2F7}
+.escuro{--fundo:#15123F;--folha:#2A2570;--texto:#fff;--sec:#B8B5E8;--ter:#ffffff55;--ficha:#3A3590;--vidro:rgba(255,255,255,.12);--borda:rgba(255,255,255,.22);--tinta:#5AA9FF;--anel:#2A2570}
+.tel{background:var(--fundo);color:var(--texto)}
+.estado{height:54px;display:flex;justify-content:space-between;align-items:center;padding:0 34px;font-size:16px;font-weight:600}
+.folha{position:absolute;top:62px;left:0;right:0;bottom:0;background:var(--folha);border-radius:38px 38px 0 0;padding:14px 16px 0}
+.barra{display:flex;justify-content:space-between;align-items:center;height:48px}
+.vidro{height:44px;padding:0 18px;border-radius:22px;background:var(--vidro);border:1px solid var(--borda);display:flex;align-items:center;font-size:17px;color:var(--tinta)}
+.titulo{font-size:17px;font-weight:600}
+.guardar{height:44px;padding:0 18px;border-radius:22px;background:#0071E3;color:#fff;display:flex;align-items:center;font-size:17px;font-weight:700}
+.corpo{padding:22px 4px 0;display:flex;flex-direction:column;gap:22px}
+.sec{font-size:13px;font-weight:600;color:var(--sec);text-transform:uppercase;letter-spacing:.04em}
+.texto{font-size:24px;font-weight:600;line-height:1.25;margin-top:6px}
+.cursor{display:inline-block;width:2px;height:26px;background:#0071E3;vertical-align:-4px;margin-left:1px}
+.desc{font-size:17px;line-height:1.35;color:var(--sec);margin-top:6px}
+.novo{outline:2px dashed #FF9F0A;outline-offset:6px;border-radius:6px;position:relative}
+.etiqueta{position:absolute;right:-6px;top:-24px;background:#FF9F0A;color:#000;font-size:11px;font-weight:800;padding:2px 7px;border-radius:8px}
+.fotos{display:flex;gap:8px}
+.foto{width:72px;height:72px;border-radius:14px;position:relative}
+.x{position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:12px;background:#48484A;border:2px solid var(--anel);color:#fff;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.bib{width:72px;height:72px;border-radius:14px;box-sizing:border-box;border:2px dashed color-mix(in srgb,var(--tinta) 50%,transparent);background:color-mix(in srgb,var(--vidro) 60%,transparent);color:var(--tinta);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.bib b{font-size:11px}
+.fichas{display:flex;flex-wrap:wrap;gap:8px}
+.f{height:40px;border-radius:20px;background:var(--ficha);display:flex;align-items:center;gap:8px;padding:0 14px 0 6px;font-size:15px;font-weight:700}
+.f i{width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:15px}
+.f.sel{background:#0071E3;color:#fff}
+.ajuda{display:flex;gap:6px;align-items:center;font-size:15px;color:var(--sec)}
+</style>
+</head>
+<body>
+<script>
+const svgX='<svg width="10" height="10" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ecra=(modo)=>`
+<div class="tel ${modo}">
+  <div class="estado"><span>9:41</span><span>●●● ▮</span></div>
+  <div class="folha">
+    <div class="barra"><span class="vidro">Cancelar</span><span class="titulo">Nova nota</span><span class="guardar">Guardar</span></div>
+    <div class="corpo">
+      <div>
+        <div class="sec">O que tens na cabeça?</div>
+        <div class="texto">Ligar ao canalizador</div>
+        <div class="sec" style="margin-top:14px">Descrição</div>
+        <div class="desc novo"><span class="etiqueta">NOVO</span>Fuga na casa de banho. Pedir orçamento antes de sexta.<span class="cursor"></span></div>
+      </div>
+      <div class="fotos novo"><span class="etiqueta">NOVO</span>
+        <div class="foto" style="background:linear-gradient(160deg,#9CC9E8 0%,#C8DDE6 45%,#7A8F9C 46%,#5C6B75 100%)"><span class="x">${svgX}</span></div>
+        <div class="foto" style="background:radial-gradient(circle at 35% 40%,#E8D6B8 0 18%,transparent 19%),linear-gradient(135deg,#B9A58A,#6E5E4C)"><span class="x">${svgX}</span></div>
+        <div class="bib"><svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M12 5v14M5 12h14"/></svg><b>Biblioteca</b></div>
+      </div>
+      <div class="fichas">
+        <span class="f sel"><i style="background:rgba(0,0,0,.22)">🏠</i>Casa</span>
+        <span class="f"><i style="background:#FFE3C2">💼</i>Trabalho</span>
+        <span class="f"><i style="background:#D4F5DD">🛒</i>Compras</span>
+        <span class="f"><i style="background:#EADCFF">🎸</i>Pessoal</span>
+      </div>
+      <div class="ajuda"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Expira daqui a 3 dias se não lhe tocares</div>
+    </div>
+  </div>
+</div>`;
+document.body.innerHTML=ecra('claro')+ecra('escuro');
+</script>
+</body>
+</html>
