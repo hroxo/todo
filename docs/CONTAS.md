@@ -18,7 +18,20 @@ Os identificadores de cliente não são segredos: a app usa OAuth com PKCE, como
    - ID do pacote: `com.hugo.tudo`.
 5. Copiar o **ID de cliente** (`123-abc.apps.googleusercontent.com`) para `googleClientId`.
 
-> Enquanto o ecrã de consentimento estiver em modo **Teste**, a Google pede para voltar a ligar a conta de 7 em 7 dias (o mesmo ritmo da reassinatura). Para não expirar, publicar a app ("Em produção"): a Google mostra um aviso de "app não verificada" no login, mas funciona para uso pessoal.
+> Enquanto o ecrã de consentimento estiver em modo **Teste**, só se ligam as contas da lista de utilizadores de teste, e a Google pede para voltar a ligar a conta de 7 em 7 dias. Para qualquer pessoa poder ligar (até 100 utilizadores, com o aviso de "app não verificada" no login), publicar a app ("Em produção"). **A consola exige antes uma política de privacidade**: o texto está em [`POLITICA-PRIVACIDADE.md`](POLITICA-PRIVACIDADE.md), e tem de ficar publicado num endereço público.
+
+### Estado do registo Google (novembro de 2026)
+
+| | |
+| --- | --- |
+| Projeto | `My First Project` (`coral-subject-472115-n7`) |
+| Cliente OAuth | `ToDo iOS`, tipo **iOS**, ID do pacote `com.hugo.tudo` |
+| ID de cliente | `386480318753-d6hsntb5r24tju820t2bv6ar1k21ejki.apps.googleusercontent.com` (já em `RegistoApps.swift`) |
+| Âmbitos | `openid`, `userinfo.email`, `calendar.readonly` |
+| Publicação | **Em teste**: só 1 utilizador de teste (a conta do Hugo). Os testers do TestFlight ainda não conseguem ligar a conta Google |
+| Ecrã de consentimento | já existia no projeto com o nome **"TGA"**, que **não foi alterado**: o login mostraria "TGA" em vez de "ToDo". Mudar o nome em Branding antes de abrir a mais pessoas |
+
+Para abrir a toda a gente falta: publicar a política de privacidade, pô-la (e uma página inicial) em Branding e carregar em **Publicar app**. Para tirar o aviso e o limite de 100 há a verificação da Google.
 
 ## Microsoft (Outlook, Hotmail, Microsoft 365)
 

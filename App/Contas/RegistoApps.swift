@@ -4,7 +4,7 @@
 enum RegistoApps {
     /// Google Cloud › APIs e serviços › Credenciais › ID de cliente OAuth do tipo iOS
     /// ("123-abc.apps.googleusercontent.com").
-    static let googleClientId = ""
+    static let googleClientId = "386480318753-d6hsntb5r24tju820t2bv6ar1k21ejki.apps.googleusercontent.com"
     /// Microsoft Entra › Registos de aplicações › ID da aplicação (cliente), com o retorno
     /// `todo-hugo://auth` em "Aplicações móveis e de ambiente de trabalho".
     static let microsoftClientId = ""
