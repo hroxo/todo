@@ -19,3 +19,6 @@ App/Info.plist
 App/ToDo.entitlements
 Widgets/Info.plist
 Widgets/ToDoWidgets.entitlements
+
+# Imagens originais do Glassy: não são publicadas; a app usa só as camadas geradas.
+Glassy2/
