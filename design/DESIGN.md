@@ -29,8 +29,8 @@ Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJD
 
 ### 2.1 Contexto da stack [Decidido — não alterar]
 
-- **Desenvolvimento em Linux, em Swift.** Não há Xcode nem Mac na máquina de trabalho. Nada neste guia pode depender de abrir o Xcode, o simulador, os SwiftUI Previews ou o Icon Composer.
-- O projeto é gerado com **XcodeGen** (`project.yml`) e compilado no **GitHub Actions**, num runner macOS. O resultado é um `.ipa` sem assinatura, instalado no iPhone com o **Sideloadly**.
+- **Desenvolvimento em Windows, em Swift.** Não há Xcode na máquina de trabalho. Nada neste guia pode depender de abrir o Xcode, o simulador, os SwiftUI Previews ou o Icon Composer.
+- O projeto é gerado com **XcodeGen** (`project.yml`) e compilado no **GitHub Actions**, num runner macOS, que também tira as capturas de cada ecrã. Chega ao iPhone pelo **TestFlight**, ou com o `.ipa` sem assinatura da release `ultima` e o iloader.
 - Consequências para a UI:
   - O catálogo `Assets.xcassets` é editado como ficheiros (pastas + `Contents.json`). É por isso que este pacote o entrega já montado.
   - A validação visual faz-se instalando no iPhone. Cada ecrã deve ser simples de testar à mão, e a lógica (expiração, durações, contagens) vive no módulo testável que corre no CI.
@@ -38,7 +38,7 @@ Referência visual (mocks iteráveis): https://claude.ai/artifact/HUdHGgoDoZwCJD
 
 ### 2.2 Requisitos
 
-- **Deployment target: iOS 26.0.** O liquid glass (`glassEffect`, `GlassEffectContainer`, `.buttonStyle(.glass)`) só existe a partir do iOS 26. O iPhone está no iOS 27, por isso não há perda. Isto **substitui** o "iOS 17.0" que estava no `CLAUDE.md`. [Proposta, a confirmar]
+- **Deployment target: iOS 26.0.** O liquid glass (`glassEffect`, `GlassEffectContainer`, `.buttonStyle(.glass)`) só existe a partir do iOS 26. [Decidido]
 - O runner do CI tem de usar Xcode 26 ou superior (o workflow já escolhe a versão mais recente disponível).
 - Tipografia: a fonte do sistema (SF Pro), sempre com estilos dinâmicos (`.largeTitle`, `.headline`…), para respeitar o Dynamic Type. Nunca tamanhos fixos em pontos.
 - Ícones: só SF Symbols (secção 6). Nada de SVG ou PNG próprios dentro da UI.
@@ -455,32 +455,4 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
   - **Escuro:** noite índigo com estrelas.
   - **Tingido:** cinzentos sobre preto.
 - Gerado a partir do desenho anterior da mascote, com um script SwiftUI `ImageRenderer` a 1024 px. Ainda não foi atualizado para o Glassy (7.14): esse desenho já não existe no código.
-- **Ícone anterior (B2, substituído):**
-
-
-- Conceito: três linhas de lista que encolhem e desvanecem; a primeira está feita. É a "lista que se limpa sozinha".
-- Fundo em gradiente diagonal roxo (#A050E0) → azul (#0A60EE), com um brilho suave no canto superior esquerdo. Elementos em vidro branco translúcido, com reflexo no contorno.
-- Três aparências no `AppIcon.appiconset`: **clara**, **escura** (fundo preto, elementos no gradiente roxo-azul) e **tingida** (cinzentos sobre preto; o iOS aplica a cor escolhida pelo utilizador).
-- PNG de 1024 × 1024 sem transparência e sem cantos arredondados (o iOS aplica a máscara).
-- O ícone usado na app são os 3 PNG do `AppIcon.appiconset`. A pasta `Design/icon-layers/` (camadas em SVG) é só arquivo: o Icon Composer da Apple só corre em macOS, por isso não faz parte do fluxo atual.
-
-## 11. Ficheiros deste pacote
-
-| Ficheiro | Onde colocar |
-| --- | --- |
-| `DESIGN.md` | Raiz do repositório, ao lado do `CLAUDE.md`. Acrescentar ao `CLAUDE.md`: "Segue o DESIGN.md para toda a UI." |
-| `Assets.xcassets/` | Copiar a pasta inteira para dentro da pasta de fontes da app que o `project.yml` inclui (por exemplo `App/Resources/Assets.xcassets`). Se já existir um, juntar o conteúdo. Contém `AppIcon`, `AccentColor`, `Listas/` e `Estados/`. |
-| `Design/icone-preview.png` | Só referência visual (as 3 aparências do ícone). Guardar em `docs/` ou `Design/`; não entra no target. |
-| `Design/icon-layers/*.svg` | Só arquivo. Não entra no target. |
-
-No `project.yml` (XcodeGen), confirmar que a pasta do `Assets.xcassets` está nas `sources` do target e que existem estas definições:
-
-```yaml
-settings:
-  base:
-    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
-    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
-```
-
-Como não há Xcode local, o primeiro build no CI é o teste: se o ícone ou as cores não aparecerem, ver o log do passo `actool` com `gh run view --log-failed`.
+- O ícone usado na app são os 3 PNG do `AppIcon.appiconset` (`design/icone/README.md` explica como os trocar): 1024 × 1024, sem transparência e sem cantos arredondados (o iOS aplica a máscara).

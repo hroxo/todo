@@ -95,7 +95,6 @@ Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma
 2. `registarAcao` (editar, subtópico, foto, nota): `ultimaAcaoEm` e `alteradoEm = agora`; o prazo recomeça e a lista deixa de estar vazia.
 3. `manter(longo:)`: `expiraEm = agora + diasManterCurto` ou `diasManterLongo`.
 4. `avaliar()` (ao abrir, ao voltar do segundo plano e de minuto a minuto com a app aberta):
-   - as listas iniciais repetidas pelo iCloud juntam-se (sai a vazia; nunca uma com pontos);
    - os ativos vencidos passam a `expirado`;
    - os expirados e os concluídos para lá da retenção são apagados;
    - as listas vazias são avaliadas.
@@ -107,6 +106,7 @@ Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma
 - **Limites:** no máximo `maxListas = 8` e até `maxPermanentes = 4`.
 - **Listas vazias:** uma lista não permanente sem pontos abertos ganha `vaziaDesde` e sai do Início ao fim de `diasListaVazia` (5). Espera pelos pontos expirados (ainda recuperáveis).
 - **Funções:** `quandoDesaparece`, `manterLista`, `definirPermanente` e `podeSerPermanente`.
+- **Listas iniciais:** Trabalho e Pessoal criam-se uma vez por aparelho, que guarda os ids em `UserDefaults`. Num aparelho novo, o iCloud pode trazer depois as antigas. `juntarListasIniciaisRepetidas(criadasAqui:)` apaga só as cópias que este aparelho criou, vazias aqui e com outra do mesmo nome: nunca a de outro aparelho, que pode ter pontos ainda por sincronizar.
 
 ### Avisos
 
@@ -146,7 +146,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 - **Estrutura:** uma lista `compras` tem secções (os itens) e pontos (os subtópicos).
 - **Envio:** `ListaPartilhada.paraPartilhar` gera um ficheiro `.todolista` (JSON), enviado pela folha de partilha (`PartilhaCompras`).
 - **Receção:** ao abrir o ficheiro, `juntar` funde por `partilhaId` e pelos ids. Ganha a alteração mais recente, e as lápides contam.
-- **Ao vivo:** ainda não há partilha ao vivo. Precisa do CloudKit com `CKShare` (ver PROGRESSO).
+- **Ao vivo:** ainda não há partilha ao vivo. Precisaria da base partilhada do CloudKit (`CKShare`), que a sincronização automática do SwiftData não usa.
 
 ## Backup (DESIGN.md 7.19)
 
@@ -194,7 +194,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 
 ## Testes
 
-`Packages/ToDoCore/Tests/ToDoCoreTests` (173 testes):
+`Packages/ToDoCore/Tests/ToDoCoreTests` (mais de 200 testes):
 - expiração, tarefas e notas;
 - espaços e listas vazias;
 - calendário e eventos externos, contas e OAuth;

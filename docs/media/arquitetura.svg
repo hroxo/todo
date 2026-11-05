@@ -127,8 +127,8 @@
   <rect x="28" y="784" width="760" height="300" rx="16" class="painel"/>
   <text x="48" y="814" class="z" fill="#1E4FB5">QUANDO CORRE O QUÊ (ToDoApp)</text>
   <circle cx="58" cy="850" r="5" fill="#5B8DEF"/>
-  <text x="74" y="855" class="b"><tspan font-weight="700">Abrir ou voltar do segundo plano:</tspan> avaliar() expira, apaga e junta listas</text>
-  <text x="74" y="877" class="s">repetidas; reagenda os avisos e o widget; lê o calendário.</text>
+  <text x="74" y="855" class="b"><tspan font-weight="700">Abrir ou voltar do segundo plano:</tspan> avaliar() expira e apaga;</text>
+  <text x="74" y="877" class="s">junta as listas iniciais repetidas; reagenda os avisos e o widget; lê o calendário.</text>
   <circle cx="58" cy="914" r="5" fill="#5B8DEF"/>
   <text x="74" y="919" class="b"><tspan font-weight="700">A cada minuto, com a app aberta:</tspan> avaliar(); só reagenda se algo expirou.</text>
   <circle cx="58" cy="956" r="5" fill="#5B8DEF"/>

@@ -9,7 +9,7 @@
 O que não recebe atenção em 3 dias sai do caminho.<br>
 A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas por fazer.
 
-[![Versão 0.2](https://img.shields.io/badge/vers%C3%A3o-0.2-A050E0)](#novidades-da-02)
+[![Versão 0.6](https://img.shields.io/badge/vers%C3%A3o-0.6-A050E0)](#novidades)
 [![CI](https://github.com/hroxo/todo/actions/workflows/ci.yml/badge.svg)](https://github.com/hroxo/todo/actions/workflows/ci.yml)
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-000000?logo=apple&logoColor=white)](#instalar-no-iphone)
 [![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%C2%B7%20SwiftData-F05138?logo=swift&logoColor=white)](#arquitetura)
@@ -24,20 +24,13 @@ A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas p
 
 ---
 
-## Novidades da 0.2
+## Novidades
 
-A 0.2 deu à ToDo uma identidade própria e um fluxo mais simples de usar todos os dias.
-
-- ⏳ **O Glassy.** A mascote da app aparece no Início, nos widgets e nos ecrãs vazios, e na app está viva: respira, pisca e a areia corre. A areia desce quando os pontos se acumulam e ele fica preocupado; se perdes tudo fica ko, de vidro rachado; sem nada a fechar, festeja com a areia em cima. Muda também com a hora do dia e com o que andas a fazer (trabalho, tempo para ti, viagem).
-- 🧩 **Widgets.** O widget médio *O que importa agora* mostra os 3 pontos mais urgentes, que concluis com um toque no anel. No ecrã bloqueado, um **+** abre a captura, e há um controlo *Nova nota* para o Centro de Controlo e o Action Button.
-- ✨ **Para ti.** Um cartão no topo do Início diz numa frase o que importa agora, com o botão certo ao lado (Abrir, Manter +5, Tornar permanente…). Quando não há nada a dizer, não aparece.
-- 🧠 **Inteligência no iPhone.** Os avisos e o *Para ti* têm contexto ("2 subtópicos por fazer · sem mexer desde segunda"), escritos pelo modelo da Apple no próprio telemóvel. Nada sai do iPhone, e tudo se desliga nas Definições.
-- 💧 **Manter com física de água.** A gota de vidro segue o dedo com inércia, estica, treme e enche-se de cor.
-- 👥 **Vistas partilhadas.** Listas por secções (lojas, divisões da casa, dias de viagem) que não expiram e se partilham por AirDrop. Abrir no outro iPhone junta as duas cópias.
-- 🧹 **Listas que também se arrumam.** Uma lista sem pontos abertos sai do Início ao fim de 5 dias, com aviso na véspera. Até 4 listas podem ser permanentes.
-- 🎨 **Início ao estilo Fitness.** Cartões de cor cheia, números grandes e o vidro só onde faz falta.
-- 💾 **Backup em JSON.** Exportar e restaurar tudo (listas, pontos, fotos e definições), com um resumo antes de confirmar. A base de dados já está pronta para o iCloud.
-- 🍎 **Iniciar sessão com a Apple**, opcional, preparado para o dia da conta Apple Developer.
+- ⏳ **O Glassy, anfitrião do Início.** A mascote está viva: respira, pisca, e a areia conta como vai o teu dia. Fica preocupada quando os pontos se acumulam e festeja quando o dia fica ganho.
+- 🌅 **Um céu que segue o dia.** O Início tem colinas, sol e lua: dia no modo claro, noite no escuro, como o teu iPhone.
+- ✍️ **Captura mais completa.** Descrição e fotos logo ao criar um ponto.
+- 🧪 **TestFlight.** As versões de teste chegam pelo TestFlight, sem reinstalar de 7 em 7 dias.
+- 🛡️ **Mais estável.** Corrigidas falhas ao voltar à app depois de muito tempo em segundo plano e ao abrir pontos, e os pontos expiram mesmo com a app aberta.
 
 ## Porquê
 
@@ -142,6 +135,8 @@ E ainda:
 - **Listas que se arrumam**: uma lista vazia sai ao fim de 5 dias (com aviso na véspera); até 4 podem ser permanentes.
 - **Ecrãs vazios com a Ampulheta**: a celebrar quando nada expirou.
 - **Notificações** 24 horas antes de um ponto expirar (nunca durante a noite).
+- **Inteligência no iPhone**: os avisos e o *Para ti* têm contexto, escrito pelo modelo da Apple no próprio telemóvel. Nada sai do iPhone, e desliga-se nas Definições.
+- **Iniciar sessão com a Apple**, opcional.
 - Cada gesto tem uma alternativa por menu, e a app suporta Dynamic Type e VoiceOver.
 
 ## Galeria
@@ -168,7 +163,13 @@ Todas as durações podem ser mudadas em Definições › Avançado › Prazos.
 
 ## Instalar no iPhone
 
-A app é para uso pessoal e não está na App Store. Cada versão é compilada pelo CI e publicada como `.ipa`.
+A app não está na App Store. Precisa de um iPhone com iOS 26 ou superior.
+
+**Por TestFlight (recomendado).** As versões de teste chegam pela app TestFlight, por convite. Pede o convite ao autor.
+
+### Sem TestFlight: instalar a `.ipa` com o iloader
+
+Cada versão é compilada pelo CI e publicada como `.ipa`.
 
 **Precisas de:** um iPhone com iOS 26 ou superior, um cabo USB, um computador (Windows, Linux ou macOS) e um Apple ID gratuito. Recomenda-se um Apple ID só para isto, mas não é obrigatório.
 
@@ -262,7 +263,7 @@ ToDo
 
 ## Desenvolvimento
 
-**O CI é o compilador** do `.ipa`. Para iterar a interface, o Mac Intel com o Xcode 26.3 compila e corre a app no simulador iOS 26 (ver `docs/PROGRESSO.md`).
+**O CI é o compilador.** Cada push para `main` corre os testes do núcleo, compila, fotografa cada ecrã no simulador e confirma que a app real arranca. O envio para o TestFlight é um workflow à parte, lançado à mão. A arquitetura e o fluxo de dados estão desenhados em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
 
 ```mermaid
 flowchart LR
@@ -273,6 +274,7 @@ flowchart LR
   E --> H[arranque real]
   H --> D[.ipa na release 'ultima'<br/>só do main]
   D --> G[iloader → iPhone]
+  I[workflow TestFlight<br/>à mão] --> J[TestFlight → iPhone]
 ```
 
 | Script | O que faz |
@@ -291,8 +293,8 @@ A app tem um **modo de demonstração** (`-demo YES -ecra <nome>`), com dados de
 - [x] **M3** Expirados, Concluídos, Definições, captura rápida e design
 - [x] **M4** Descrição curta, Definições reorganizadas
 - [x] **M5** Calendário (EventKit), espaços em páginas, calendário por espaço
-- [x] **M6** Versão 0.2: widgets e a Ampulheta, Para ti, inteligência no iPhone, vistas partilhadas, listas permanentes, backup JSON, ícone novo
-- [ ] **M7** Conta Apple Developer: TestFlight, widget com dados, iCloud contínuo
+- [x] **M6** Widgets e a Ampulheta, Para ti, inteligência no iPhone, vistas partilhadas, listas permanentes, backup JSON, ícone novo
+- [ ] **M7** Conta Apple Developer: TestFlight e widget com dados ✓; falta a sincronização com o iCloud
 - [ ] **M8** Vistas partilhadas ao vivo, captura inteligente, Siri e Atalhos
 - [ ] **M9** Importar CSV; acabamento visual, háptica e acessibilidade
 

@@ -88,4 +88,4 @@ sincronização falha em silêncio.
 3. Pôr o widget no ecrã principal: deve mostrar os pontos (App Group).
 4. Sincronização: criar um ponto, apagar a app, reinstalar pelo TestFlight; o ponto volta
    ao fim de uns segundos. Com outro aparelho na mesma conta iCloud, aparece lá também.
-5. Atualizar `docs/PROGRESSO.md` e o `CLAUDE.md` (12.2): o iloader deixa de ser o caminho.
+5. Atualizar o README (Roadmap M7): a sincronização com o iCloud passa a funcionar.
