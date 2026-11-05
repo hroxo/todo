@@ -2,6 +2,15 @@
 
 Visão técnica do ToDo para quem vai mexer no código. O desenho visual está em [`design/DESIGN.md`](../design/DESIGN.md); o dia da conta Apple paga está em [`CONTA-DEVELOPER.md`](CONTA-DEVELOPER.md).
 
+![Arquitetura e fluxo de dados](media/arquitetura.png)
+
+O desenho é gerado a partir de [`media/arquitetura.svg`](media/arquitetura.svg). Depois de o editar, exporta o PNG com o Edge (ou o Chrome) sem janela:
+
+```sh
+msedge --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=1600,1110 \
+  --screenshot=docs/media/arquitetura.png file:///<caminho>/docs/media/arquitetura.svg
+```
+
 ## Camadas
 
 ```
@@ -85,7 +94,8 @@ Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma
 1. `criarItem`: `expiraEm = agora + diasExpiracao`.
 2. `registarAcao` (editar, subtópico, foto, nota): `ultimaAcaoEm` e `alteradoEm = agora`; o prazo recomeça e a lista deixa de estar vazia.
 3. `manter(longo:)`: `expiraEm = agora + diasManterCurto` ou `diasManterLongo`.
-4. `avaliar()` (ao abrir e ao voltar ao primeiro plano):
+4. `avaliar()` (ao abrir, ao voltar do segundo plano e de minuto a minuto com a app aberta):
+   - as listas iniciais repetidas pelo iCloud juntam-se (sai a vazia; nunca uma com pontos);
    - os ativos vencidos passam a `expirado`;
    - os expirados e os concluídos para lá da retenção são apagados;
    - as listas vazias são avaliadas.
@@ -102,7 +112,7 @@ Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma
 
 - `planoAvisos()` e `planoAvisosListas()` devolvem `Aviso`/`AvisoLista`, com o texto de `TextoAviso`.
 - `Notificacoes.reagendar()` agenda até `maxAvisos = 60` (o iOS aceita 64).
-- O modelo do iPhone reescreve o corpo dos 12 mais próximos.
+- O modelo do iPhone reescreve o corpo dos 12 mais próximos (3 em segundo plano, com bloco de expiração: sem ele, o iOS matava a app ao fim de cerca de 30 s).
 - **Categorias:**
   - item: Manter +5, Manter +15 e Concluir;
   - lista vazia: Manter mais 5 dias e Tornar permanente.
@@ -162,7 +172,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 ## Calendário
 
 - `Calendario` (`@Observable`) junta eventos do **EventKit** e das contas **Google/Microsoft**. Só lê: a app não cria eventos. `APICalendario` vai buscar os externos e `JuntarEventos` deduplica, ficando a versão externa, que tem mais detalhe.
-- **Leitura:** nunca bloqueia o ecrã. Só começa com a app ativa, junta as rajadas de `EKEventStoreChanged` e faz tudo fora da thread principal. A EventKit não diz o que mudou, por isso relê-se o dia, mas `Diferencas.aplicar` só converte os eventos que mudaram, e `eventos` só muda quando há diferenças. Uma marca em `UserDefaults` (`calendarioALer`) deteta que a app morreu a ler; aí não se lê mais até a pessoa pedir (`leituraFalhou`).
+- **Leitura:** nunca bloqueia o ecrã. Só começa com a app ativa, junta as rajadas de `EKEventStoreChanged` e faz tudo fora da thread principal. A EventKit não diz o que mudou, por isso relê-se o dia, mas `Diferencas.aplicar` só converte os eventos que mudaram, e `eventos` só muda quando há diferenças. Uma marca em `UserDefaults` (`calendarioALer`) deteta que a app morreu a ler; aí não se lê mais até a pessoa pedir (`leituraFalhou`). A marca limpa-se 1 s depois da leitura, na thread principal: um desenho bloqueado nunca a limpa, e um crash de outra parte não fica atribuído ao calendário.
 - **Destinos:** cada calendário tem um destino: um espaço, "sem espaço" ou escondido (`DestinoCalendario`). `Espacos.associarPorNome` faz a associação inicial por nome.
 - **Pontos:** um evento vira ponto com `criarPontoDeEvento` (uma vez por `eventoId` + `eventoInicio`, por causa dos recorrentes).
 - **OAuth:**
@@ -184,7 +194,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 
 ## Testes
 
-`Packages/ToDoCore/Tests/ToDoCoreTests` (171 testes):
+`Packages/ToDoCore/Tests/ToDoCoreTests` (173 testes):
 - expiração, tarefas e notas;
 - espaços e listas vazias;
 - calendário e eventos externos, contas e OAuth;
@@ -213,3 +223,6 @@ O ícone da app (`AppIcon-1024`, `-dark` e `-tinted`) é gerado a partir do cód
 - Comentários curtos que explicam o porquê, com referência ao DESIGN.md ou à especificação quando existir.
 - Datas sempre via `Relogio`; durações sempre via `Definicoes`.
 - Sem dependências externas.
+- **Modelos apagados:** o SwiftData para a app quando se lê um modelo já apagado. Um ecrã que guarda um modelo (navegação, `@State`, aviso de "Anular", animação de saída) verifica `foiApagado` antes de o ler, e usa `persistentModelID` como identidade. Com o iCloud, outro aparelho pode apagar a qualquer momento.
+- **Segundo plano:** todo o `beginBackgroundTask` tem bloco de expiração, e o trabalho tem de caber em cerca de 30 s.
+- **Uma só cópia:** confirmações e regras repetidas em vários ecrãs vivem num modificador (`acoesDeItem`, `apagarLista`) ou no núcleo.

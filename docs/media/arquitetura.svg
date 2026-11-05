@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1110" viewBox="0 0 1600 1110" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+  <!-- Fonte do docs/media/arquitetura.png. Para atualizar: editar aqui e exportar (ver docs/ARQUITETURA.md). -->
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5B6472"/>
+    </marker>
+    <style>
+      .t { font-size: 17px; font-weight: 700; fill: #1F2328; }
+      .s { font-size: 13px; fill: #57606A; }
+      .z { font-size: 13px; font-weight: 700; letter-spacing: 1.2px; }
+      .r { font-size: 12px; fill: #5B6472; font-style: italic; paint-order: stroke; stroke: #F7F8FA; stroke-width: 5px; stroke-linejoin: round; }
+      .h { paint-order: stroke; stroke-width: 9px; stroke-linejoin: round; }
+      .f { stroke: #5B6472; stroke-width: 2; fill: none; marker-end: url(#seta); }
+      .d { stroke: #5B6472; stroke-width: 2; fill: none; marker-start: url(#seta); marker-end: url(#seta); }
+      .svc { fill: #FFFFFF; stroke: #C9CED6; stroke-width: 1.5; }
+      .app { fill: #FFFFFF; stroke: #5B8DEF; stroke-width: 1.5; }
+      .wid { fill: #FFFFFF; stroke: #8B6BE3; stroke-width: 1.5; }
+      .core { fill: #FFFFFF; stroke: #3BA66B; stroke-width: 1.5; }
+      .dados { fill: #FFF4E0; stroke: #E5A93B; stroke-width: 1.8; }
+      .nuvem { fill: #E6F4FB; stroke: #4BA3D9; stroke-width: 1.8; }
+      .painel { fill: #FFFFFF; stroke: #D0D7DE; stroke-width: 1.5; }
+      .b { font-size: 14px; fill: #1F2328; }
+      .estado { stroke-width: 1.8; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1110" fill="#F7F8FA"/>
+
+  <text x="40" y="52" font-size="28" font-weight="800" fill="#1F2328">ToDo · arquitetura e fluxo de dados</text>
+  <text x="40" y="80" class="s" font-size="15">Setas: para onde vão os dados. Tudo fica no iPhone, exceto a sincronização com o iCloud e a leitura dos calendários Google e Outlook.</text>
+
+  <!-- Camada 1: serviços -->
+  <text x="40" y="120" class="z" fill="#57606A">SERVIÇOS DO IPHONE E EXTERNOS</text>
+  <rect x="40" y="132" width="236" height="70" rx="12" class="svc"/>
+  <text x="56" y="160" class="t">Apple Intelligence</text><text x="56" y="182" class="s">Foundation Models, no iPhone</text>
+  <rect x="296" y="132" width="236" height="70" rx="12" class="svc"/>
+  <text x="312" y="160" class="t">Calendários</text><text x="312" y="182" class="s">EventKit · Google · Outlook</text>
+  <rect x="552" y="132" width="236" height="70" rx="12" class="svc"/>
+  <text x="568" y="160" class="t">Tu</text><text x="568" y="182" class="s">toques, gestos e menus</text>
+  <rect x="808" y="132" width="236" height="70" rx="12" class="svc"/>
+  <text x="824" y="160" class="t">Ficheiros e AirDrop</text><text x="824" y="182" class="s">backup, vista partilhada, CSV</text>
+  <rect x="1064" y="132" width="236" height="70" rx="12" class="svc"/>
+  <text x="1080" y="160" class="t">Notificações do iOS</text><text x="1080" y="182" class="s">avisos com ações</text>
+  <rect x="1320" y="132" width="236" height="70" rx="12" class="svc"/>
+  <text x="1336" y="160" class="t">Ecrã principal e bloqueado</text><text x="1336" y="182" class="s">widgets e controlo Nova nota</text>
+
+  <!-- Camada 2: app e extensão -->
+  <rect x="28" y="236" width="1280" height="158" rx="16" fill="#EAF2FF" stroke="#9DBEF2" stroke-width="1.5"/>
+  <rect x="1314" y="236" width="254" height="158" rx="16" fill="#F1ECFF" stroke="#B9A6F0" stroke-width="1.5"/>
+
+  <rect x="40" y="272" width="236" height="108" rx="12" class="app"/>
+  <text x="56" y="300" class="t">Inteligencia</text>
+  <text x="56" y="324" class="s">redige as frases do widget,</text><text x="56" y="342" class="s">dos avisos e do Para ti;</text><text x="56" y="360" class="s">sem modelo: texto de base</text>
+  <rect x="296" y="272" width="236" height="108" rx="12" class="app"/>
+  <text x="312" y="300" class="t">Calendario · Contas</text>
+  <text x="312" y="324" class="s">eventos de hoje, só leitura</text><text x="312" y="342" class="s">tokens OAuth no Keychain</text><text x="312" y="360" class="s">"+" cria o ponto via Tarefas</text>
+  <rect x="552" y="272" width="236" height="108" rx="12" class="app"/>
+  <text x="568" y="300" class="t">Ecrãs</text>
+  <text x="568" y="324" class="s">Início · Lista · Detalhe</text><text x="568" y="342" class="s">Captura · Concluídos</text><text x="568" y="360" class="s">Expirados · Definições</text>
+  <rect x="808" y="272" width="236" height="108" rx="12" class="app"/>
+  <text x="824" y="300" class="t">Backups · Partilha</text>
+  <text x="824" y="324" class="s">exporta e restaura o JSON</text><text x="824" y="342" class="s">envia e junta .todolista</text><text x="824" y="360" class="s">exporta CSV</text>
+  <rect x="1064" y="272" width="236" height="108" rx="12" class="app"/>
+  <text x="1080" y="300" class="t">Notificacoes</text>
+  <text x="1080" y="324" class="s">agenda até 60 avisos</text><text x="1080" y="342" class="s">trata Manter e Concluir</text><text x="1080" y="360" class="s">grava o resumo do widget</text>
+  <rect x="1320" y="272" width="236" height="108" rx="12" class="wid"/>
+  <text x="1336" y="300" class="t">Widgets</text>
+  <text x="1336" y="324" class="s">"O que importa agora"</text><text x="1336" y="342" class="s">Concluir grava na base</text><text x="1336" y="360" class="s">Nova nota abre a captura</text>
+
+  <!-- Camada 3: núcleo -->
+  <rect x="28" y="440" width="1280" height="156" rx="16" fill="#E9F7EF" stroke="#8FD3A8" stroke-width="1.5"/>
+
+  <rect x="40" y="474" width="236" height="110" rx="12" class="core"/>
+  <text x="56" y="502" class="t">ParaTi · TextoAviso</text>
+  <text x="56" y="526" class="s">escolhem os factos;</text><text x="56" y="544" class="s">o modelo só os redige</text>
+  <rect x="296" y="474" width="236" height="110" rx="12" class="core"/>
+  <text x="312" y="502" class="t">EventosExternos · OAuth</text>
+  <text x="312" y="526" class="s">PKCE, lê as APIs e junta</text><text x="312" y="544" class="s">os eventos repetidos</text>
+  <rect x="552" y="474" width="236" height="110" rx="12" fill="#D5F2E0" stroke="#1F8A4C" stroke-width="2.5"/>
+  <text x="568" y="502" class="t">Tarefas · as regras</text>
+  <text x="568" y="526" class="s">criar · manter · fixar · mover</text><text x="568" y="544" class="s">concluir · anular · apagar</text><text x="568" y="562" class="s">avaliar(): expira e apaga</text>
+  <rect x="808" y="474" width="236" height="110" rx="12" class="core"/>
+  <text x="824" y="502" class="t">Backup · Partilha · CSV</text>
+  <text x="824" y="526" class="s">formatos com versão;</text><text x="824" y="544" class="s">juntar nunca apaga nada</text>
+  <rect x="1064" y="474" width="236" height="110" rx="12" class="core"/>
+  <text x="1080" y="502" class="t">ResumoWidget · avisos</text>
+  <text x="1080" y="526" class="s">prioridades e razões;</text><text x="1080" y="544" class="s">aviso 24 h antes, nunca</text><text x="1080" y="562" class="s">entre as 22:00 e as 08:00</text>
+
+  <rect x="1320" y="474" width="236" height="110" rx="12" class="dados"/>
+  <text x="1336" y="502" class="t">resumo-widget.json</text>
+  <text x="1336" y="526" class="s">gravado pela app;</text><text x="1336" y="544" class="s">o widget recalcula-o</text><text x="1336" y="562" class="s">para cada hora</text>
+
+  <!-- Camada 4: dados -->
+  <rect x="40" y="660" width="1200" height="84" rx="14" class="dados"/>
+  <text x="60" y="692" class="t" font-size="19">ToDo.store · SQLite com SwiftData, no App Group (partilhado com o widget)</text>
+  <text x="60" y="720" class="s" font-size="14">Lista · Item · Foto · esquemas V1 a V6 congelados + PlanoMigracao (BaseDados). Há dados reais: uma mudança aos modelos é um esquema novo.</text>
+  <rect x="1320" y="660" width="236" height="84" rx="14" class="nuvem"/>
+  <text x="1336" y="692" class="t">iCloud · CloudKit</text>
+  <text x="1336" y="716" class="s">sincroniza entre aparelhos</text>
+
+  <!-- Setas: serviços ⇄ app -->
+  <line x1="158" y1="202" x2="158" y2="272" class="d"/><text x="166" y="228" class="r">factos ↑ frases ↓</text>
+  <line x1="414" y1="202" x2="414" y2="272" class="f"/><text x="422" y="228" class="r">eventos</text>
+  <line x1="670" y1="202" x2="670" y2="272" class="f"/><text x="678" y="228" class="r">ações</text>
+  <line x1="926" y1="202" x2="926" y2="272" class="d"/><text x="934" y="228" class="r">exporta · restaura</text>
+  <line x1="1182" y1="202" x2="1182" y2="272" class="d"/><text x="1190" y="228" class="r">avisos ↑ ações ↓</text>
+  <line x1="1438" y1="272" x2="1438" y2="202" class="f"/><text x="1446" y="228" class="r">mostra</text>
+
+  <!-- Setas: app ⇄ núcleo -->
+  <line x1="158" y1="474" x2="158" y2="380" class="f"/><text x="166" y="422" class="r">factos</text>
+  <line x1="414" y1="380" x2="414" y2="474" class="d"/><text x="422" y="422" class="r">converte</text>
+  <line x1="670" y1="380" x2="670" y2="474" class="d"/><text x="678" y="422" class="r">ações ↓ · @Query ↑</text>
+  <line x1="926" y1="380" x2="926" y2="474" class="d"/><text x="934" y="422" class="r">junta por id</text>
+  <line x1="1182" y1="474" x2="1182" y2="380" class="f"/><text x="1190" y="422" class="r">plano de avisos</text>
+  <line x1="1300" y1="529" x2="1320" y2="529" class="f"/>
+  <line x1="1438" y1="474" x2="1438" y2="380" class="f"/><text x="1446" y="422" class="r">lê</text>
+
+  <!-- Setas: núcleo ⇄ dados -->
+  <line x1="158" y1="660" x2="158" y2="584" class="f"/><text x="166" y="628" class="r">lê</text>
+  <line x1="670" y1="584" x2="670" y2="660" class="d"/><text x="678" y="628" class="r">grava · lê (ModelContext)</text>
+  <line x1="926" y1="584" x2="926" y2="660" class="f"/><text x="934" y="628" class="r">insere e atualiza</text>
+  <line x1="1182" y1="660" x2="1182" y2="584" class="f"/><text x="1190" y="628" class="r">lê</text>
+  <path d="M1330,380 L1330,420 L1311,420 L1311,636 L1220,636 L1220,660" class="f"/>
+  <line x1="1240" y1="702" x2="1320" y2="702" class="d"/><text x="1280" y="692" class="r" text-anchor="middle">sincroniza</text>
+
+  <!-- Painel: quando corre o quê -->
+  <rect x="28" y="784" width="760" height="300" rx="16" class="painel"/>
+  <text x="48" y="814" class="z" fill="#1E4FB5">QUANDO CORRE O QUÊ (ToDoApp)</text>
+  <circle cx="58" cy="850" r="5" fill="#5B8DEF"/>
+  <text x="74" y="855" class="b"><tspan font-weight="700">Abrir ou voltar do segundo plano:</tspan> avaliar() expira, apaga e junta listas</text>
+  <text x="74" y="877" class="s">repetidas; reagenda os avisos e o widget; lê o calendário.</text>
+  <circle cx="58" cy="914" r="5" fill="#5B8DEF"/>
+  <text x="74" y="919" class="b"><tspan font-weight="700">A cada minuto, com a app aberta:</tspan> avaliar(); só reagenda se algo expirou.</text>
+  <circle cx="58" cy="956" r="5" fill="#5B8DEF"/>
+  <text x="74" y="961" class="b"><tspan font-weight="700">Ir para segundo plano:</tspan> reagenda os avisos; o modelo reescreve até 3,</text>
+  <text x="74" y="983" class="s">dentro dos cerca de 30 s que o iOS dá, com bloco de expiração.</text>
+  <circle cx="58" cy="1020" r="5" fill="#5B8DEF"/>
+  <text x="74" y="1025" class="b"><tspan font-weight="700">Ação numa notificação ou no widget:</tspan> grava direto na base,</text>
+  <text x="74" y="1047" class="s">sem abrir a app; o resumo do widget é reescrito logo a seguir.</text>
+
+  <!-- Painel: ciclo de um ponto -->
+  <rect x="812" y="784" width="760" height="300" rx="16" class="painel"/>
+  <text x="832" y="814" class="z" fill="#1F7A45">CICLO DE UM PONTO</text>
+  <text x="1552" y="814" class="r" text-anchor="end">durações editáveis em Definições › Avançado</text>
+
+  <path d="M890,912 C890,862 990,862 990,912" class="f"/>
+  <text x="850" y="852" class="s">Manter +5 / +15 · qualquer ação recomeça</text>
+  <rect x="850" y="915" width="180" height="54" rx="27" fill="#E6F0FF" stroke="#5B8DEF" class="estado"/>
+  <text x="940" y="940" class="t" text-anchor="middle" font-size="16">Ativo</text>
+  <text x="940" y="958" class="s" text-anchor="middle">3 dias de prazo</text>
+  <text x="940" y="996" class="s" text-anchor="middle">Fixar: nunca expira</text>
+
+  <rect x="1120" y="845" width="220" height="54" rx="27" fill="#FFF1E6" stroke="#E8833A" class="estado"/>
+  <text x="1230" y="870" class="t" text-anchor="middle" font-size="16">Expirados · 14 dias</text>
+  <text x="1230" y="888" class="s" text-anchor="middle">Recuperar volta a Ativo</text>
+  <rect x="1120" y="995" width="220" height="54" rx="27" fill="#E6F7EC" stroke="#3BA66B" class="estado"/>
+  <text x="1230" y="1020" class="t" text-anchor="middle" font-size="16">Concluídos · 7 dias</text>
+  <text x="1230" y="1038" class="s" text-anchor="middle">Reabrir volta a Ativo</text>
+  <rect x="1410" y="915" width="140" height="54" rx="27" fill="#F2F3F5" stroke="#8C959F" class="estado"/>
+  <text x="1480" y="947" class="t" text-anchor="middle" font-size="16">Apagado</text>
+
+  <line x1="1030" y1="930" x2="1118" y2="882" class="f"/>
+  <text x="1060" y="896" class="r" text-anchor="middle">sem ações</text>
+  <line x1="1030" y1="955" x2="1118" y2="1010" class="f"/>
+  <text x="1040" y="1020" class="r" text-anchor="middle">Concluir (anular 4 s)</text>
+  <line x1="1340" y1="878" x2="1408" y2="930" class="f"/>
+  <line x1="1340" y1="1015" x2="1408" y2="956" class="f"/>
+  <text x="1480" y="1068" class="r" text-anchor="middle">aviso 24 h antes de expirar</text>
+
+  <!-- Títulos das zonas por último, com fundo da cor da zona: as setas passam por trás. -->
+  <text x="44" y="259" class="z h" fill="#1E4FB5" stroke="#EAF2FF">APP · SWIFTUI (App/)</text>
+  <text x="1294" y="259" class="r h" text-anchor="end" stroke="#EAF2FF">ToDoApp arranca tudo e decide quando corre a manutenção (em baixo, à esquerda)</text>
+  <text x="1330" y="259" class="z h" fill="#5B3DBF" stroke="#F1ECFF">EXTENSÃO WIDGETS</text>
+  <text x="44" y="463" class="z h" fill="#1F7A45" stroke="#E9F7EF">TODOCORE · REGRAS SEM UI, TESTADAS COM swift test</text>
+  <text x="1294" y="463" class="r h" text-anchor="end" stroke="#E9F7EF">Relogio injetável (nunca Date() nas regras) · Definicoes em UserDefaults</text>
+  <text x="1328" y="463" class="z h" fill="#B7791F" stroke="#F7F8FA">APP GROUP</text>
+</svg>
