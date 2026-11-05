@@ -94,25 +94,35 @@ public final class Tarefas {
         }
     }
 
+    /// Dias em que as listas iniciais de um aparelho novo ficam vigiadas: o tempo de o iCloud
+    /// trazer as que já existiam.
+    public static let diasVigiarListasIniciais = 7
+
     /// Num aparelho novo a app cria Trabalho e Pessoal antes de o iCloud trazer as que já
-    /// existiam, e ficavam repetidas. Cada aparelho só apaga as cópias que ele próprio criou
-    /// (`criadasAqui`) e só quando aqui estão vazias e há outra com o mesmo nome: é o único que
-    /// sabe se a sua cópia tem pontos, e nunca apaga a de outro aparelho nem uma com pontos.
-    /// Caso raro aceite: dois aparelhos novos ao mesmo tempo podem apagar os dois a sua; eram
-    /// vazias, nada se perde. Devolve os ids apagados.
+    /// existiam, e ficavam repetidas. **Nada se apaga aqui:** apagar já levou pontos que outro
+    /// aparelho tinha posto na cópia e ainda não tinham chegado (o iCloud traz a lista antes
+    /// dos pontos). Quando aparece a repetida, a cópia que este aparelho criou, se aqui estiver
+    /// vazia, só deixa de ser permanente: segue a regra das listas vazias (sai ao fim de 5 dias
+    /// sem pontos, com aviso na véspera), e um ponto que chegue entretanto segura-a.
+    /// Só mexe nas cópias criadas aqui (`criadasAqui`), uma vez cada uma e só nos primeiros
+    /// `diasVigiarListasIniciais` dias. Devolve os ids que deixam de ser vigiados.
     @discardableResult
-    public func juntarListasIniciaisRepetidas(criadasAqui: Set<UUID>) throws -> Set<UUID> {
-        guard !criadasAqui.isEmpty else { return [] }
+    public func juntarListasIniciaisRepetidas(criadasAqui: Set<UUID>, criadasEm: Date) throws -> Set<UUID> {
+        guard relogio.agora < daquiA(Self.diasVigiarListasIniciais, desde: criadasEm) else { return criadasAqui }
         let nomes = Set(Self.listasIniciais.map(\.nome))
-        let iniciais = try listas().filter { $0.permanente && nomes.contains($0.nome) }
-        var apagadas = Set<UUID>()
-        for lista in iniciais where criadasAqui.contains(lista.id) && lista.itens.isEmpty {
-            let haOutra = iniciais.contains { $0.nome == lista.nome && $0.id != lista.id && !apagadas.contains($0.id) }
+        let todas = try listas()
+        // As que já não existem (apagadas à mão, por exemplo) deixam de ser vigiadas.
+        var tratadas = criadasAqui.filter { id in !todas.contains { $0.id == id } }
+        for lista in todas where criadasAqui.contains(lista.id) && lista.permanente && nomes.contains(lista.nome) {
+            let haOutra = todas.contains { $0.id != lista.id && $0.nome == lista.nome && $0.permanente }
             guard haOutra else { continue }
-            contexto.delete(lista)
-            apagadas.insert(lista.id)
+            // Com pontos fica como está, e nunca mais é vigiada.
+            if lista.itens.isEmpty {
+                lista.permanente = false
+            }
+            tratadas.insert(lista.id)
         }
-        return apagadas
+        return tratadas
     }
 
     @discardableResult

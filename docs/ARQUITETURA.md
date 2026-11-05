@@ -106,7 +106,7 @@ Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma
 - **Limites:** no máximo `maxListas = 8` e até `maxPermanentes = 4`.
 - **Listas vazias:** uma lista não permanente sem pontos abertos ganha `vaziaDesde` e sai do Início ao fim de `diasListaVazia` (5). Espera pelos pontos expirados (ainda recuperáveis).
 - **Funções:** `quandoDesaparece`, `manterLista`, `definirPermanente` e `podeSerPermanente`.
-- **Listas iniciais:** Trabalho e Pessoal criam-se uma vez por aparelho, que guarda os ids em `UserDefaults`. Num aparelho novo, o iCloud pode trazer depois as antigas. `juntarListasIniciaisRepetidas(criadasAqui:)` apaga só as cópias que este aparelho criou, vazias aqui e com outra do mesmo nome: nunca a de outro aparelho, que pode ter pontos ainda por sincronizar.
+- **Listas iniciais:** Trabalho e Pessoal criam-se uma vez por aparelho, que guarda a data e os ids em `UserDefaults`. Num aparelho novo, o iCloud pode trazer depois as antigas. `juntarListasIniciaisRepetidas(criadasAqui:criadasEm:)` **não apaga nada**: a cópia criada aqui, se estiver vazia quando aparece a repetida, deixa de ser permanente e sai pela regra das listas vazias (5 dias). Assim, um ponto que outro aparelho lá tenha posto ainda tem tempo de chegar e segura-a. Só nos primeiros 7 dias, e uma vez por lista.
 
 ### Avisos
 

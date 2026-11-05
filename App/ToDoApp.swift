@@ -130,15 +130,22 @@ struct ToDoApp: App {
     private func manutencao(soSeMudou: Bool = false) {
         let contexto = Self.contentor.mainContext
         let tarefas = Tarefas(contexto: contexto)
-        // Que listas iniciais nasceram neste aparelho: só essas podem sair se o iCloud as repetir.
-        // Criam-se uma só vez por aparelho, para dois aparelhos não as recriarem um ao outro.
-        let chave = "listasIniciaisDesteAparelho"
-        var criadasAqui = Set((UserDefaults.standard.stringArray(forKey: chave) ?? []).compactMap(UUID.init(uuidString:)))
-        if criadasAqui.isEmpty, let novas = try? tarefas.criarListasIniciaisSeVazio(), !novas.isEmpty {
-            criadasAqui.formUnion(novas.map(\.id))
-            UserDefaults.standard.set(criadasAqui.map(\.uuidString), forKey: chave)
+        // As listas iniciais criam-se uma só vez por aparelho, e as deste aparelho ficam vigiadas
+        // uns dias, para o caso de o iCloud trazer as antigas (Tarefas.juntarListasIniciaisRepetidas).
+        let defaults = UserDefaults.standard
+        let chaveData = "listasIniciaisCriadasEm", chaveIds = "listasIniciaisVigiadas"
+        var vigiadas = Set((defaults.stringArray(forKey: chaveIds) ?? []).compactMap(UUID.init(uuidString:)))
+        if defaults.object(forKey: chaveData) == nil, let novas = try? tarefas.criarListasIniciaisSeVazio(), !novas.isEmpty {
+            vigiadas = Set(novas.map(\.id))
+            defaults.set(Date.now, forKey: chaveData)
+            defaults.set(vigiadas.map(\.uuidString), forKey: chaveIds)
         }
-        _ = try? tarefas.juntarListasIniciaisRepetidas(criadasAqui: criadasAqui)
+        if !vigiadas.isEmpty, let criadasEm = defaults.object(forKey: chaveData) as? Date,
+           let tratadas = try? tarefas.juntarListasIniciaisRepetidas(criadasAqui: vigiadas, criadasEm: criadasEm),
+           !tratadas.isEmpty {
+            vigiadas.subtract(tratadas)
+            defaults.set(vigiadas.map(\.uuidString), forKey: chaveIds)
+        }
         let mudou = (try? tarefas.avaliar()).map { $0.expirados + $0.apagados > 0 } ?? false
         try? contexto.save()
         guard mudou || !soSeMudou else { return }

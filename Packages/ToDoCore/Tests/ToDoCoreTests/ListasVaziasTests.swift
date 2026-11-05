@@ -183,59 +183,104 @@ final class ListasVaziasTests: BaseTestes {
     }
 
     /// O caso normal: aparelho novo, e o iCloud traz as listas antigas (uma com pontos, outra
-    /// vazia) depois de a app já ter criado as suas.
-    func testAparelhoNovoApagaAsSuasCopiasVazias() throws {
+    /// vazia) depois de a app já ter criado as suas. Nada se apaga logo: as cópias deste aparelho
+    /// deixam de ser permanentes e saem ao fim de 5 dias pela regra das listas vazias.
+    func testAparelhoNovoLargaAsSuasCopiasVazias() throws {
         let minhas = try tarefas.criarListasIniciaisSeVazio()
+        let ids = Set(minhas.map(\.id))
         let antigas = doOutroAparelho()
         try tarefas.criarItem(titulo: "Relatório", em: antigas.trabalho)
 
-        let apagadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)))
+        let tratadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: ids, criadasEm: relogio.agora)
+
+        XCTAssertEqual(tratadas, ids)
+        XCTAssertEqual(try tarefas.listas().count, 4)
+        XCTAssertTrue(minhas.allSatisfy { !$0.permanente })
+        XCTAssertTrue(antigas.trabalho.permanente)
+        XCTAssertTrue(antigas.pessoal.permanente)
+
+        try tarefas.avaliar()
+        avancar(dias: 5)
+        try tarefas.avaliar()
         try contexto.save()
 
-        XCTAssertEqual(apagadas, Set(minhas.map(\.id)))
         XCTAssertEqual(Set(try tarefas.listas().map(\.id)), [antigas.trabalho.id, antigas.pessoal.id])
         XCTAssertEqual(try contarItens(), 1)
     }
 
-    /// Escreveste logo na lista do aparelho novo: ela tem pontos e fica, mesmo repetida.
-    func testCopiaPropriaComPontosNuncaSai() throws {
+    /// O bug que a revisão encontrou: o iCloud traz a lista antiga antes dos pontos que o outro
+    /// iPhone pôs na cópia deste. Apagar logo perdia esses pontos; agora o ponto que chega
+    /// depois segura a lista.
+    func testPontoQueChegaDepoisSeguraACopia() throws {
         let minhas = try tarefas.criarListasIniciaisSeVazio()
         let meuTrabalho = try XCTUnwrap(minhas.first { $0.nome == "Trabalho" })
-        try tarefas.criarItem(titulo: "Ponto do primeiro dia", em: meuTrabalho)
-        let antigas = doOutroAparelho()
+        _ = doOutroAparelho()
+        try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)), criadasEm: relogio.agora)
+        try tarefas.avaliar()
 
-        try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)))
+        avancar(dias: 2)
+        try tarefas.criarItem(titulo: "Ligar ao banco", em: meuTrabalho)
+        avancar(dias: 3)
+        try tarefas.avaliar()
         try contexto.save()
 
         XCTAssertTrue(try existe(meuTrabalho))
-        XCTAssertTrue(try existe(antigas.trabalho))
-        XCTAssertEqual(try tarefas.listas().filter { $0.nome == "Pessoal" }.map(\.id), [antigas.pessoal.id])
-        XCTAssertEqual(try contarItens(), 1)
+        XCTAssertEqual(meuTrabalho.itens.map(\.titulo), ["Ligar ao banco"])
     }
 
-    /// O aparelho antigo vê as cópias vazias do novo, mas não as criou: não lhes toca, mesmo que
-    /// do lado de lá já tenham pontos por sincronizar.
-    func testNuncaApagaACopiaDeOutroAparelho() throws {
+    /// Escreveste logo na lista do aparelho novo: fica permanente, e nunca mais é vigiada
+    /// (meses depois, vazia, não pode sair sozinha).
+    func testCopiaPropriaComPontosFicaEDeixaDeSerVigiada() throws {
+        let minhas = try tarefas.criarListasIniciaisSeVazio()
+        let ids = Set(minhas.map(\.id))
+        let meuTrabalho = try XCTUnwrap(minhas.first { $0.nome == "Trabalho" })
+        try tarefas.criarItem(titulo: "Ponto do primeiro dia", em: meuTrabalho)
+        _ = doOutroAparelho()
+
+        let tratadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: ids, criadasEm: relogio.agora)
+
+        XCTAssertTrue(meuTrabalho.permanente)
+        XCTAssertEqual(tratadas, ids)
+    }
+
+    /// O aparelho antigo vê as cópias do novo, mas não as criou: não lhes toca.
+    func testNuncaMexeNaCopiaDeOutroAparelho() throws {
         let novas = doOutroAparelho()
         let minhaLista = try tarefas.criarLista(nome: "Trabalho", cor: .azul)
         try tarefas.definirPermanente(minhaLista, true)
+        let fantasma = UUID()
 
-        let apagadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: [UUID()])
+        let tratadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: [fantasma], criadasEm: relogio.agora)
 
-        XCTAssertTrue(apagadas.isEmpty)
-        XCTAssertTrue(try existe(novas.trabalho))
-        XCTAssertTrue(try existe(novas.pessoal))
-        XCTAssertTrue(try existe(minhaLista))
+        // Uma lista vigiada que já não existe deixa de ser vigiada.
+        XCTAssertEqual(tratadas, [fantasma])
+        XCTAssertTrue(novas.trabalho.permanente)
+        XCTAssertTrue(novas.pessoal.permanente)
+        XCTAssertTrue(minhaLista.permanente)
     }
 
-    /// Sem repetidas não sai nada, mesmo vazias.
-    func testListasIniciaisSemRepetidasFicam() throws {
+    /// Passados os primeiros dias, as listas deste aparelho já não são vigiadas.
+    func testDepoisDosPrimeirosDiasNaoMexe() throws {
+        let minhas = try tarefas.criarListasIniciaisSeVazio()
+        let ids = Set(minhas.map(\.id))
+        let criadasEm = relogio.agora
+        avancar(dias: Tarefas.diasVigiarListasIniciais)
+        _ = doOutroAparelho()
+
+        let tratadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: ids, criadasEm: criadasEm)
+
+        XCTAssertEqual(tratadas, ids)
+        XCTAssertTrue(minhas.allSatisfy(\.permanente))
+    }
+
+    /// Sem repetidas não se mexe em nada, e continuam vigiadas.
+    func testSemRepetidasContinuaAVigiar() throws {
         let minhas = try tarefas.criarListasIniciaisSeVazio()
 
-        let apagadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)))
+        let tratadas = try tarefas.juntarListasIniciaisRepetidas(criadasAqui: Set(minhas.map(\.id)), criadasEm: relogio.agora)
 
-        XCTAssertTrue(apagadas.isEmpty)
-        XCTAssertEqual(try tarefas.listas().count, 2)
+        XCTAssertTrue(tratadas.isEmpty)
+        XCTAssertTrue(minhas.allSatisfy(\.permanente))
     }
 
     func testListaApagadaFicaMarcada() throws {
