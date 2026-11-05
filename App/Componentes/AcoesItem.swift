@@ -145,7 +145,54 @@ struct AcoesDeItem: ViewModifier {
     }
 }
 
+/// Confirmação de apagar uma lista, a mesma em todos os ecrãs. Com `fechar`, o ecrã da lista
+/// fecha primeiro e a lista só sai depois da animação, para não ficar em branco a fechar.
+struct ApagarLista: ViewModifier {
+    @Binding var lista: Lista?
+    var fechar: (() -> Void)?
+
+    @Environment(\.modelContext) private var contexto
+
+    func body(content: Content) -> some View {
+        content
+            .confirmationDialog(
+                "Apagar a lista «\(lista?.nome ?? "")»?",
+                isPresented: Binding(presente: $lista),
+                titleVisibility: .visible,
+                presenting: lista
+            ) { lista in
+                Button("Apagar", role: .destructive) { apagar(lista) }
+            } message: { lista in
+                Text(mensagem(lista))
+            }
+    }
+
+    private func mensagem(_ lista: Lista) -> String {
+        if lista.ehCompras { return "Apaga todas as secções e pontos. Esta ação não pode ser desfeita." }
+        return switch Tarefas(contexto: contexto).contarItens(de: lista) {
+        case 0: "A lista está vazia."
+        case 1: "Apaga também 1 item. Esta ação não pode ser desfeita."
+        case let n: "Apaga também \(n) itens. Esta ação não pode ser desfeita."
+        }
+    }
+
+    private func apagar(_ lista: Lista) {
+        let tarefas = Tarefas(contexto: contexto)
+        guard let fechar else {
+            withAnimation { tarefas.apagar(lista) }
+            return
+        }
+        fechar()
+        // Se sair antes, o ecrã mostra-se vazio (`foiApagado`): é só estética, não um crash.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { tarefas.apagar(lista) }
+    }
+}
+
 extension View {
+    func apagarLista(_ lista: Binding<Lista?>, fechar: (() -> Void)? = nil) -> some View {
+        modifier(ApagarLista(lista: lista, fechar: fechar))
+    }
+
     func acoesDeItem(
         aEditar: Binding<Item?>,
         aApagar: Binding<Item?>,

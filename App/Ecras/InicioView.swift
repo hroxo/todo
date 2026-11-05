@@ -131,18 +131,7 @@ struct InicioView: View {
                 formulario = .editar(lista)
             }
             #endif
-            .confirmationDialog(
-                "Apagar a lista «\(aApagar?.nome ?? "")»?",
-                isPresented: Binding(presente: $aApagar),
-                titleVisibility: .visible,
-                presenting: aApagar
-            ) { lista in
-                Button("Apagar", role: .destructive) {
-                    withAnimation { Tarefas(contexto: contexto).apagar(lista) }
-                }
-            } message: { lista in
-                Text(mensagemApagar(lista))
-            }
+            .apagarLista($aApagar)
         }
     }
 
@@ -436,12 +425,4 @@ struct InicioView: View {
         estado.reagendarAvisos()
     }
 
-
-    private func mensagemApagar(_ lista: Lista) -> String {
-        switch Tarefas(contexto: contexto).contarItens(de: lista) {
-        case 0: "A lista está vazia."
-        case 1: "Apaga também 1 item. Esta ação não pode ser desfeita."
-        case let n: "Apaga também \(n) itens. Esta ação não pode ser desfeita."
-        }
-    }
 }

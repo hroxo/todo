@@ -4,6 +4,44 @@ O que correu mal, como se descobriu e o que ficou para não voltar a acontecer. 
 recente fica em cima. Cada afirmação diz o nível de certeza: **visto no iPhone**, **visto no
 simulador**, **passou no CI** ou **suspeita**.
 
+## Novembro de 2026: crashes de testers ao voltar do standby e ao abrir pontos
+
+### Para quem usa a app
+
+Dois testers viram a app fechar-se: um ao voltar a ela depois de a ter deixado em standby,
+outro ao abrir pontos. Os dados não eram afetados.
+
+**Estado:** corrigido sem ver os relatórios de crash. As causas abaixo são **suspeitas**, tiradas
+da leitura do código. O código de terminação no relatório confirma qual era:
+`0x8badf00d` aponta para a primeira, "backing data could no longer be found" para a segunda.
+
+### Causas prováveis
+
+1. **Tempo em segundo plano sem fim marcado.** Ao sair da app, o modelo do iPhone reescrevia
+   até 12 avisos com `beginBackgroundTask()` sem bloco de expiração. Se passasse dos cerca de
+   30 s que o iOS dá, o iOS matava a app, e quem voltava via-a arrancar do zero.
+2. **Ler um ponto ou lista já apagados.** O SwiftData para a app em vez de devolver um valor
+   vazio. A proteção existia no Detalhe e na Lista, mas não no `.id(atual.id)` do Detalhe, nas
+   linhas, nos cartões das listas nem no "Anular". Com o iCloud, outro aparelho pode apagar a
+   qualquer momento.
+
+### Correção
+
+- Bloco de expiração que cancela a escrita e devolve o tempo; em segundo plano escreve só 3.
+- `foiApagado` no núcleo e a guarda em todos os ecrãs que guardam um modelo; o Detalhe usa o
+  `persistentModelID` como identidade.
+- De caminho: as listas iniciais repetidas pelo iCloud juntam-se, os pontos expiram com a app
+  aberta, a marca do calendário dura 1 s em vez de 10 (já não culpa o calendário por outros
+  crashes), o cabeçalho usa sempre o calendário gregoriano, as fotos reduzem-se sem as
+  descodificar inteiras e as quatro cópias do "Apagar lista" passaram a uma.
+
+### O que fica para o futuro
+
+- Um ecrã que guarda um modelo (navegação, `@State`, aviso de "Anular") verifica `foiApagado`
+  antes de o ler.
+- Trabalho em segundo plano tem sempre bloco de expiração e um limite que caiba nos 30 s.
+- Ver os relatórios de crash do TestFlight antes de corrigir, quando existirem.
+
 ## Novembro de 2026: a app ficava em branco ao abrir com o calendário autorizado
 
 ### Para quem usa a app

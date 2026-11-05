@@ -38,7 +38,7 @@ struct ItemDetalheView: View {
 
     var body: some View {
         // Durante a animação de fecho depois de apagar, o item já não existe.
-        if item.isDeleted || item.modelContext == nil {
+        if item.foiApagado {
             Color.clear
         } else {
             conteudo
@@ -181,7 +181,7 @@ struct ItemDetalheView: View {
             nota = item.nota ?? ""
         }
         .onDisappear {
-            guard !item.isDeleted, item.modelContext != nil else { return }
+            guard !item.foiApagado else { return }
             guardarTitulo()
             tarefas.definirNota(item, nota)
         }
@@ -506,13 +506,14 @@ struct DetalheNavegavel: View {
     var body: some View {
         ZStack {
             ItemDetalheView(item: atual, navegacao: navegacao)
-                .id(atual.id)
+                // O identificador da base lê-se mesmo com o item apagado; o `id` não.
+                .id(atual.persistentModelID)
                 .transition(transicao)
         }
     }
 
     private var navegacao: NavegacaoDetalhe? {
-        guard !atual.isDeleted, atual.modelContext != nil, let lista = atual.lista else { return nil }
+        guard !atual.foiApagado, let lista = atual.lista else { return nil }
         let ordem = NavegacaoItens.ordem(lista)
         guard ordem.contains(where: { $0.id == atual.id }) else { return nil }
         return NavegacaoDetalhe(

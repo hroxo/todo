@@ -11,6 +11,16 @@ struct CartaoLista: View {
     @Environment(\.modelContext) private var contexto
 
     var body: some View {
+        // Na animação de saída a lista pode já estar apagada (por exemplo, noutro aparelho).
+        if lista.foiApagado {
+            Color.clear
+        } else {
+            conteudo
+        }
+    }
+
+    @ViewBuilder
+    private var conteudo: some View {
         let cor = lista.cor
         // Nas compras conta o que falta comprar e o anel enche com o carrinho (DESIGN.md 7.15).
         let artigos = lista.itensAtivos.flatMap(\.subtopicosOrdenados)

@@ -47,6 +47,7 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
     /// Avisos escritos pelo modelo em cada reagendamento: os mais próximos, que são os que
     /// importam e cabem no tempo que o iOS dá em segundo plano.
     private static let maxEscritos = 12
+    private static let maxEscritosFundo = 3
 
     /// Substitui todos os avisos pendentes pelos mais próximos (o iOS guarda no máximo 64).
     /// Agenda logo com o texto de base; se o modelo do iPhone estiver disponível, reescreve
@@ -71,11 +72,19 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
 
         escrita?.cancel()
         guard inteligente, Inteligencia.disponivel else { return }
-        let porEscrever = avisos.prefix(Self.maxEscritos).filter { escritos[Self.chave($0)] == nil }
+        // Em segundo plano o iOS dá cerca de 30 s: só os mais próximos, para caber.
+        let maximo = UIApplication.shared.applicationState == .background ? Self.maxEscritosFundo : Self.maxEscritos
+        let porEscrever = avisos.prefix(maximo).filter { escritos[Self.chave($0)] == nil }
         guard !porEscrever.isEmpty else { return }
         escrita = Task { @MainActor in
-            let tarefa = UIApplication.shared.beginBackgroundTask()
-            defer { UIApplication.shared.endBackgroundTask(tarefa) }
+            // Sem isto, quando o tempo extra acaba o iOS mata a app (parece um crash ao voltar).
+            nonisolated(unsafe) var tarefa = UIBackgroundTaskIdentifier.invalid
+            tarefa = UIApplication.shared.beginBackgroundTask { [weak self] in
+                self?.escrita?.cancel()
+                UIApplication.shared.endBackgroundTask(tarefa)
+                tarefa = .invalid
+            }
+            defer { if tarefa != .invalid { UIApplication.shared.endBackgroundTask(tarefa) } }
             for aviso in porEscrever {
                 guard !Task.isCancelled else { return }
                 guard let corpo = await Inteligencia.corpoAviso(aviso, base: TextoAviso.corpo(aviso)) else { continue }

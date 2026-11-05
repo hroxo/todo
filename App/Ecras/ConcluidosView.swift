@@ -21,7 +21,7 @@ struct ConcluidosView: View {
         let agora = Date.now
         @Bindable var estado = estado
         let filtro = estado.filtroConcluidos
-        let todos = concluidos.sorted { ($0.concluidoEm ?? .distantPast) > ($1.concluidoEm ?? .distantPast) }
+        let todos = concluidos.filter { !$0.foiApagado }.sorted { ($0.concluidoEm ?? .distantPast) > ($1.concluidoEm ?? .distantPast) }
         let itens = filtro.aplicar(todos, agora: agora)
 
         NavigationStack {

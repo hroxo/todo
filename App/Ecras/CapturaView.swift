@@ -141,7 +141,8 @@ struct CapturaView: View {
             }
             .tint(cor.tinta)
             .onAppear {
-                listaId = estado.listaAtual?.id ?? UUID(uuidString: ultimaListaId)
+                // A lista aberta pode ter desaparecido entretanto (lista vazia, outro aparelho).
+                listaId = estado.listaAtual.flatMap { $0.foiApagado ? nil : $0.id } ?? UUID(uuidString: ultimaListaId)
                 foco = .texto
             }
             .defaultFocus($foco, .texto)

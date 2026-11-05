@@ -61,6 +61,12 @@ public enum TipoLista: String, CaseIterable, Codable, Sendable {
     case normal, compras
 }
 
+extension PersistentModel {
+    /// Apagado (ou a apagar) da base: ler-lhe os dados para a app. Os ecrãs que guardam um
+    /// modelo (navegação, estado, animação de saída) verificam isto antes de o desenhar.
+    public var foiApagado: Bool { isDeleted || modelContext == nil }
+}
+
 /// Compatível com o CloudKit (EsquemaV6): sem atributos únicos, tudo com valor por defeito e
 /// as relações para muitos opcionais; `itens` dá sempre uma lista.
 @Model

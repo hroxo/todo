@@ -35,6 +35,8 @@ struct ToDoApp: App {
     @State private var calendario = Calendario(contentor: ToDoApp.contentor)
     @State private var conta = ContaApple()
     @Environment(\.scenePhase) private var fase
+    /// Verdadeiro ao arrancar e depois de ir para segundo plano.
+    @State private var vemDoFundo = true
 
     init() {
         // Antes de tudo, para o iOS poder entregar as ações das notificações.
@@ -56,6 +58,10 @@ struct ToDoApp: App {
                             .environment(conta)
                             .environment(\.agora, linha.date)
                             .modifier(CeuDoModo(agora: linha.date))
+                            // Um ponto que chega ao fim do prazo com a app aberta expira logo.
+                            .onChange(of: linha.date) {
+                                if fase == .active { manutencao(soSeMudou: true) }
+                            }
                     }
                 }
             }
@@ -71,10 +77,15 @@ struct ToDoApp: App {
             // Sobre a base vazia, reagendar apagava os avisos e o widget ficava sem pontos.
             guard Self.erroBaseDados == nil else { return }
             switch nova {
-            case .active:
+            // Só ao abrir e ao voltar do segundo plano: o Centro de Controlo e os alertas também
+            // passam por inativa, e não precisam de refazer os avisos todos.
+            case .active where vemDoFundo:
+                vemDoFundo = false
                 manutencao()
                 calendario.atualizar()
-            case .background where !Demo.ativo:
+            case .background:
+                vemDoFundo = true
+                guard !Demo.ativo else { return }
                 calendario.aoSairParaSegundoPlano()
                 Self.notificacoes.reagendar()
             default: break
@@ -113,14 +124,16 @@ struct ToDoApp: App {
         }
     }
 
-    /// Sempre que a app abre ou volta ao primeiro plano (especificação 4.2).
+    /// Sempre que a app abre ou volta ao primeiro plano (especificação 4.2) e, com
+    /// `soSeMudou`, de minuto a minuto: aí só refaz os avisos e o widget se algo expirou.
     @MainActor
-    private func manutencao() {
+    private func manutencao(soSeMudou: Bool = false) {
         let contexto = Self.contentor.mainContext
         let tarefas = Tarefas(contexto: contexto)
         _ = try? tarefas.criarListasIniciaisSeVazio()
-        _ = try? tarefas.avaliar()
+        let mudou = (try? tarefas.avaliar()).map { $0.expirados + $0.apagados > 0 } ?? false
         try? contexto.save()
+        guard mudou || !soSeMudou else { return }
         // Na demonstração não há avisos, mas o widget mostra os dados de exemplo.
         if Demo.ativo {
             Self.notificacoes.atualizarWidget()

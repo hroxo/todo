@@ -19,7 +19,7 @@ struct ExpiradosView: View {
     var body: some View {
         @Bindable var estado = estado
         let filtro = estado.filtroExpirados
-        let todos = expirados.sorted { ($0.expiradoEm ?? .distantPast) > ($1.expiradoEm ?? .distantPast) }
+        let todos = expirados.filter { !$0.foiApagado }.sorted { ($0.expiradoEm ?? .distantPast) > ($1.expiradoEm ?? .distantPast) }
         let itens = filtro.aplicar(todos, agora: .now)
 
         NavigationStack {

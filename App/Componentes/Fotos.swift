@@ -1,3 +1,4 @@
+import ImageIO
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -5,16 +6,17 @@ import UIKit
 /// Reduz uma foto da biblioteca para JPEG (lado maior ≤ 2048 px, qualidade 0,8; DESIGN.md 7.7).
 enum ProcessarFoto {
     static func jpeg(_ dados: Data, ladoMaximo: CGFloat = 2048, qualidade: CGFloat = 0.8) -> Data? {
-        guard let imagem = UIImage(data: dados) else { return nil }
-        let maior = max(imagem.size.width, imagem.size.height)
-        let escala = min(1, ladoMaximo / maior)
-        let tamanho = CGSize(width: (imagem.size.width * escala).rounded(), height: (imagem.size.height * escala).rounded())
-        let formato = UIGraphicsImageRendererFormat()
-        formato.scale = 1
-        let reduzida = UIGraphicsImageRenderer(size: tamanho, format: formato).image { _ in
-            imagem.draw(in: CGRect(origin: .zero, size: tamanho))
-        }
-        return reduzida.jpegData(compressionQuality: qualidade)
+        // Reduz sem descodificar a foto inteira: uma de 24 MP ocupava ~100 MB só para isto.
+        // Nunca aumenta, e aplica a rotação da câmara.
+        let opcoes = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: ladoMaximo,
+        ] as CFDictionary
+        guard let fonte = CGImageSourceCreateWithData(dados as CFData, nil),
+              let reduzida = CGImageSourceCreateThumbnailAtIndex(fonte, 0, opcoes)
+        else { return nil }
+        return UIImage(cgImage: reduzida).jpegData(compressionQuality: qualidade)
     }
 
     /// Carrega e reduz as fotos escolhidas no PhotosPicker.

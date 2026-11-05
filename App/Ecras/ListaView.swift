@@ -15,7 +15,7 @@ struct ListaView: View {
     @State private var aEditar: Item?
     @State private var aApagar: Item?
     @State private var personalizar = false
-    @State private var apagarLista = false
+    @State private var listaAApagar: Lista?
     @State private var sucessos = 0
     @State private var ultimoConcluido: UltimoConcluido?
 
@@ -29,7 +29,7 @@ struct ListaView: View {
     private var tarefas: Tarefas { Tarefas(contexto: contexto) }
 
     var body: some View {
-        if lista.isDeleted || lista.modelContext == nil {
+        if lista.foiApagado {
             Color.clear
         } else if lista.ehCompras {
             ComprasView(lista: lista)
@@ -96,7 +96,7 @@ struct ListaView: View {
                         Label("Exportar CSV", systemImage: "square.and.arrow.up")
                     }
                     Button(role: .destructive) {
-                        apagarLista = true
+                        listaAApagar = lista
                     } label: {
                         Label("Apagar lista", systemImage: "trash")
                     }
@@ -128,20 +128,7 @@ struct ListaView: View {
         .sheet(isPresented: $personalizar) {
             PersonalizarListaView(modo: .editar(lista))
         }
-        .confirmationDialog(
-            "Apagar a lista «\(lista.nome)»?",
-            isPresented: $apagarLista,
-            titleVisibility: .visible
-        ) {
-            Button("Apagar", role: .destructive) {
-                let tarefas = tarefas
-                let lista = lista
-                dismiss()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { tarefas.apagar(lista) }
-            }
-        } message: {
-            Text(mensagemApagar)
-        }
+        .apagarLista($listaAApagar) { dismiss() }
     }
 
     /// Uma lista vazia e não permanente desaparece ao fim de 5 dias (DESIGN.md 7.17).
@@ -253,13 +240,5 @@ struct ListaView: View {
         .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
         .padding(.horizontal, Espaco.margem)
         .padding(.bottom, Espaco.curto)
-    }
-
-    private var mensagemApagar: String {
-        switch tarefas.contarItens(de: lista) {
-        case 0: "A lista está vazia."
-        case 1: "Apaga também 1 item. Esta ação não pode ser desfeita."
-        case let n: "Apaga também \(n) itens. Esta ação não pode ser desfeita."
-        }
     }
 }

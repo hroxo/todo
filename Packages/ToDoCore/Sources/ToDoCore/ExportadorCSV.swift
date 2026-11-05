@@ -43,12 +43,7 @@ public enum ExportadorCSV {
     public static func nomeFicheiro(lista: String?, data: Date, calendario: Calendar = .current) -> String {
         let c = calendario.dateComponents([.year, .month, .day], from: data)
         let dia = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
-        let proibidos = CharacterSet(charactersIn: "/\\:?%*|\"<>").union(.newlines).union(.controlCharacters)
-        let nome = (lista ?? "tudo")
-            .components(separatedBy: proibidos)
-            .joined(separator: "-")
-            .trimmingCharacters(in: .whitespaces)
-        return "ToDo-\(nome.isEmpty ? "lista" : nome)-\(dia).csv"
+        return "ToDo-\(Formatos.nomeFicheiro(lista ?? "tudo"))-\(dia).csv"
     }
 
     /// Um campo: entre aspas quando tem o separador, aspas ou quebras de linha; as aspas

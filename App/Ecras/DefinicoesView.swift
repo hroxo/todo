@@ -188,19 +188,7 @@ struct DefinicoesView: View {
                 estado.reagendarAvisos()
             }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
-            .confirmationDialog(
-                "Apagar a lista «\(aApagar?.nome ?? "")»?",
-                isPresented: Binding(presente: $aApagar),
-                titleVisibility: .visible,
-                presenting: aApagar
-            ) { lista in
-                Button("Apagar", role: .destructive) {
-                    withAnimation { Tarefas(contexto: contexto).apagar(lista) }
-                }
-            } message: { lista in
-                let n = Tarefas(contexto: contexto).contarItens(de: lista)
-                Text(n == 1 ? "Apaga também 1 item." : "Apaga também \(n) itens.")
-            }
+            .apagarLista($aApagar)
         }
     }
 

@@ -18,6 +18,15 @@ struct LinhaItem: View {
     private var prazo: Prazo? { Prazo(item: item, agora: agora) }
 
     var body: some View {
+        // Na animação de saída o item pode já estar apagado (por exemplo, noutro aparelho).
+        if item.foiApagado {
+            Color.clear
+        } else {
+            conteudo
+        }
+    }
+
+    private var conteudo: some View {
         HStack(spacing: Espaco.grelha) {
             botaoConcluir
 

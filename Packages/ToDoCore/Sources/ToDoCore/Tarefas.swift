@@ -308,7 +308,8 @@ public final class Tarefas {
     /// prazo e o mesmo anel. Não conta como ação. Só vale para itens principais ainda
     /// concluídos.
     public func anular(_ item: Item, para antes: AntesDeConcluir) {
-        guard !item.ehSubtopico, item.estado == .concluido else { return }
+        // O aviso dura 4 s: entretanto o item pode ter sido apagado (noutro aparelho).
+        guard !item.foiApagado, !item.ehSubtopico, item.estado == .concluido else { return }
         item.estado = antes.estado
         item.concluidoEm = nil
         item.expiraEm = antes.expiraEm
@@ -413,6 +414,7 @@ public final class Tarefas {
     /// e apaga o que já ficou tempo suficiente em Expirados ou Concluídos.
     @discardableResult
     public func avaliar() throws -> (expirados: Int, apagados: Int) {
+        try juntarListasIniciaisRepetidas()
         let agora = relogio.agora
         var expirados = 0
         var apagados = 0
@@ -431,6 +433,21 @@ public final class Tarefas {
         }
         try avaliarListasVazias()
         return (expirados, apagados)
+    }
+
+    /// Num aparelho novo a app cria Trabalho e Pessoal antes de o iCloud trazer as que já
+    /// existiam, e ficavam repetidas. Das iniciais com o mesmo nome sai a vazia; se estiverem
+    /// todas vazias fica a de menor id, para todos os aparelhos apagarem a mesma. Nunca apaga
+    /// uma lista com pontos.
+    private func juntarListasIniciaisRepetidas() throws {
+        let nomes = Set(Self.listasIniciais.map(\.nome))
+        let iniciais = try listas().filter { $0.permanente && nomes.contains($0.nome) }
+        for repetidas in Dictionary(grouping: iniciais, by: \.nome).values where repetidas.count > 1 {
+            let fica = repetidas.first { !$0.itens.isEmpty } ?? repetidas.min { $0.id.uuidString < $1.id.uuidString }!
+            for lista in repetidas where lista.id != fica.id && lista.itens.isEmpty {
+                contexto.delete(lista)
+            }
+        }
     }
 
     /// Uma lista não permanente sem pontos abertos começa a contar; ao fim de 5 dias

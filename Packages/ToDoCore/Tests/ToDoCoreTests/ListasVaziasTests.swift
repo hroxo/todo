@@ -169,6 +169,41 @@ final class ListasVaziasTests: BaseTestes {
         )
     }
 
+    /// Num aparelho novo, o iCloud traz as listas iniciais depois de a app já as ter criado.
+    func testListasIniciaisRepetidasJuntamSemPerderPontos() throws {
+        try tarefas.criarListasIniciaisSeVazio()
+        let pessoalLocal = try XCTUnwrap(try tarefas.listas().first { $0.nome == "Pessoal" })
+        // As que chegam do outro aparelho: o Trabalho tem pontos, o Pessoal está vazio.
+        let trabalho = Lista(nome: "Trabalho", cor: .azul, ordem: 2)
+        let pessoal = Lista(nome: "Pessoal", cor: .roxo, ordem: 3)
+        for lista in [trabalho, pessoal] {
+            lista.permanente = true
+            contexto.insert(lista)
+        }
+        try tarefas.criarItem(titulo: "Relatório", em: trabalho)
+
+        try tarefas.avaliar()
+        try contexto.save()
+
+        let nomes = try tarefas.listas().map(\.nome).sorted()
+        XCTAssertEqual(nomes, ["Pessoal", "Trabalho"])
+        XCTAssertTrue(try existe(trabalho))
+        XCTAssertEqual(try contarItens(), 1)
+        // Duas vazias: fica a de menor id, a mesma em todos os aparelhos.
+        let esperado = [pessoal, pessoalLocal].min { $0.id.uuidString < $1.id.uuidString }!.id
+        XCTAssertEqual(try tarefas.listas().first { $0.nome == "Pessoal" }?.id, esperado)
+    }
+
+    func testListaApagadaFicaMarcada() throws {
+        let ideias = try tarefas.criarLista(nome: "Ideias", cor: .amarelo)
+        try contexto.save()
+        XCTAssertFalse(ideias.foiApagado)
+
+        tarefas.apagar(ideias)
+        try contexto.save()
+        XCTAssertTrue(ideias.foiApagado)
+    }
+
     func testListaPermanenteNaoTemAviso() throws {
         let casa = try tarefas.criarLista(nome: "Casa", cor: .verde)
         try tarefas.definirPermanente(casa, true)

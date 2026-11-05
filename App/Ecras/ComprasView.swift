@@ -13,7 +13,7 @@ struct ComprasView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(EstadoApp.self) private var estado
     @State private var personalizar = false
-    @State private var apagarLista = false
+    @State private var listaAApagar: Lista?
     @State private var lojaARenomear: Item?
     @State private var novoNome = ""
 
@@ -71,7 +71,7 @@ struct ComprasView: View {
                     }
                     BotaoPermanente(lista: lista)
                     Button(role: .destructive) {
-                        apagarLista = true
+                        listaAApagar = lista
                     } label: {
                         Label("Apagar lista", systemImage: "trash")
                     }
@@ -96,20 +96,7 @@ struct ComprasView: View {
                 if let loja = lojaARenomear { try? tarefas.editarTitulo(loja, para: novoNome) }
             }
         }
-        .confirmationDialog(
-            "Apagar a lista «\(lista.nome)»?",
-            isPresented: $apagarLista,
-            titleVisibility: .visible
-        ) {
-            Button("Apagar", role: .destructive) {
-                let tarefas = tarefas
-                let lista = lista
-                dismiss()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { tarefas.apagar(lista) }
-            }
-        } message: {
-            Text("Apaga todas as secções e pontos. Esta ação não pode ser desfeita.")
-        }
+        .apagarLista($listaAApagar) { dismiss() }
     }
 
     /// Por comprar primeiro; os riscados descem, pela ordem em que foram escritos.
@@ -219,7 +206,7 @@ enum PartilhaCompras {
         let pasta = gestor.temporaryDirectory.appendingPathComponent("Partilhar", isDirectory: true)
         try? gestor.removeItem(at: pasta)
         guard (try? gestor.createDirectory(at: pasta, withIntermediateDirectories: true)) != nil else { return }
-        let url = pasta.appendingPathComponent("\(lista.nome).\(ListaPartilhada.extensao)")
+        let url = pasta.appendingPathComponent("\(Formatos.nomeFicheiro(lista.nome)).\(ListaPartilhada.extensao)")
         guard (try? dados.write(to: url, options: .atomic)) != nil else { return }
         PartilhaCSV.mostrarFolha(com: url)
     }

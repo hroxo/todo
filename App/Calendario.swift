@@ -157,8 +157,10 @@ final class Calendario {
             guard !Task.isCancelled else { return }
             marcarLeitura(true)
             await lerEventos()
-            // Os eventos ainda têm de se desenhar: só depois disso a leitura correu bem.
-            try? await Task.sleep(for: .seconds(10))
+            // Os eventos ainda têm de se desenhar. Basta 1 s: isto corre na linha principal, por
+            // isso um desenho bloqueado nunca chega aqui. Mais tempo culpava o calendário por
+            // crashes de outras partes.
+            try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             marcarLeitura(false)
         }
