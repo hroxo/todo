@@ -156,6 +156,11 @@ enum Demo {
             estado.demoWidgets = true
         case "personalizar":
             estado.abrirPersonalizar = true
+        case "quatro-listas":
+            // Só 4 espaços: a segunda página tem apenas o cartão "Nova lista".
+            for lista in listas.dropFirst(Espacos.porPagina) { contexto.delete(lista) }
+            try? contexto.save()
+            estado.irParaUltimaPagina = true
         case "calendario":
             estado.rolarParaCalendario = true
         case "evento":

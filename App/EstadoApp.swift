@@ -13,6 +13,10 @@ final class EstadoApp {
     /// Navegação do separador Listas (Lista → Detalhe).
     var caminho = NavigationPath()
     var mostrarCaptura = false
+    /// Pressão longa no "+": abre o formulário de nova lista.
+    var mostrarNovaLista = false
+    /// Só para o modo de demonstração: o Início abre na última página (a do "Nova lista").
+    var irParaUltimaPagina = false
     /// Só para o modo de demonstração: abre Personalizar lista no Início.
     var abrirPersonalizar = false
     /// Só para o modo de demonstração: desce até ao calendário no Início.

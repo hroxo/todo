@@ -284,8 +284,10 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.12b Espaços com setas e calendário por espaço (mocks 11–14)
 
-- **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 4 espaços, sem setas, como antes.
+- **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 3 espaços, sem setas, como antes.
+- **Exatamente 4 espaços**: a primeira página fica cheia, por isso já há uma segunda página, só com o cartão "Nova lista" (rótulo "Nova lista" em vez de "Espaços 5–…").
 - **Máximo de 8**: na última página, "Nova lista" só aparece se houver menos de 8; com 8, aparece a nota "Máximo de 8 espaços".
+- **Pressão longa no "+"** de baixo (meio segundo, com vibração): abre Nova lista; com 8, mostra o aviso do máximo. O toque curto continua a abrir a captura.
 - **Hoje no calendário por espaço** [Decidido]: eventos de todos os espaços, num só grupo branco, por hora. Cabeçalho "HOJE NO CALENDÁRIO" com "4 eventos · todos os espaços". Cada linha (62 pt): horas, barra da cor do calendário, título e, por baixo, o espaço (círculo do ícone de 18 pt, nome em `.footnote` semibold) e o local. O "+" fica na cor do espaço e cria o ponto nesse espaço. Calendários sem espaço não aparecem.
 - Imagens dos mocks: `design/mocks/*.png` (geradas com `scripts/mocks.sh` a partir de `design/mocks/html/`).
 - **Eventos sem espaço** (Melhoria 6.1) [Decidido 22/10/2026, substitui "calendários sem espaço não aparecem"]: aparecem também, com um círculo tracejado de 18 pt e "Sem espaço" no lugar do espaço. O "+" de um evento sem espaço cria o ponto na última lista usada (pressão longa: escolher outra). Cada calendário tem três destinos: um espaço, **Sem espaço** (aparece) ou **Não mostrar** (escondido).

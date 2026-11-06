@@ -7,9 +7,9 @@ public enum Espacos {
     public static let porPagina = 4
 
     /// Divide os elementos da grelha (espaços e, no fim, "Nova lista") em páginas de 4.
-    /// Até 4 espaços há uma só página com tudo.
+    /// Até 3 espaços há uma só página com tudo; com 4 já há segunda página, só com "Nova lista".
     public static func paginas<T>(_ elementos: [T], espacos: Int) -> [[T]] {
-        guard espacos > porPagina else { return [elementos] }
+        guard espacos >= porPagina else { return [elementos] }
         return stride(from: 0, to: elementos.count, by: porPagina).map {
             Array(elementos[$0..<min($0 + porPagina, elementos.count)])
         }
@@ -18,6 +18,8 @@ public enum Espacos {
     /// "Espaços 1–4 de 6".
     public static func rotuloPagina(_ pagina: Int, espacos: Int) -> String {
         let primeiro = pagina * porPagina + 1
+        // Página só com o cartão "Nova lista" (acontece com 4 espaços).
+        if primeiro > espacos { return "Nova lista" }
         let ultimo = min((pagina + 1) * porPagina, espacos)
         return primeiro == ultimo ? "Espaço \(primeiro) de \(espacos)" : "Espaços \(primeiro)–\(ultimo) de \(espacos)"
     }

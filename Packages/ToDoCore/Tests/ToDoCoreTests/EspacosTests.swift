@@ -12,9 +12,16 @@ final class EspacosTests: BaseTestes {
         XCTAssertEqual(try tarefas.listas().count, Tarefas.maxListas)
     }
 
-    func testAteQuatroEspacosUmaSoPagina() {
+    func testAteTresEspacosUmaSoPagina() {
+        let paginas = Espacos.paginas(["A", "B", "C", "+"], espacos: 3)
+        XCTAssertEqual(paginas, [["A", "B", "C", "+"]])
+    }
+
+    func testQuatroEspacosCriamLogoASegundaPaginaSoComNovaLista() {
         let paginas = Espacos.paginas(["A", "B", "C", "D", "+"], espacos: 4)
-        XCTAssertEqual(paginas, [["A", "B", "C", "D", "+"]])
+        XCTAssertEqual(paginas, [["A", "B", "C", "D"], ["+"]])
+        XCTAssertEqual(Espacos.rotuloPagina(0, espacos: 4), "Espaços 1–4 de 4")
+        XCTAssertEqual(Espacos.rotuloPagina(1, espacos: 4), "Nova lista")
     }
 
     func testMaisDeQuatroEspacosEmPaginasDeQuatro() {

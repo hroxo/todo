@@ -51,6 +51,8 @@ public final class Tarefas {
     public static let maxFotos = 4
     /// Máximo de espaços (listas); com mais de 4, o Início mostra páginas com setas.
     public static let maxListas = 8
+    /// Texto quando já não cabe mais um espaço (Definições e pressão longa no "+").
+    public static let avisoLimiteListas = "Chegaste ao máximo de \(maxListas) espaços. Apaga um para criar outro."
     /// Listas que nunca desaparecem, mesmo vazias (DESIGN.md 7.17).
     public static let maxPermanentes = 4
     /// A descrição é curta: 2 a 3 linhas no ecrã.

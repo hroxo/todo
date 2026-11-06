@@ -107,7 +107,7 @@ Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone, ou
 <td valign="top">
 
 ### 🗂️ Até 8 espaços
-Trabalho, Pessoal, Casa… cada espaço tem a sua cor e um ícone ou emoji. Com mais de 4, o Início mostra páginas com setas.
+Trabalho, Pessoal, Casa… cada espaço tem a sua cor e um ícone ou emoji. Com 4 ou mais, o Início mostra páginas com setas (a segunda já traz o cartão "Nova lista"); mantém premido o "+" de baixo para criar uma lista.
 
 </td>
 </tr>

@@ -78,7 +78,7 @@ struct DefinicoesView: View {
                 } footer: {
                     Text(listas.count < Tarefas.maxListas
                          ? "Toca numa lista para a personalizar. Mantém premido e arrasta para mudar a ordem."
-                         : "Chegaste ao máximo de \(Tarefas.maxListas) espaços. Apaga um para criar outro.")
+                         : Tarefas.avisoLimiteListas)
                 }
 
                 secaoCalendario

@@ -125,6 +125,11 @@ struct InicioView: View {
             .navigationDestination(for: Item.self) { DetalheNavegavel(item: $0) }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
             #if DEBUG
+            .onChange(of: estado.irParaUltimaPagina) { _, ir in
+                guard ir else { return }
+                estado.irParaUltimaPagina = false
+                pagina = max(0, Espacos.paginas(celulas(), espacos: listas.count).count - 1)
+            }
             .onChange(of: estado.abrirPersonalizar) { _, abrir in
                 guard abrir, let lista = listas.first else { return }
                 estado.abrirPersonalizar = false
@@ -137,9 +142,9 @@ struct InicioView: View {
 
     private func celulas() -> [Celula] {
         var resultado = listas.map { Celula.lista($0) }
-        // Com 4 espaços a vista fica cheia: o "Nova lista" abriria uma terceira fila. Aí
-        // cria-se em Definições › Listas; com mais de 4, volta na última página.
-        if listas.count < Tarefas.maxListas && listas.count != Espacos.porPagina {
+        // Com 4 espaços a primeira página fica cheia: o "Nova lista" vai para uma segunda
+        // página (ver `Espacos.paginas`).
+        if listas.count < Tarefas.maxListas {
             resultado.append(.nova)
         }
         return resultado

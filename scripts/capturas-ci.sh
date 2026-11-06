@@ -80,6 +80,7 @@ ECRAS=(
   "13-expirados-filtro|expirados-filtro|"
   "14-evento|evento|"
   "15-widgets|widget|"
+  "16-quatro-listas|quatro-listas|"
 )
 
 primeira=1

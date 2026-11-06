@@ -12,6 +12,53 @@ struct RaizView: View {
     /// As boas-vindas (com o login opcional) só aparecem na primeira abertura.
     @AppStorage("boasVindasVistas") private var boasVindasVistas = false
     @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
+    @Query private var listas: [Lista]
+    @State private var tamanho = CGSize.zero
+    /// Pressão longa no "+" (ver `seguirPressaoLonga`): o toque que a acaba não abre a captura.
+    @State private var temporizador: Task<Void, Never>?
+    @State private var pressaoLonga = false
+    @State private var vibrar = 0
+
+    /// Onde o iOS desenha o "+" (círculo de vidro no canto de baixo à direita).
+    private func naZonaDoMais(_ ponto: CGPoint) -> Bool {
+        ponto.x > tamanho.width - 100 && ponto.y > tamanho.height - 110
+    }
+
+    /// Mantém premido o "+" durante meio segundo: nova lista. É um gesto em simultâneo com o
+    /// toque normal (que o separador do sistema continua a tratar).
+    private var seguirPressaoLonga: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .global)
+            .onChanged { toque in
+                if temporizador != nil {
+                    // Arrastar cancela a pressão.
+                    if hypot(toque.translation.width, toque.translation.height) > 12 {
+                        temporizador?.cancel()
+                    }
+                    return
+                }
+                pressaoLonga = false
+                guard naZonaDoMais(toque.startLocation) else { return }
+                temporizador = Task {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    guard !Task.isCancelled else { return }
+                    pressaoLonga = true
+                    vibrar += 1
+                    abrirNovaLista()
+                }
+            }
+            .onEnded { _ in
+                temporizador?.cancel()
+                temporizador = nil
+            }
+    }
+
+    private func abrirNovaLista() {
+        if listas.count < Tarefas.maxListas {
+            estado.mostrarNovaLista = true
+        } else {
+            estado.avisoPartilha = Tarefas.avisoLimiteListas
+        }
+    }
 
     var body: some View {
         @Bindable var estado = estado
@@ -35,6 +82,9 @@ struct RaizView: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
+        .onGeometryChange(for: CGSize.self, of: \.size) { tamanho = $0 }
+        .simultaneousGesture(seguirPressaoLonga)
+        .sensoryFeedback(.impact, trigger: vibrar)
         .overlay {
             if let festa = estado.festa, !reduzirMovimento {
                 Confetes().id(festa)
@@ -64,7 +114,12 @@ struct RaizView: View {
         .onChange(of: estado.separador) { anterior, novo in
             if novo == .captura {
                 estado.separador = anterior == .captura ? .listas : anterior
-                estado.mostrarCaptura = true
+                // O toque que acaba uma pressão longa já abriu a nova lista.
+                if pressaoLonga {
+                    pressaoLonga = false
+                } else {
+                    estado.mostrarCaptura = true
+                }
             }
         }
         #if DEBUG
@@ -77,6 +132,9 @@ struct RaizView: View {
         .sheet(isPresented: $estado.mostrarCaptura) {
             CapturaView()
                 .environment(estado)
+        }
+        .sheet(isPresented: $estado.mostrarNovaLista) {
+            PersonalizarListaView(modo: .nova)
         }
     }
 }
