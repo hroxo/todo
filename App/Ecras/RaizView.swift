@@ -12,16 +12,17 @@ struct RaizView: View {
     /// As boas-vindas (com o login opcional) só aparecem na primeira abertura.
     @AppStorage("boasVindasVistas") private var boasVindasVistas = false
     @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
-    @Query private var listas: [Lista]
     @State private var tamanho = CGSize.zero
+    @State private var margemBaixo: CGFloat = 0
     /// Pressão longa no "+" (ver `seguirPressaoLonga`): o toque que a acaba não abre a captura.
     @State private var temporizador: Task<Void, Never>?
     @State private var pressaoLonga = false
     @State private var vibrar = 0
 
-    /// Onde o iOS desenha o "+" (círculo de vidro no canto de baixo à direita).
+    /// Onde o iOS desenha o "+" (círculo de vidro no canto de baixo à direita): só a faixa da
+    /// barra, para não apanhar o conteúdo de cima (cartões com menu de contexto).
     private func naZonaDoMais(_ ponto: CGPoint) -> Bool {
-        ponto.x > tamanho.width - 100 && ponto.y > tamanho.height - 110
+        ponto.x > tamanho.width - 80 && ponto.y > tamanho.height - margemBaixo - 70
     }
 
     /// Mantém premido o "+" durante meio segundo: nova lista. É um gesto em simultâneo com o
@@ -53,7 +54,10 @@ struct RaizView: View {
     }
 
     private func abrirNovaLista() {
-        if listas.count < Tarefas.maxListas {
+        // Conta na base no momento (o iCloud pode ter trazido listas): a `@Query` guardada no
+        // `Task` podia estar desatualizada. Se a leitura falhar, abre o formulário, que valida.
+        let existentes = (try? Tarefas(contexto: contexto).listas().count) ?? 0
+        if existentes < Tarefas.maxListas {
             estado.mostrarNovaLista = true
         } else {
             estado.avisoPartilha = Tarefas.avisoLimiteListas
@@ -83,6 +87,7 @@ struct RaizView: View {
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .onGeometryChange(for: CGSize.self, of: \.size) { tamanho = $0 }
+        .onGeometryChange(for: CGFloat.self, of: \.safeAreaInsets.bottom) { margemBaixo = $0 }
         .simultaneousGesture(seguirPressaoLonga)
         .sensoryFeedback(.impact, trigger: vibrar)
         .overlay {
