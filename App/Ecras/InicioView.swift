@@ -318,7 +318,7 @@ struct InicioView: View {
     }
 
     private func concluir(_ item: Item) {
-        let antes = withAnimation(.snappy) { Tarefas(contexto: contexto).concluir(item) }
+        guard let antes = withAnimation(.snappy, { Tarefas(contexto: contexto).concluir(item) }) else { return }
         try? contexto.save()
         estado.reagendarAvisos()
         withAnimation(.snappy) {

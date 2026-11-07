@@ -1,4 +1,5 @@
 import SwiftUI
+import ToDoCore
 
 /// Escala de espaçamento (DESIGN.md 5). Nenhum ecrã define margens à mão: usa estes valores
 /// e o `EcraBase`.

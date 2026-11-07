@@ -129,7 +129,7 @@ final class TarefasTests: BaseTestes {
         let ultimaAcao = item.ultimaAcaoEm
         avancar(horas: 5)
 
-        let antes = tarefas.concluir(item)
+        let antes = try XCTUnwrap(tarefas.concluir(item))
         XCTAssertEqual(item.estado, .concluido)
         tarefas.anular(item, para: antes)
 
@@ -146,7 +146,7 @@ final class TarefasTests: BaseTestes {
         let item = try tarefas.criarItem(titulo: "Revisão semanal", em: lista)
         tarefas.definirFixado(item, true)
 
-        let antes = tarefas.concluir(item)
+        let antes = try XCTUnwrap(tarefas.concluir(item))
         tarefas.anular(item, para: antes)
 
         XCTAssertEqual(item.estado, .ativo)
@@ -157,7 +157,7 @@ final class TarefasTests: BaseTestes {
     func testAnularSoDepoisDeConcluir() throws {
         let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
         let item = try tarefas.criarItem(titulo: "Ligar à avó", em: lista)
-        let antes = tarefas.concluir(item)
+        let antes = try XCTUnwrap(tarefas.concluir(item))
         tarefas.reabrir(item)
         avancar(horas: 2)
         tarefas.reabrir(item)
@@ -173,13 +173,27 @@ final class TarefasTests: BaseTestes {
     func testAnularItemJaApagadoNaoFazNada() throws {
         let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
         let item = try tarefas.criarItem(titulo: "Pagar a luz", em: lista)
-        let antes = tarefas.concluir(item)
+        let antes = try XCTUnwrap(tarefas.concluir(item))
         tarefas.apagar(item)
         try contexto.save()
         XCTAssertTrue(item.foiApagado)
 
         tarefas.anular(item, para: antes)
 
+        XCTAssertEqual(try contarItens(), 0)
+    }
+
+    /// O anel conclui 450 ms depois do toque; entretanto o item pode ter sido apagado (noutro
+    /// aparelho). Concluir não pode ler o item apagado: não faz nada e devolve nil, para o ecrã
+    /// não mostrar "Anular".
+    func testConcluirItemJaApagadoNaoFazNada() throws {
+        let lista = try tarefas.criarLista(nome: "Pessoal", cor: .verde)
+        let item = try tarefas.criarItem(titulo: "Pagar a luz", em: lista)
+        tarefas.apagar(item)
+        try contexto.save()
+        XCTAssertTrue(item.foiApagado)
+
+        XCTAssertNil(tarefas.concluir(item))
         XCTAssertEqual(try contarItens(), 0)
     }
 

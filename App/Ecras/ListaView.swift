@@ -168,9 +168,7 @@ struct ListaView: View {
 
     private func linha(_ item: Item, cor: CorLista, agora: Date) -> some View {
         NavigationLink(value: item) {
-            LinhaItem(item: item, cor: cor, agora: agora) {
-                concluir(item)
-            }
+            LinhaItem(item: item, cor: cor, agora: agora, aoConcluir: { concluir(item) })
         }
         .listRowBackground(Ceu.cartao.mix(with: cor.base, by: 0.14))
         .swipeActions(edge: .leading) {
@@ -205,7 +203,7 @@ struct ListaView: View {
     }
 
     private func concluir(_ item: Item) {
-        let antes = withAnimation(.snappy) { tarefas.concluir(item) }
+        guard let antes = withAnimation(.snappy, { tarefas.concluir(item) }) else { return }
         sucessos += 1
         estado.reagendarAvisos()
         withAnimation(.snappy) { ultimoConcluido = UltimoConcluido(item: item, antes: antes) }

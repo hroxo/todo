@@ -25,7 +25,8 @@ final class ContasCalendario {
     private(set) var erro: String?
 
     @ObservationIgnored private var sessao: ASWebAuthenticationSession?
-    @ObservationIgnored private let contexto = ContextoApresentacao()
+    // A sessão só guarda o contexto com referência fraca.
+    @ObservationIgnored private var contexto: ContextoApresentacao?
 
     init() {
         guard !Demo.ativo else { return }
@@ -152,7 +153,14 @@ final class ContasCalendario {
     // MARK: - Sessão de login
 
     private func iniciarSessao(_ url: URL, esquema: String) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuacao in
+        let cenas = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        // Sem cena não há onde mostrar o login: falha com erro em vez de crash.
+        guard let cena = cenas.first(where: { $0.keyWindow != nil }) ?? cenas.first else {
+            throw ASWebAuthenticationSessionError(.presentationContextInvalid)
+        }
+        let contexto = ContextoApresentacao(janela: cena.keyWindow ?? ASPresentationAnchor(windowScene: cena))
+        self.contexto = contexto
+        return try await withCheckedThrowingContinuation { continuacao in
             let sessao = ASWebAuthenticationSession(url: url, callback: .customScheme(esquema)) { retorno, erro in
                 if let retorno {
                     continuacao.resume(returning: retorno)
@@ -178,13 +186,10 @@ final class ContasCalendario {
 
     /// Mostra a página de login por cima da janela da app.
     private final class ContextoApresentacao: NSObject, ASWebAuthenticationPresentationContextProviding {
-        func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-            MainActor.assumeIsolated {
-                UIApplication.shared.connectedScenes
-                    .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-                    .first ?? ASPresentationAnchor()
-            }
-        }
+        let janela: ASPresentationAnchor
+        init(janela: ASPresentationAnchor) { self.janela = janela }
+
+        func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor { janela }
     }
 }
 

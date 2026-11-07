@@ -4,6 +4,32 @@ O que correu mal, como se descobriu e o que ficou para não voltar a acontecer. 
 recente fica em cima. Cada afirmação diz o nível de certeza: **visto no iPhone**, **visto no
 simulador**, **passou no CI** ou **suspeita**.
 
+## Novembro de 2026: na lista, o anel concluía sem animação
+
+### Para quem usa a app
+
+Dentro de uma lista, tocar no anel tirava logo o ponto, sem o anel encher e ficar verde
+(DESIGN.md 7.4). No Início estava bem. Os dados não eram afetados.
+
+**Estado:** corrigido e **visto no simulador** (o anel fica verde e só depois o ponto sai).
+
+### Causa
+
+O `LinhaItem` tinha um só fecho, `aoConcluir`, e a `ListaView` passava-o sem rótulo, depois dos
+parênteses. A Melhoria 23 acrescentou `aoTocarConcluir` a seguir, para o grão de areia do Início.
+Um fecho sem rótulo liga-se ao **último** parâmetro de fecho, por isso a `ListaView` passou, sem
+erro, a concluir no toque em vez de depois da animação. O Xcode avisava
+("backward matching of the unlabeled trailing closure"), mas o aviso ficou no meio de outros.
+
+De caminho: depois do toque, o anel espera 450 ms antes de concluir. Se outro aparelho apagasse o
+ponto nesse intervalo, concluir lia um modelo apagado (o crash da entrada abaixo). **Suspeita**,
+nunca vista: o `Tarefas.concluir` passou a não fazer nada (devolve nil) com um item apagado.
+
+### O que fica para o futuro
+
+- Zero avisos no build: um aviso novo lê-se, não se junta aos outros.
+- Uma vista com mais de um fecho recebe-os sempre com rótulo.
+
 ## Novembro de 2026: crashes de testers ao voltar do standby e ao abrir pontos
 
 ### Para quem usa a app

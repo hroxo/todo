@@ -323,9 +323,11 @@ public final class Tarefas {
         item.expiraEm = daquiA(dias, desde: agora)
     }
 
-    /// Conclui o item. Devolve o que é preciso para o `anular` logo a seguir.
+    /// Conclui o item. Devolve o que é preciso para o `anular` logo a seguir, ou nil se o item
+    /// já foi apagado (o anel conclui 450 ms depois do toque, e outro aparelho pode apagá-lo).
     @discardableResult
-    public func concluir(_ item: Item) -> AntesDeConcluir {
+    public func concluir(_ item: Item) -> AntesDeConcluir? {
+        guard !item.foiApagado else { return nil }
         let antes = AntesDeConcluir(estado: item.estado, expiraEm: item.expiraEm, ultimaAcaoEm: item.ultimaAcaoEm)
         item.estado = .concluido
         item.concluidoEm = relogio.agora
