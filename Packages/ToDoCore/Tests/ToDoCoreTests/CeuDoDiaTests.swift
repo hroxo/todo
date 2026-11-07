@@ -1,7 +1,8 @@
 import XCTest
 @testable import ToDoCore
 
-/// O céu que segue o modo do iPhone, e a saudação que segue o relógio.
+/// O céu que segue o modo do iPhone, a saudação que segue o relógio e o sol de Lisboa da
+/// Aparência "Reativo".
 final class CeuDoDiaTests: XCTestCase {
     private var calendario: Calendar {
         var calendario = Calendar(identifier: .gregorian)
@@ -29,5 +30,35 @@ final class CeuDoDiaTests: XCTestCase {
 
     func testASaudacaoNaoMudaComOModo() {
         XCTAssertEqual(CeuDoDia(agora: data(9), escuro: true, calendario: calendario).saudacao, "Bom dia!")
+    }
+
+    private func data(_ ano: Int, _ mes: Int, _ dia: Int, _ hora: Int, _ minuto: Int = 0) -> Date {
+        calendario.date(from: DateComponents(year: ano, month: mes, day: dia, hour: hora, minute: minuto))!
+    }
+
+    private func noite(_ data: Date) -> Bool {
+        CeuDoDia.ehNoite(agora: data, calendario: calendario)
+    }
+
+    func testReativoNoInverno() {
+        // Em Lisboa, a 2 de novembro, o sol nasce por volta das 7:05 e põe-se às 17:37.
+        XCTAssertTrue(noite(data(2026, 11, 2, 6, 50)))
+        XCTAssertFalse(noite(data(2026, 11, 2, 7, 20)))
+        XCTAssertFalse(noite(data(2026, 11, 2, 17, 20)))
+        XCTAssertTrue(noite(data(2026, 11, 2, 17, 55)))
+        XCTAssertTrue(noite(data(2026, 12, 21, 21)))
+    }
+
+    func testReativoNoVerao() {
+        // A 21 de junho o sol só se põe por volta das 21:05.
+        XCTAssertFalse(noite(data(2026, 6, 21, 20, 45)))
+        XCTAssertTrue(noite(data(2026, 6, 21, 21, 25)))
+        XCTAssertTrue(noite(data(2026, 6, 21, 5, 50)))
+        XCTAssertFalse(noite(data(2026, 6, 21, 6, 30)))
+    }
+
+    func testReativoNaViradaDoDia() {
+        XCTAssertTrue(noite(data(2026, 11, 2, 23, 59)))
+        XCTAssertTrue(noite(data(2026, 11, 3, 0, 0)))
     }
 }

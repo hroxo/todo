@@ -62,6 +62,55 @@ enum CoresEstado {
     static let anelTrilho = Color("AnelTrilho")
 }
 
+/// Aparência escolhida nas Definições. "Reativo" é claro de dia e escuro depois do pôr do sol.
+enum Aparencia: String, CaseIterable, Identifiable {
+    case sistema, claro, escuro, reativo
+
+    /// Chave nova de propósito: a antiga ("aparencia", até à Melhoria 24) pode ainda guardar
+    /// "claro" ou "escuro" e mudava o modo a quem nunca o escolheu nesta versão.
+    static let chave = "aparenciaEscolhida"
+
+    var id: String { rawValue }
+
+    var nome: String {
+        switch self {
+        case .sistema: "Sistema"
+        case .claro: "Claro"
+        case .escuro: "Escuro"
+        case .reativo: "Reativo"
+        }
+    }
+
+    func esquema(agora: Date) -> ColorScheme? {
+        switch self {
+        case .sistema: nil
+        case .claro: .light
+        case .escuro: .dark
+        case .reativo: CeuDoDia.ehNoite(agora: agora) ? .dark : .light
+        }
+    }
+}
+
+extension Binding where Value == Definicoes {
+    /// A hora dos avisos como `Date`, para o `DatePicker` (Definições e questionário).
+    var horaAvisos: Binding<Date> {
+        Binding<Date>(
+            get: {
+                Calendar.current.date(
+                    bySettingHour: wrappedValue.horaNotificacao,
+                    minute: wrappedValue.minutoNotificacao,
+                    second: 0,
+                    of: .now
+                ) ?? .now
+            },
+            set: { nova in
+                let c = Calendar.current.dateComponents([.hour, .minute], from: nova)
+                wrappedValue.definirHora(c.hour ?? 9, c.minute ?? 0)
+            }
+        )
+    }
+}
+
 extension Binding where Value == Bool {
     /// Verdadeiro enquanto o opcional tiver valor; ao fechar, limpa-o.
     init<T>(presente opcional: Binding<T?>) {

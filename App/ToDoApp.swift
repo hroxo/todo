@@ -35,6 +35,7 @@ struct ToDoApp: App {
     @State private var calendario = Calendario(contentor: ToDoApp.contentor)
     @State private var conta = ContaApple()
     @Environment(\.scenePhase) private var fase
+    @AppStorage(Aparencia.chave) private var aparencia = Aparencia.sistema
     /// Verdadeiro ao arrancar e depois de ir para segundo plano.
     @State private var vemDoFundo = true
 
@@ -49,6 +50,7 @@ struct ToDoApp: App {
                 if let erro = Self.erroBaseDados {
                     ErroBaseDadosView(erro: erro)
                         .modifier(CeuDoModo(agora: .now))
+                        .preferredColorScheme(aparencia.esquema(agora: .now))
                 } else {
                     // De minuto a minuto, para a saudação e o calendário; o céu segue o modo do iPhone (DESIGN.md 7.23).
                     TimelineView(.periodic(from: .now, by: 60)) { linha in
@@ -58,6 +60,8 @@ struct ToDoApp: App {
                             .environment(conta)
                             .environment(\.agora, linha.date)
                             .modifier(CeuDoModo(agora: linha.date))
+                            // Por fora do céu, para ele seguir o modo; o Reativo muda sozinho ao minuto.
+                            .preferredColorScheme(aparencia.esquema(agora: linha.date))
                             // Um ponto que chega ao fim do prazo com a app aberta expira logo.
                             .onChange(of: linha.date) {
                                 if fase == .active { manutencao(soSeMudou: true) }
@@ -124,27 +128,39 @@ struct ToDoApp: App {
         }
     }
 
+    private static let chaveListasCriadasEm = "listasIniciaisCriadasEm"
+    private static let chaveListasVigiadas = "listasIniciaisVigiadas"
+
+    /// Os primeiros espaços criam-se uma só vez por aparelho (Trabalho e Pessoal, ou os escolhidos
+    /// no questionário), e os deste aparelho ficam vigiados uns dias, para o caso de o iCloud
+    /// trazer os antigos (Tarefas.juntarListasIniciaisRepetidas).
+    @MainActor
+    static func criarListasIniciais(_ espacos: [EspacoInicial] = EspacoInicial.predefinidos) {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: chaveListasCriadasEm) == nil else { return }
+        let contexto = contentor.mainContext
+        // Falhar aqui só deixa o Início sem listas; a abertura seguinte tenta outra vez.
+        guard let novas = try? Tarefas(contexto: contexto).criarListasIniciaisSeVazio(espacos), !novas.isEmpty else { return }
+        defaults.set(Date.now, forKey: chaveListasCriadasEm)
+        defaults.set(novas.map(\.id.uuidString), forKey: chaveListasVigiadas)
+        try? contexto.save()
+    }
+
     /// Sempre que a app abre ou volta ao primeiro plano (especificação 4.2) e, com
     /// `soSeMudou`, de minuto a minuto: aí só refaz os avisos e o widget se algo expirou.
     @MainActor
     private func manutencao(soSeMudou: Bool = false) {
         let contexto = Self.contentor.mainContext
         let tarefas = Tarefas(contexto: contexto)
-        // As listas iniciais criam-se uma só vez por aparelho, e as deste aparelho ficam vigiadas
-        // uns dias, para o caso de o iCloud trazer as antigas (Tarefas.juntarListasIniciaisRepetidas).
+        // Numa instalação nova espera pelo questionário, que cria os espaços escolhidos.
         let defaults = UserDefaults.standard
-        let chaveData = "listasIniciaisCriadasEm", chaveIds = "listasIniciaisVigiadas"
-        var vigiadas = Set((defaults.stringArray(forKey: chaveIds) ?? []).compactMap(UUID.init(uuidString:)))
-        if defaults.object(forKey: chaveData) == nil, let novas = try? tarefas.criarListasIniciaisSeVazio(), !novas.isEmpty {
-            vigiadas = Set(novas.map(\.id))
-            defaults.set(Date.now, forKey: chaveData)
-            defaults.set(vigiadas.map(\.uuidString), forKey: chaveIds)
-        }
-        if !vigiadas.isEmpty, let criadasEm = defaults.object(forKey: chaveData) as? Date,
+        if defaults.bool(forKey: "boasVindasVistas") { Self.criarListasIniciais() }
+        var vigiadas = Set((defaults.stringArray(forKey: Self.chaveListasVigiadas) ?? []).compactMap(UUID.init(uuidString:)))
+        if !vigiadas.isEmpty, let criadasEm = defaults.object(forKey: Self.chaveListasCriadasEm) as? Date,
            let tratadas = try? tarefas.juntarListasIniciaisRepetidas(criadasAqui: vigiadas, criadasEm: criadasEm),
            !tratadas.isEmpty {
             vigiadas.subtract(tratadas)
-            defaults.set(vigiadas.map(\.uuidString), forKey: chaveIds)
+            defaults.set(vigiadas.map(\.uuidString), forKey: Self.chaveListasVigiadas)
         }
         let mudou = (try? tarefas.avaliar()).map { $0.expirados + $0.apagados > 0 } ?? false
         try? contexto.save()

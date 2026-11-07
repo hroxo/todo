@@ -2,60 +2,36 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Barra de separadores com liquid glass (DESIGN.md 7.1). O "+" da captura é um separador
-/// com o papel de pesquisa, que o iOS desenha como um círculo de vidro à direita da barra;
-/// ao tocá-lo abre-se a captura e volta-se ao separador anterior.
+/// Os separadores (DESIGN.md 7.1). A barra do sistema fica escondida: a nossa
+/// (`BarraSeparadores`) tem o "+" da captura num círculo à parte, com Nova lista ao manter premido.
 struct RaizView: View {
     @Environment(EstadoApp.self) private var estado
     @Environment(\.modelContext) private var contexto
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
-    /// As boas-vindas (com o login opcional) só aparecem na primeira abertura.
+    /// O questionário completo só aparece na primeira abertura; quem já usava a app antes dele
+    /// vê uma vez o convite para ajustar o ritmo e os avisos.
     @AppStorage("boasVindasVistas") private var boasVindasVistas = false
+    @AppStorage("questionarioVisto") private var questionarioVisto = false
     @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
-    @State private var tamanho = CGSize.zero
-    @State private var margemBaixo: CGFloat = 0
-    /// Pressão longa no "+" (ver `seguirPressaoLonga`): o toque que a acaba não abre a captura.
-    @State private var temporizador: Task<Void, Never>?
-    @State private var pressaoLonga = false
-    @State private var vibrar = 0
+    @State private var barraEscondida = false
 
-    /// Onde o iOS desenha o "+" (círculo de vidro no canto de baixo à direita): só a faixa da
-    /// barra, para não apanhar o conteúdo de cima (cartões com menu de contexto).
-    private func naZonaDoMais(_ ponto: CGPoint) -> Bool {
-        ponto.x > tamanho.width - 80 && ponto.y > tamanho.height - margemBaixo - 70
+    /// Onde começa o questionário, ou nil quando não há nada a perguntar.
+    private var inicioQuestionario: QuestionarioView.Passo? {
+        if Demo.ativo { return estado.questionarioDemo }
+        if !boasVindasVistas { return .entrada }
+        return questionarioVisto ? nil : .convite
     }
 
-    /// Mantém premido o "+" durante meio segundo: nova lista. É um gesto em simultâneo com o
-    /// toque normal (que o separador do sistema continua a tratar).
-    private var seguirPressaoLonga: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .global)
-            .onChanged { toque in
-                if temporizador != nil {
-                    // Arrastar cancela a pressão.
-                    if hypot(toque.translation.width, toque.translation.height) > 12 {
-                        temporizador?.cancel()
-                    }
-                    return
-                }
-                pressaoLonga = false
-                guard naZonaDoMais(toque.startLocation) else { return }
-                temporizador = Task {
-                    try? await Task.sleep(for: .milliseconds(500))
-                    guard !Task.isCancelled else { return }
-                    pressaoLonga = true
-                    vibrar += 1
-                    abrirNovaLista()
-                }
-            }
-            .onEnded { _ in
-                temporizador?.cancel()
-                temporizador = nil
-            }
+    private func fecharQuestionario() {
+        boasVindasVistas = true
+        questionarioVisto = true
+        estado.questionarioDemo = nil
+        estado.reagendarAvisos()
     }
 
     private func abrirNovaLista() {
-        // Conta na base no momento (o iCloud pode ter trazido listas): a `@Query` guardada no
-        // `Task` podia estar desatualizada. Se a leitura falhar, abre o formulário, que valida.
+        // Conta na base no momento (o iCloud pode ter trazido listas). Se a leitura falhar,
+        // abre o formulário, que valida.
         let existentes = (try? Tarefas(contexto: contexto).listas().count) ?? 0
         if existentes < Tarefas.maxListas {
             estado.mostrarNovaLista = true
@@ -69,27 +45,29 @@ struct RaizView: View {
 
         TabView(selection: $estado.separador) {
             Tab("Listas", systemImage: "list.bullet", value: EstadoApp.Separador.listas) {
-                InicioView()
+                InicioView().toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("Concluídos", systemImage: "checkmark.circle", value: EstadoApp.Separador.concluidos) {
-                ConcluidosView()
+                ConcluidosView().toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("Expirados", systemImage: "hourglass", value: EstadoApp.Separador.expirados) {
-                ExpiradosView()
+                ExpiradosView().toolbarVisibility(.hidden, for: .tabBar)
             }
-            .badge(expirados.count)
             Tab("Definições", systemImage: "gearshape", value: EstadoApp.Separador.definicoes) {
-                DefinicoesView()
-            }
-            Tab("Nova nota", systemImage: "plus", value: EstadoApp.Separador.captura, role: .search) {
-                Color.clear
+                DefinicoesView().toolbarVisibility(.hidden, for: .tabBar)
             }
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .onGeometryChange(for: CGSize.self, of: \.size) { tamanho = $0 }
-        .onGeometryChange(for: CGFloat.self, of: \.safeAreaInsets.bottom) { margemBaixo = $0 }
-        .simultaneousGesture(seguirPressaoLonga)
-        .sensoryFeedback(.impact, trigger: vibrar)
+        .onPreferenceChange(BarraEscondida.self) { [$barraEscondida] in $barraEscondida.wrappedValue = $0 }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if !barraEscondida {
+                BarraSeparadores(
+                    separador: $estado.separador,
+                    expirados: expirados.count,
+                    novaNota: { estado.mostrarCaptura = true },
+                    novaLista: abrirNovaLista
+                )
+            }
+        }
         .overlay {
             if let festa = estado.festa, !reduzirMovimento {
                 Confetes().id(festa)
@@ -108,22 +86,13 @@ struct RaizView: View {
         #if DEBUG
         .fullScreenCover(isPresented: $estado.demoWidgets) { DemoWidgetsView() }
         #endif
-        .sheet(isPresented: Binding(
-            get: { !boasVindasVistas && !Demo.ativo },
-            set: { if !$0 { boasVindasVistas = true } }
+        .fullScreenCover(isPresented: Binding(
+            get: { inicioQuestionario != nil },
+            set: { if !$0 { fecharQuestionario() } }
         )) {
-            BoasVindasView()
-                .presentationDetents([.large])
-                .presentationBackground(Ceu.folha)
-        }
-        .onChange(of: estado.separador) { anterior, novo in
-            if novo == .captura {
-                estado.separador = anterior == .captura ? .listas : anterior
-                // O toque que acaba uma pressão longa já abriu a nova lista.
-                if pressaoLonga {
-                    pressaoLonga = false
-                } else {
-                    estado.mostrarCaptura = true
+            if let inicio = inicioQuestionario {
+                QuestionarioView(inicio: inicio, completo: inicio != .convite) { espacos in
+                    ToDoApp.criarListasIniciais(espacos)
                 }
             }
         }

@@ -112,7 +112,7 @@ struct ItemDetalheView: View {
                 .padding(.bottom, Espaco.curto)
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+        .preference(key: BarraEscondida.self, value: true)
         .toolbar {
             if let navegacao {
                 ToolbarItemGroup(placement: .topBarTrailing) {

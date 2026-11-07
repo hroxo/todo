@@ -4,6 +4,34 @@ O que correu mal, como se descobriu e o que ficou para não voltar a acontecer. 
 recente fica em cima. Cada afirmação diz o nível de certeza: **visto no iPhone**, **visto no
 simulador**, **passou no CI** ou **suspeita**.
 
+## Novembro de 2026: o "+" entrou na barra no iOS 27 e uma ficha tapava o "Expira…"
+
+### Para quem usa a app
+
+- No iOS 27, o "+" da captura deixou de ser um círculo à parte e passou a ser um 5.º separador
+  ("Nova nota") dentro da barra; às vezes o primeiro toque nem abria a captura.
+- Na Nova nota, com certas listas (ex.: Trabalho, Pessoal, Continente, teste 2), a última ficha
+  ficava por cima do texto "Expira daqui a 3 dias…". Os dados não eram afetados.
+
+**Estado:** os dois corrigidos e **vistos no simulador** (iOS 27.2). A pressão longa no "+" abre o
+menu Nova lista no simulador; o toque no item do menu fica por **ver no iPhone**.
+
+### Causa
+
+- O "+" era um `Tab(role: .search)`, que o iOS 26 desenhava separado da barra. O iOS 27 mudou isso.
+  A pressão longa era um gesto por cima da barra, que adivinhava onde estava o "+".
+- `FluxoLayout.sizeThatFits` devolvia a largura da linha mais larga e o `placeSubviews` voltava a
+  calcular as linhas com essa largura arredondada ao pixel. A linha mais larga deixava de caber por
+  uma fração, a última ficha passava para uma linha que não estava na altura, e o texto seguinte
+  sobrepunha-se.
+
+### O que fica para o futuro
+
+- O que depende de como o sistema desenha um componente (aqui, o separador de pesquisa) muda entre
+  versões do iOS: a barra passou a ser nossa (`BarraSeparadores`) e o menu usa o `Menu` nativo.
+- Um `Layout` mede e coloca com a mesma largura: devolve a largura proposta.
+- Demo e captura `captura-fichas` com as listas do tester, para o CI fotografar o caso.
+
 ## Novembro de 2026: na lista, o anel concluía sem animação
 
 ### Para quem usa a app

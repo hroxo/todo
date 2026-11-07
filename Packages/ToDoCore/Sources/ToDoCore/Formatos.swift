@@ -14,6 +14,14 @@ public enum Formatos {
         return "\(diasSemana[c.weekday! - 1]), \(c.day!) \(meses[c.month! - 1])"
     }
 
+    /// "na quinta, 12 nov" ou "no sábado, 14 nov", para "Um ponto criado hoje sai …".
+    public static func noDia(_ data: Date, calendario: Calendar = .current) -> String {
+        var gregoriano = Calendar(identifier: .gregorian)
+        gregoriano.timeZone = calendario.timeZone
+        let fimDeSemana = [1, 7].contains(gregoriano.component(.weekday, from: data))
+        return (fimDeSemana ? "no " : "na ") + cabecalho(data, calendario: calendario).lowercased()
+    }
+
     /// "hoje", "ontem" ou "19/10".
     public static func dia(_ data: Date, agora: Date, calendario: Calendar = .current) -> String {
         if calendario.isDate(data, inSameDayAs: agora) { return "hoje" }

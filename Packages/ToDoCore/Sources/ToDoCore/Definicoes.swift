@@ -1,5 +1,24 @@
 import Foundation
 
+/// Quando chega o aviso antes de um ponto expirar (questionário e Definições › Notificações).
+public enum ModoAviso: String, Codable, CaseIterable, Sendable {
+    /// 24 horas antes, à hora exata; de madrugada passa para a hora das notificações.
+    case vinteQuatroHoras
+    /// Na véspera do dia em que expira, à hora escolhida.
+    case manha, noite
+
+    public var nome: String {
+        switch self {
+        case .vinteQuatroHoras: "24 horas antes"
+        case .manha: "De manhã"
+        case .noite: "À noite"
+        }
+    }
+
+    /// A hora que o modo põe ao ser escolhido: "À noite, às 09:00" não faria sentido.
+    public var horaPredefinida: Int { self == .noite ? 21 : 9 }
+}
+
 /// Valores editáveis nas Definições (especificação 9), guardados em UserDefaults.
 public struct Definicoes: Codable, Equatable, Sendable {
     /// Os limites dos ecrãs de Avançado. Valem também ao ler: um backup pode vir de qualquer lado.
@@ -7,6 +26,8 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public static let intervaloManterCurto = 1...30
     public static let intervaloManterLongo = 1...90
     public static let intervaloRetencao = 1...60
+    /// O slider do questionário; em Avançado continua até 30.
+    public static let intervaloQuestionario = 2...15
 
     public var diasExpiracao = 3
     public var diasManterCurto = 5
@@ -16,6 +37,7 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public var horaNotificacao = 9
     public var minutoNotificacao = 0
     public var avisosAtivos = true
+    public var modoAviso = ModoAviso.vinteQuatroHoras
     /// Dias sem pontos abertos até uma lista não permanente desaparecer (DESIGN.md 7.17).
     public var diasListaVazia = 5
     /// Textos e sugestões escritos pelo modelo da Apple no iPhone (DESIGN.md 7.16).
@@ -40,8 +62,31 @@ public struct Definicoes: Codable, Equatable, Sendable {
         horaNotificacao = try dias(.horaNotificacao, base.horaNotificacao, 0...23)
         minutoNotificacao = try dias(.minutoNotificacao, base.minutoNotificacao, 0...59)
         avisosAtivos = try c.decodeIfPresent(Bool.self, forKey: .avisosAtivos) ?? base.avisosAtivos
+        // Um modo desconhecido (backup de uma versão futura) fica no de sempre, sem estragar o resto.
+        modoAviso = (try? c.decodeIfPresent(ModoAviso.self, forKey: .modoAviso)) ?? base.modoAviso
         diasListaVazia = try dias(.diasListaVazia, base.diasListaVazia, Self.intervaloRetencao)
         inteligenciaAtiva = try c.decodeIfPresent(Bool.self, forKey: .inteligenciaAtiva) ?? base.inteligenciaAtiva
+    }
+
+    /// Escolhe o modo dos avisos com a hora dele.
+    public mutating func escolher(_ modo: ModoAviso) {
+        modoAviso = modo
+        horaNotificacao = modo.horaPredefinida
+        minutoNotificacao = 0
+    }
+
+    /// A hora escolhida no seletor. De manhã e à noite fica entre as 08:00 e as 21:59, como o
+    /// aviso (regra da noite): o resumo nunca promete uma hora em que o aviso não chega.
+    public mutating func definirHora(_ hora: Int, _ minuto: Int) {
+        horaNotificacao = modoAviso == .vinteQuatroHoras ? hora : min(21, max(8, hora))
+        minutoNotificacao = minuto
+    }
+
+    /// "De manhã, às 09:00", para o questionário e as Definições.
+    public var resumoAvisos: String {
+        guard avisosAtivos else { return "Desligados" }
+        guard modoAviso != .vinteQuatroHoras else { return modoAviso.nome }
+        return "\(modoAviso.nome), às " + String(format: "%02d:%02d", horaNotificacao, minutoNotificacao)
     }
 
     /// As definições depois de restaurar um backup: as dele, mas sem encurtar o que protege os

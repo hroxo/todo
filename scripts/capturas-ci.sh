@@ -69,6 +69,7 @@ ECRAS=(
   "4-manter-premido|detalhe|-manter premido"
   "5-manter-direita|detalhe|-manter direita"
   "6-captura|captura|"
+  "6b-captura-fichas|captura-fichas|"
   "7-personalizar|personalizar|"
   "8-expirados|expirados|"
   "9-concluidos|concluidos|"
@@ -81,6 +82,12 @@ ECRAS=(
   "14-evento|evento|"
   "15-widgets|widget|"
   "16-quatro-listas|quatro-listas|"
+  "17-questionario-entrada|questionario-entrada|"
+  "17b-questionario-ritmo|questionario-ritmo|"
+  "17c-questionario-avisos|questionario-avisos|"
+  "17d-questionario-uso|questionario-uso|"
+  "17e-questionario-pronto|questionario-pronto|"
+  "17f-questionario-ajustar|questionario-ajustar|"
 )
 
 primeira=1

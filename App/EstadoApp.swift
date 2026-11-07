@@ -6,14 +6,14 @@ import ToDoCore
 @Observable
 final class EstadoApp {
     enum Separador: Hashable {
-        case listas, concluidos, expirados, definicoes, captura
+        case listas, concluidos, expirados, definicoes
     }
 
     var separador: Separador = .listas
     /// Navegação do separador Listas (Lista → Detalhe).
     var caminho = NavigationPath()
     var mostrarCaptura = false
-    /// Pressão longa no "+": abre o formulário de nova lista.
+    /// Nova lista no menu do "+" (manter premido): abre o formulário.
     var mostrarNovaLista = false
     /// Só para o modo de demonstração: o Início abre na última página (a do "Nova lista").
     var irParaUltimaPagina = false
@@ -23,6 +23,8 @@ final class EstadoApp {
     var rolarParaCalendario = false
     /// Só para o modo de demonstração: abre um evento do calendário.
     var abrirEventoDemo = false
+    /// Só para o modo de demonstração: abre o questionário neste passo.
+    var questionarioDemo: QuestionarioView.Passo?
     /// Só para o modo de demonstração: mostra as vistas dos widgets.
     var demoWidgets = false
     /// A lista que está aberta, para a captura rápida a pré-selecionar.

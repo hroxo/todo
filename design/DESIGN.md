@@ -153,10 +153,12 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 
 ### 7.1 Barra de separadores (liquid glass) [Decidido]
 
-- `TabView` nativa com 4 separadores: **Listas, Concluídos, Expirados, Definições**. No iOS 26+ ganha liquid glass automaticamente; não se estiliza à mão.
-- O separador Expirados mostra um contador `.badge(n)` quando há itens.
-- **Botão "+" de captura:** um botão circular de vidro, à direita da barra e separado dela, como nos mocks. Implementação: um `Button` em overlay com `.glassEffect(.regular.tint(.accentColor).interactive(), in: .circle)`, alinhado com a barra. [Proposta: se o alinhamento com a barra nativa der problemas, usar `.tabViewBottomAccessory` com um botão "Nova nota"]
-- `.tabBarMinimizeBehavior(.onScrollDown)` para a barra encolher ao percorrer listas longas. [Proposta]
+- `TabView` nativa com 4 separadores: **Listas, Concluídos, Expirados, Definições**, com a barra do sistema escondida. [Alterado 07/11/2026: o iOS 27 deixou de desenhar o separador de pesquisa à parte e o "+" passava a ser um 5.º separador dentro da barra.]
+- **A barra é nossa** (`BarraSeparadores`), com vidro nativo num `GlassEffectContainer`: os 4 separadores numa cápsula `.glassEffect(.regular.interactive())` (ícone e rótulo; o escolhido na cor de destaque, com fundo leve) e, à direita, na mesma linha e separado dela, o **"+" de captura** num círculo de vidro de 62 pt. Fica em `safeAreaInset` em baixo, para o conteúdo nunca ficar escondido.
+- O separador Expirados mostra um contador vermelho quando há itens.
+- **"+":** toque abre a Nova nota; **manter premido** abre, a partir do "+", o menu com **Nova lista** (`Menu` com `primaryAction`, que também serve o VoiceOver). Com 8 espaços, Nova lista mostra o aviso do máximo.
+- O Detalhe esconde a barra (tem o Manter no fundo, 7.5).
+- A barra deixa de encolher ao percorrer (era o `.tabBarMinimizeBehavior` da barra do sistema).
 - O conteúdo percorre **por baixo** da barra (é isso que dá o efeito de vidro), mas a última linha tem de ficar visível quando se chega ao fim.
 
 ### 7.2 Cartão de lista (Início)
@@ -260,9 +262,10 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Definições (mock 9)** [Decidido 21/10/2026: gerir listas primeiro; menos controlos de horários]. `Form` agrupado, por esta ordem:
   1. **Listas**: uma linha por lista (ícone em círculo de 30 pt, nome, número de ativos, pega para arrastar). Tocar abre Personalizar lista. Última linha "+ Nova lista" na cor de destaque. Ordenar arrastando, sem botão Editar.
   2. **Calendário**: "Calendários" (valor: as fontes ligadas, por exemplo "Apple, Outlook") leva à escolha dos calendários; interruptor "Mostrar eventos no Início". Sem ligação: uma só linha "Ligar calendário".
-  3. **Notificações**: interruptor "Avisar antes de expirar" e "Hora dos avisos" (só a hora; nada de outros horários).
-  4. **Aparência**: controlo segmentado Sistema · Claro · Escuro.
-  5. **Avançado**: "Prazos" (valor resumido "3 · 5 · 15 dias"; abre um ecrã com as cinco durações) e "Importar e backup".
+  3. **Notificações**: interruptor "Avisar antes de expirar", "Quando" (24 horas antes · De manhã · À noite, como no questionário, 7.20b) e "Hora dos avisos".
+  4. **Aparência** [Decidido 07/11/2026]: controlo segmentado **Sistema · Claro · Escuro · Reativo**. Reativo é claro de dia e escuro depois do pôr do sol (o sol de Lisboa, sem localização). O widget continua a seguir o modo do iPhone.
+  5. **O teu ritmo** [Decidido 07/11/2026, mock Questionário]: "Um ponto fica" (dias), "Avisos" ("De manhã, às 09:00") e "Responder outra vez às perguntas", que abre só o ritmo e os avisos.
+  6. **Avançado**: "Prazos" (valor resumido "3 · 5 · 15 dias"; abre um ecrã com as cinco durações) e "Importar e backup".
 - Ícones das linhas em círculos coloridos de 30 pt, como nos Ajustes do iOS.
 
 ### 7.12 Calendário no Início (mocks 7 e 8)
@@ -287,7 +290,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 3 espaços, sem setas, como antes.
 - **Exatamente 4 espaços**: a primeira página fica cheia, por isso já há uma segunda página, só com o cartão "Nova lista" (rótulo "Nova lista" em vez de "Espaços 5–…").
 - **Máximo de 8**: na última página, "Nova lista" só aparece se houver menos de 8; com 8, aparece a nota "Máximo de 8 espaços".
-- **Pressão longa no "+"** de baixo (meio segundo, com vibração): abre Nova lista; com 8, mostra o aviso do máximo. O toque curto continua a abrir a captura.
+- **Manter premido o "+"** de baixo: abre o menu com Nova lista (7.1); com 8, mostra o aviso do máximo. O toque curto continua a abrir a captura.
 - **Hoje no calendário por espaço** [Decidido]: eventos de todos os espaços, num só grupo branco, por hora. Cabeçalho "HOJE NO CALENDÁRIO" com "4 eventos · todos os espaços". Cada linha (62 pt): horas, barra da cor do calendário, título e, por baixo, o espaço (círculo do ícone de 18 pt, nome em `.footnote` semibold) e o local. O "+" fica na cor do espaço e cria o ponto nesse espaço. Calendários sem espaço não aparecem.
 - Imagens dos mocks: `design/mocks/*.png` (geradas com `scripts/mocks.sh` a partir de `design/mocks/html/`).
 - **Eventos sem espaço** (Melhoria 6.1) [Decidido 22/10/2026, substitui "calendários sem espaço não aparecem"]: aparecem também, com um círculo tracejado de 18 pt e "Sem espaço" no lugar do espaço. O "+" de um evento sem espaço cria o ponto na última lista usada (pressão longa: escolher outra). Cada calendário tem três destinos: um espaço, **Sem espaço** (aparece) ou **Não mostrar** (escondido).
@@ -395,19 +398,29 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 ### 7.23 O céu [Decidido 02/11/2026; alterado 04/11/2026: segue o modo do iPhone, não a hora]
 - O preto sai de todos os ecrãs. O fundo é um céu (`CeuDoDia`) que depende só do modo do iPhone: o **claro é sempre dia** (azul, com sol) e o **escuro é sempre noite** (índigo, com lua e estrelas). O dia ganho fica verde, exceto no modo escuro.
 - O Início tem a cena com colinas; os outros ecrãs só a cor do céu; as listas e os detalhes mantêm o fundo na cor da lista.
-- A app não tem opção de Aparência: usa a do sistema.
+- Por defeito segue o modo do sistema; em Definições › Aparência pode ficar sempre claro, sempre escuro ou **Reativo** (7.11), e o céu acompanha.
 - O Glassy saúda pelo relógio, em qualquer modo: "Bom dia!" das 6h às 12h, "Boa tarde!" até às 20h e "Boa noite!" depois.
 
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 
 - **Para que serve:** dá um identificador estável e privado, o mesmo em qualquer aparelho, que ligará os dados à pessoa se um dia houver outra forma de lá chegar (web, outra plataforma, um servidor). Não é o login que guarda os dados: isso é o iCloud (7.19).
-- **Primeira abertura:** a Ampulheta a acenar, "Bem-vindo à ToDo", o botão do sistema "Iniciar sessão com a Apple" e "Agora não". Não volta a aparecer.
+- **Primeira abertura:** o botão do sistema "Iniciar sessão com a Apple" fica no fim do questionário (7.20b), por baixo de "Começar a usar". Não volta a aparecer.
 - **Definições › Conta (no topo):** com sessão, a inicial, o nome e o email e "Terminar sessão" (não apaga nada); sem sessão, o botão.
 - **Técnica:**
   - O identificador e o perfil (o nome e o email, que a Apple só dá na primeira vez) ficam no Keychain. "Terminar sessão" apaga só o identificador: o perfil volta quando a mesma conta entra outra vez. Uma conta diferente nunca herda o perfil da anterior.
   - Ao abrir e ao voltar à app, verifica se o acesso foi revogado nos Ajustes. Revogado, a sessão termina e o perfil é apagado. Se a verificação falhar (sem rede), a sessão fica.
   - Se o iOS não conseguir tratar do pedido, a app pede para confirmar nos Ajustes a conta Apple. Cancelar não mostra erro.
 - **Capacidade:** `com.apple.developer.applesignin` está ligada no `project.yml` desde a conta paga (docs/CONTA-DEVELOPER.md).
+
+### 7.20b Questionário da primeira abertura [Decidido 07/11/2026, mock `design/mocks/Questionario.png`]
+
+- Ecrã inteiro no céu (`QuestionarioView`), com colinas e o Glassy na entrada e no fim. Três perguntas, todas com valores já escolhidos, para quem só quer carregar em Continuar; o passo aparece em três traços no topo.
+  1. **Ritmo:** "Quanto tempo fica um ponto sem ações?", slider de 2 a 15 dias (3 é o sugerido; em Avançado continua até 30) e a prévia "Um ponto criado hoje sai na quinta, 12 nov."
+  2. **Avisos:** 24 horas antes (à hora exata; de madrugada passa para a manhã) · De manhã (na véspera) · À noite (na véspera), com a hora dentro da opção escolhida. A hora fica sempre entre as 08:00 e as 22:00.
+  3. **Uso:** grelha com Trabalho, Estudos, Casa e Compras ("Aqui nada expira"). Pessoal fica sempre. Cria os primeiros espaços (só os 4 primeiros nascem permanentes: com os 5, Compras não).
+- **Entrada:** "Bem-vindo à ToDo", Começar e **Saltar** (fica com os valores de hoje e com Trabalho e Pessoal). **Fim:** "Está pronto", "Começar a usar" e o login opcional da Apple (7.20).
+- **Quem já usa a app** vê uma vez o convite "Ajusta a ToDo ao teu ritmo" (ficha "Novo"), com Ajustar (só ritmo e avisos) e Agora não. Os espaços que já tem não mudam.
+- Numa instalação nova, os primeiros espaços só se criam no fim do questionário (ou ao saltar).
 
 ### 7.18 Ecrãs vazios com a Ampulheta [Decidido 28/10/2026]
 

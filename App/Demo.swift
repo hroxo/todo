@@ -152,6 +152,20 @@ enum Demo {
         case "captura":
             estado.listaAtual = listas.dropFirst().first
             estado.mostrarCaptura = true
+        case "captura-fichas":
+            // As listas de um tester em que a última ficha se sobrepunha ao "Expira daqui a…".
+            for lista in listas.dropFirst(2) { contexto.delete(lista) }
+            let t = Tarefas(contexto: contexto, definicoes: Definicoes())
+            _ = try? t.criarLista(nome: "Continente", cor: .vermelho, icone: "cart.fill", tipo: .compras)
+            _ = try? t.criarLista(nome: "teste 2", cor: .azul, icone: "checkmark.circle.fill")
+            try? contexto.save()
+            estado.mostrarCaptura = true
+        case "questionario-entrada": estado.questionarioDemo = .entrada
+        case "questionario-ajustar": estado.questionarioDemo = .convite
+        case "questionario-ritmo": estado.questionarioDemo = .ritmo
+        case "questionario-avisos": estado.questionarioDemo = .avisos
+        case "questionario-uso": estado.questionarioDemo = .uso
+        case "questionario-pronto": estado.questionarioDemo = .pronto
         case "widget":
             estado.demoWidgets = true
         case "personalizar":

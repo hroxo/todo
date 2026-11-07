@@ -44,10 +44,6 @@ public struct AntesDeConcluir: Equatable, Sendable {
 /// Regras de produto sobre listas e itens (especificação 4). A interface chama só isto;
 /// não altera os modelos diretamente. Não grava: o contexto da app grava sozinho.
 public final class Tarefas {
-    public static let listasIniciais: [(nome: String, cor: CorLista, icone: String)] = [
-        ("Trabalho", .azul, "briefcase.fill"),
-        ("Pessoal", .roxo, "person.fill"),
-    ]
     public static let maxFotos = 4
     /// Máximo de espaços (listas); com mais de 4, o Início mostra páginas com setas.
     public static let maxListas = 8
@@ -83,14 +79,18 @@ public final class Tarefas {
         try contexto.fetch(FetchDescriptor<Lista>(sortBy: [SortDescriptor(\.ordem)]))
     }
 
-    /// Cria Trabalho e Pessoal se ainda não houver listas. Devolve as que criou (vazio se já
-    /// havia), para a app saber quais nasceram neste aparelho (`juntarListasIniciaisRepetidas`).
+    /// Cria os primeiros espaços se ainda não houver listas: os escolhidos no questionário, com
+    /// Pessoal sempre, ou Trabalho e Pessoal. Só os primeiros `maxPermanentes` ficam permanentes.
+    /// Devolve as que criou (vazio se já havia), para a app saber quais nasceram neste aparelho
+    /// (`juntarListasIniciaisRepetidas`).
     @discardableResult
-    public func criarListasIniciaisSeVazio() throws -> [Lista] {
+    public func criarListasIniciaisSeVazio(_ escolhidos: [EspacoInicial] = EspacoInicial.predefinidos) throws -> [Lista] {
         guard try contexto.fetchCount(FetchDescriptor<Lista>()) == 0 else { return [] }
-        return Self.listasIniciais.enumerated().map { ordem, inicial in
-            let lista = Lista(nome: inicial.nome, cor: inicial.cor, ordem: ordem, icone: inicial.icone)
-            lista.permanente = true
+        let espacos = EspacoInicial.allCases.filter { $0 == .pessoal || escolhidos.contains($0) }
+        return espacos.enumerated().map { ordem, espaco in
+            let lista = Lista(nome: espaco.nome, cor: espaco.cor, ordem: ordem, icone: espaco.icone)
+            lista.tipo = espaco.tipo
+            lista.permanente = ordem < Self.maxPermanentes
             contexto.insert(lista)
             return lista
         }
@@ -100,8 +100,8 @@ public final class Tarefas {
     /// trazer as que já existiam.
     public static let diasVigiarListasIniciais = 7
 
-    /// Num aparelho novo a app cria Trabalho e Pessoal antes de o iCloud trazer as que já
-    /// existiam, e ficavam repetidas. **Nada se apaga aqui:** apagar já levou pontos que outro
+    /// Num aparelho novo a app cria os primeiros espaços (Trabalho e Pessoal, ou os do
+    /// questionário) antes de o iCloud trazer os que já existiam, e ficavam repetidos. **Nada se apaga aqui:** apagar já levou pontos que outro
     /// aparelho tinha posto na cópia e ainda não tinham chegado (o iCloud traz a lista antes
     /// dos pontos). Quando aparece a repetida, a cópia que este aparelho criou, se aqui estiver
     /// vazia, só deixa de ser permanente: segue a regra das listas vazias (sai ao fim de 5 dias
@@ -111,7 +111,7 @@ public final class Tarefas {
     @discardableResult
     public func juntarListasIniciaisRepetidas(criadasAqui: Set<UUID>, criadasEm: Date) throws -> Set<UUID> {
         guard relogio.agora < daquiA(Self.diasVigiarListasIniciais, desde: criadasEm) else { return criadasAqui }
-        let nomes = Set(Self.listasIniciais.map(\.nome))
+        let nomes = Set(EspacoInicial.allCases.map(\.nome))
         let todas = try listas()
         // As que já não existem (apagadas à mão, por exemplo) deixam de ser vigiadas.
         var tratadas = criadasAqui.filter { id in !todas.contains { $0.id == id } }
@@ -514,8 +514,9 @@ public final class Tarefas {
 
     // MARK: - Notificações (especificação 6)
 
-    /// Avisos a agendar: 24 horas antes de cada item ativo expirar, os mais próximos primeiro.
-    /// Um aviso que calharia entre as 22:00 e as 08:00 passa para a hora das notificações.
+    /// Avisos a agendar, os mais próximos primeiro: 24 horas antes de cada item ativo expirar
+    /// (entre as 22:00 e as 08:00 passa para a hora das notificações) ou na véspera, de manhã
+    /// ou à noite, conforme `Definicoes.modoAviso`.
     public func planoAvisos() throws -> [Aviso] {
         guard definicoes.avisosAtivos else { return [] }
         let agora = relogio.agora
@@ -536,7 +537,7 @@ public final class Tarefas {
         return Array(avisos.sorted { $0.data < $1.data }.prefix(Self.maxAvisos))
     }
 
-    /// Um aviso 24 horas antes de cada lista vazia desaparecer, com a mesma regra da noite.
+    /// Um aviso antes de cada lista vazia desaparecer, com as mesmas regras dos pontos.
     public func planoAvisosListas() throws -> [AvisoLista] {
         guard definicoes.avisosAtivos else { return [] }
         let agora = relogio.agora
@@ -549,6 +550,7 @@ public final class Tarefas {
     }
 
     func horaDoAviso(paraExpiracaoEm limite: Date) -> Date {
+        guard definicoes.modoAviso == .vinteQuatroHoras else { return horaNaVespera(de: limite) }
         let base = calendario.date(byAdding: .hour, value: -24, to: limite)!
         let hora = calendario.component(.hour, from: base)
         guard hora >= 22 || hora < 8 else { return base }
@@ -562,6 +564,18 @@ public final class Tarefas {
             second: 0,
             of: dia
         )!
+    }
+
+    /// De manhã ou à noite: na véspera do dia em que expira, à hora escolhida, sempre entre as
+    /// 08:00 e as 22:00. Se a véspera já passou (prazos curtos), fica no próprio dia; se isso
+    /// for depois do prazo, os planos deixam o aviso de fora.
+    private func horaNaVespera(de limite: Date) -> Date {
+        let hora = min(21, max(8, definicoes.horaNotificacao))
+        func aHora(_ dia: Date) -> Date {
+            calendario.date(bySettingHour: hora, minute: definicoes.minutoNotificacao, second: 0, of: dia)!
+        }
+        let vespera = aHora(calendario.date(byAdding: .day, value: -1, to: calendario.startOfDay(for: limite))!)
+        return vespera > relogio.agora ? vespera : aHora(limite)
     }
 
     // MARK: - Auxiliares

@@ -26,6 +26,9 @@ A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas p
 
 ## Novidades
 
+- 👋 **Questionário de boas-vindas.** Na primeira abertura, três perguntas ajustam a app ao teu ritmo: quanto tempo fica um ponto, quando chega o aviso (24 horas antes, de manhã ou à noite) e para que a vais usar (cria os primeiros espaços).
+- 🌗 **Aparência à escolha.** Sistema, Claro, Escuro ou Reativo, que escurece depois do pôr do sol.
+- ➕ **O "+" outra vez à parte da barra**, também no iOS 27; mantém-no premido para criar uma lista.
 - ⏳ **O Glassy, anfitrião do Início.** A mascote está viva: respira, pisca, e a areia conta como vai o teu dia. Fica preocupada quando os pontos se acumulam e festeja quando o dia fica ganho.
 - 🌅 **Um céu que segue o dia.** O Início tem colinas, sol e lua: dia no modo claro, noite no escuro, como o teu iPhone.
 - ✍️ **Captura mais completa.** Descrição e fotos logo ao criar um ponto.
@@ -107,15 +110,15 @@ Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone, ou
 <td valign="top">
 
 ### 🗂️ Até 8 espaços
-Trabalho, Pessoal, Casa… cada espaço tem a sua cor e um ícone ou emoji. Com 4 ou mais, o Início mostra páginas com setas (a segunda já traz o cartão "Nova lista"); mantém premido o "+" de baixo para criar uma lista.
+Trabalho, Pessoal, Casa… cada espaço tem a sua cor e um ícone ou emoji. Com 4 ou mais, o Início mostra páginas com setas (a segunda já traz o cartão "Nova lista"); mantém premido o "+" de baixo e escolhe Nova lista.
 
 </td>
 </tr>
 <tr>
 <td valign="top">
 
-### 🌗 Claro ou escuro, como o teu iPhone
-A app segue o tema do sistema, e o ícone também tem versões escura e tingida.
+### 🌗 Claro, escuro ou reativo
+Por defeito a app segue o tema do sistema; nas Definições podes deixá-la sempre clara, sempre escura ou **Reativa**, clara de dia e escura depois do pôr do sol. O ícone também tem versões escura e tingida.
 
 </td>
 <td align="center"><img src="docs/media/fluxo-tema.gif" width="240" alt="O Início em modo escuro e em modo claro"></td>
@@ -134,7 +137,7 @@ E ainda:
 - **Backup em JSON**: exportar e restaurar tudo, com fotos e definições. Mesmo um backup antigo entra sem perder pontos: o que já venceu ganha tempo novo.
 - **Listas que se arrumam**: uma lista vazia sai ao fim de 5 dias (com aviso na véspera); até 4 podem ser permanentes.
 - **Ecrãs vazios com a Ampulheta**: a celebrar quando nada expirou.
-- **Notificações** 24 horas antes de um ponto expirar (nunca durante a noite).
+- **Notificações** antes de um ponto expirar: 24 horas antes, ou na véspera de manhã ou à noite, à hora que escolheres (nunca durante a noite).
 - **Inteligência no iPhone**: os avisos e o *Para ti* têm contexto, escrito pelo modelo da Apple no próprio telemóvel. Nada sai do iPhone, e desliga-se nas Definições.
 - **Iniciar sessão com a Apple**, opcional.
 - Cada gesto tem uma alternativa por menu, e a app suporta Dynamic Type e VoiceOver.

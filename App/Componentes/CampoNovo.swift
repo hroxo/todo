@@ -47,7 +47,11 @@ struct FluxoLayout: Layout {
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let posicoes = calcular(largura: proposal.width ?? .infinity, subviews: subviews)
-        return posicoes.tamanho
+        // Ocupa a largura proposta: devolver só a da linha mais larga fazia o `placeSubviews`
+        // recalcular com essa largura arredondada ao pixel, e a última ficha saltava para uma
+        // linha que não estava na altura (sobrepunha-se ao que vem a seguir).
+        guard let largura = proposal.width, largura.isFinite else { return posicoes.tamanho }
+        return CGSize(width: largura, height: posicoes.tamanho.height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {

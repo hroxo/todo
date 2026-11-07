@@ -15,6 +15,8 @@ struct DefinicoesView: View {
     @AppStorage("mostrarCalendario") private var mostrarCalendario = true
     @Query(sort: \Lista.ordem) private var listas: [Lista]
     @State private var definicoes = Definicoes.carregar()
+    @AppStorage(Aparencia.chave) private var aparencia = Aparencia.sistema
+    @State private var responderOutraVez = false
     @State private var formulario: PersonalizarListaView.Modo?
     @State private var aApagar: Lista?
     @State private var ultimoBackup = Backups.ultimoExportado
@@ -92,13 +94,20 @@ struct DefinicoesView: View {
                         }
                     }
                     if definicoes.avisosAtivos {
-                        DatePicker("Hora dos avisos", selection: horaAvisos, displayedComponents: .hourAndMinute)
+                        Picker("Quando", selection: Binding(get: { definicoes.modoAviso }, set: { definicoes.escolher($0) })) {
+                            ForEach(ModoAviso.allCases, id: \.self) { modo in
+                                Text(modo.nome).tag(modo)
+                            }
+                        }
+                        DatePicker("Hora dos avisos", selection: $definicoes.horaAvisos, displayedComponents: .hourAndMinute)
                             .environment(\.locale, Locale(identifier: "pt_PT"))
                     }
                 } header: {
                     Text("Notificações")
                 } footer: {
-                    Text("Avisa 24 horas antes de um item expirar. À noite, o aviso passa para esta hora.")
+                    Text(definicoes.modoAviso == .vinteQuatroHoras
+                         ? "Avisa 24 horas antes de um item expirar. À noite, o aviso passa para esta hora."
+                         : "Avisa na véspera do dia em que o item expira, a esta hora (entre as 08:00 e as 22:00).")
                 }
 
                 Section {
@@ -120,6 +129,20 @@ struct DefinicoesView: View {
                     Text("O modelo da Apple escreve o texto de cada aviso a partir do que tens na app. Corre só no iPhone: nada sai do telemóvel. Sem Apple Intelligence, os avisos usam um texto simples.")
                 }
 
+                Section {
+                    Picker("Aparência", selection: $aparencia) {
+                        ForEach(Aparencia.allCases) { opcao in
+                            Text(opcao.nome).tag(opcao)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                } header: {
+                    Text("Aparência")
+                } footer: {
+                    Text("Reativo: claro de dia e escuro depois do pôr do sol.")
+                }
+
                 secaoBackup
 
                 #if DEBUG
@@ -138,6 +161,16 @@ struct DefinicoesView: View {
                     Text("Só nas compilações de desenvolvimento. Ver docs/CONTA-DEVELOPER.md.")
                 }
                 #endif
+
+                Section {
+                    LabeledContent("Um ponto fica", value: Formatos.dias(definicoes.diasExpiracao))
+                    LabeledContent("Avisos", value: definicoes.resumoAvisos)
+                    Button("Responder outra vez às perguntas") { responderOutraVez = true }
+                } header: {
+                    Text("O teu ritmo")
+                } footer: {
+                    Text("Escolhido na primeira abertura. Os outros prazos (Manter, Expirados, Concluídos) estão logo abaixo.")
+                }
 
                 Section("Avançado") {
                     NavigationLink {
@@ -188,6 +221,10 @@ struct DefinicoesView: View {
                 estado.reagendarAvisos()
             }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
+            // O questionário grava as definições: ao fechar, lê-as outra vez (e o onChange reagenda).
+            .fullScreenCover(isPresented: $responderOutraVez, onDismiss: { definicoes = Definicoes.carregar() }) {
+                QuestionarioView(inicio: .ritmo)
+            }
             .apagarLista($aApagar)
         }
     }
@@ -351,24 +388,6 @@ struct DefinicoesView: View {
         } footer: {
             Text("Lê os calendários das contas do iPhone (iCloud, Google, Outlook). Para juntar uma conta: Ajustes › Calendário › Contas. Ou liga a conta Google ou Outlook aqui, para ver os convites com mais detalhe.")
         }
-    }
-
-    private var horaAvisos: Binding<Date> {
-        Binding(
-            get: {
-                Calendar.current.date(
-                    bySettingHour: definicoes.horaNotificacao,
-                    minute: definicoes.minutoNotificacao,
-                    second: 0,
-                    of: .now
-                ) ?? .now
-            },
-            set: { nova in
-                let c = Calendar.current.dateComponents([.hour, .minute], from: nova)
-                definicoes.horaNotificacao = c.hour ?? 9
-                definicoes.minutoNotificacao = c.minute ?? 0
-            }
-        )
     }
 
     private var versao: String {

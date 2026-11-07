@@ -58,7 +58,7 @@ A UI não contém regras: chama `Tarefas` (que recebe `ModelContext`, `Relogio` 
   - relações opcionais, com `originalName` para o nome antigo;
   - propriedades calculadas `itens`, `subtopicos` e `fotos` por cima das relações guardadas.
 - Enums guardados como `String` crua (`*Raw`) com computed property tipada.
-- **Definicoes** não está no SwiftData: `Codable` em UserDefaults, com `decodeIfPresent` para tolerar versões antigas. Campos: as durações, a hora dos avisos, `avisosAtivos`, `inteligenciaAtiva` e `diasListaVazia`.
+- **Definicoes** não está no SwiftData: `Codable` em UserDefaults, com `decodeIfPresent` para tolerar versões antigas. Campos: as durações, a hora dos avisos, `modoAviso` (24 horas antes, de manhã ou à noite; um valor desconhecido fica no de sempre), `avisosAtivos`, `inteligenciaAtiva` e `diasListaVazia`. `Tarefas.horaDoAviso` aplica o modo aos avisos de pontos e de listas vazias: de manhã e à noite é na véspera, entre as 08:00 e as 22:00. A Aparência (`aparenciaEscolhida`, com Reativo pelo sol de Lisboa em `CeuDoDia.ehNoite`) é só da app, num `@AppStorage`.
 
 ### Migrações
 
@@ -106,7 +106,7 @@ Se a base real não abrir, a app não se fecha: `ToDoApp` guarda o erro, usa uma
 - **Limites:** no máximo `maxListas = 8` e até `maxPermanentes = 4`.
 - **Listas vazias:** uma lista não permanente sem pontos abertos ganha `vaziaDesde` e sai do Início ao fim de `diasListaVazia` (5). Espera pelos pontos expirados (ainda recuperáveis).
 - **Funções:** `quandoDesaparece`, `manterLista`, `definirPermanente` e `podeSerPermanente`.
-- **Listas iniciais:** Trabalho e Pessoal criam-se uma vez por aparelho, que guarda a data e os ids em `UserDefaults`. Num aparelho novo, o iCloud pode trazer depois as antigas. `juntarListasIniciaisRepetidas(criadasAqui:criadasEm:)` **não apaga nada**: a cópia criada aqui, se estiver vazia quando aparece a repetida, deixa de ser permanente e sai pela regra das listas vazias (5 dias). Assim, um ponto que outro aparelho lá tenha posto ainda tem tempo de chegar e segura-a. Só nos primeiros 7 dias, e uma vez por lista.
+- **Listas iniciais:** os primeiros espaços (`EspacoInicial`: Trabalho e Pessoal, ou os escolhidos no questionário, com Pessoal sempre) criam-se uma vez por aparelho, em `ToDoApp.criarListasIniciais`, que guarda a data e os ids em `UserDefaults`. Numa instalação nova só se criam no fim do questionário (ou ao saltá-lo). Num aparelho novo, o iCloud pode trazer depois as antigas. `juntarListasIniciaisRepetidas(criadasAqui:criadasEm:)` **não apaga nada**: a cópia criada aqui, se estiver vazia quando aparece a repetida, deixa de ser permanente e sai pela regra das listas vazias (5 dias). Assim, um ponto que outro aparelho lá tenha posto ainda tem tempo de chegar e segura-a. Só nos primeiros 7 dias, e uma vez por lista.
 
 ### Avisos
 
@@ -166,7 +166,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 ## Conta Apple (DESIGN.md 7.20)
 
 - **Opcional:** `ContaApple` (`@Observable`) faz o "Iniciar sessão com a Apple", guarda o utilizador e o perfil (`PerfilApple`) no Keychain e confirma o estado da credencial ao abrir e ao voltar à app.
-- **Onde aparece:** `BoasVindasView` (uma vez, no primeiro arranque) e `SecaoConta` no topo das Definições.
+- **Onde aparece:** no fim do questionário da primeira abertura (`QuestionarioView`) e em `SecaoConta`, no topo das Definições.
 - Precisa da capacidade da conta paga para funcionar no iPhone.
 
 ## Calendário
