@@ -146,7 +146,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 - **Estrutura:** uma lista `compras` tem secções (os itens) e pontos (os subtópicos).
 - **Envio:** `ListaPartilhada.paraPartilhar` gera um ficheiro `.todolista` (JSON), enviado pela folha de partilha (`PartilhaCompras`).
 - **Receção:** ao abrir o ficheiro, `juntar` funde por `partilhaId` e pelos ids. Ganha a alteração mais recente, e as lápides contam.
-- **Ao vivo:** ainda não há partilha ao vivo. Precisaria da base partilhada do CloudKit (`CKShare`), que a sincronização automática do SwiftData não usa.
+- **Ao vivo:** ainda não há partilha ao vivo. Precisaria da base partilhada do CloudKit (`CKShare`), que a sincronização automática do SwiftData não usa, ou de um servidor (ver [Evolução](#evolução-de-on-device-para-um-backend)).
 
 ## Backup (DESIGN.md 7.19)
 
@@ -217,12 +217,48 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 
 O ícone da app (`AppIcon-1024`, `-dark` e `-tinted`) é gerado a partir do código da Ampulheta com `ImageRenderer` (DESIGN.md 10).
 
+## Evolução: de on-device para um backend
+
+**Estado atual:** a app é on-device. Os dados vivem no aparelho, a sincronização é o CloudKit do SwiftData, as notificações são locais e a inteligência é o modelo do iPhone. Não há servidor nem rede própria. **Isto é o ponto de partida, não uma regra para sempre:** o produto pode vir a precisar de um servidor (sincronização além do iCloud, partilha ao vivo, web ou outra plataforma, avisos por push). Nada disto está decidido nem agendado; esta secção diz o que já ajuda e o que teria de mudar, para que o código novo não feche a porta.
+
+### O que já ajuda
+
+- **Regras no núcleo, sem UI e sem dependências.** `ToDoCore` compila e testa-se sem simulador. As regras do produto (prazos, expiração, listas vazias, `Para ti`) são o que mais custaria a reescrever, e já estão isoladas.
+- **Identidade estável.** `Lista`, `Item` e `Foto` têm `id` (`UUID`) próprio, que não depende do SwiftData nem do CloudKit.
+- **Fusão por id, com lápides.** `Backup.restaurar` e `ListaPartilhada.juntar` juntam por id, ganha a alteração mais recente (`alteradoEm`) e `apagadoEm` impede que um apagado ressuscite. É a base de qualquer sincronização com um servidor.
+- **Formato serializável com versão.** O `Backup` (`versaoFormato`) e o `.todolista` já são JSON `Codable`; um contrato de API pode partir daí.
+- **Identificador de pessoa.** O "Iniciar sessão com a Apple" (DESIGN.md 7.20) já dá um identificador estável, previsto para ligar os dados à pessoa se um dia houver um servidor.
+- **Tempo injetável.** Nenhuma regra usa `Date()`: o mesmo código pode correr com o relógio do servidor.
+
+### O que teria de mudar (em aberto)
+
+| Tema | Hoje | Com um backend |
+| --- | --- | --- |
+| **Dados** | SwiftData é a fonte de verdade; o CloudKit só replica | Decidir o modelo: *local-first* (SwiftData continua a ser a cópia local e uma camada de sincronização fala com o servidor) ou servidor como fonte de verdade. O *local-first* mantém a app instantânea e utilizável sem rede |
+| **Regras** | `Tarefas` recebe um `ModelContext`, por isso o núcleo está preso ao SwiftData | Se o servidor tiver de aplicar as mesmas regras, extrair o que é lógica pura (prazos, expiração) para funções sem `ModelContext`, ou escrevê-las duas vezes com os mesmos testes |
+| **Escritores** | Três na mesma base (app, widget, notificações) | Um só ponto de saída para a rede (a app), com o widget e as notificações a escreverem localmente e a sincronização a seguir |
+| **Avisos** | Notificações locais agendadas por `Notificacoes.reagendar()` | Podem continuar locais; só passam a push (APNs) se o servidor tiver de avisar por si |
+| **Identidade** | Sem conta própria; Sign in with Apple é opcional | Passa a ser obrigatória para ter dados no servidor; ligar ao identificador da Apple |
+| **Inteligência** | Foundation Models no iPhone, sem rede | Pode ficar no iPhone; um modelo no servidor só se o texto do utilizador aceitar sair do aparelho |
+| **Esquema** | `EsquemaV1…V6` e `PlanoMigracao` | Uma alteração aos modelos continua a exigir um `EsquemaV7`; o contrato da API também tem de ter versão |
+| **Privacidade** | Nenhum dado sai do aparelho (fora o iCloud, que é da Apple) | Os dados passam a existir num servidor: rever [`POLITICA-PRIVACIDADE.md`](POLITICA-PRIVACIDADE.md), a ficha de privacidade da App Store e o aviso na app **antes** da mudança entrar em vigor |
+| **Custos e operação** | Zero | Alojamento, cópias de segurança, monitorização, e dados reais de testers a migrar sem perdas |
+
+### Regras para o código novo, enquanto isto não está decidido
+
+- Regra de negócio só no `ToDoCore`, com teste. Nunca na UI, para poder ser reaproveitada.
+- Todo o modelo novo tem `id` estável e, se puder ser apagado numa vista partilhada, uma lápide.
+- Nada de lógica que dependa de o aparelho ser o único escritor, nem de `persistentModelID` como identidade fora da UI. Quem sai do ecrã (rede, ficheiros, backups) usa o `id`.
+- Não acoplar uma regra ao CloudKit: ele é um mecanismo de sincronização, não uma regra do produto.
+- Qualquer chamada de rede nova passa por um ponto único e nunca bloqueia o ecrã (ver Calendário).
+- Antes de ligar um servidor, a decisão e o contrato da API entram neste ficheiro e no `design/DESIGN.md`; o que o utilizador vê muda na política de privacidade primeiro.
+
 ## Convenções
 
 - PT-PT na UI, nos identificadores, nos comentários e nos commits ("Melhoria N: …").
 - Comentários curtos que explicam o porquê, com referência ao DESIGN.md ou à especificação quando existir.
 - Datas sempre via `Relogio`; durações sempre via `Definicoes`.
-- Sem dependências externas.
+- Sem dependências externas por agora (ver [Evolução](#evolução-de-on-device-para-um-backend)).
 - **Modelos apagados:** o SwiftData para a app quando se lê um modelo já apagado. Um ecrã que guarda um modelo (navegação, `@State`, aviso de "Anular", animação de saída) verifica `foiApagado` antes de o ler, e usa `persistentModelID` como identidade. Com o iCloud, outro aparelho pode apagar a qualquer momento.
 - **Segundo plano:** todo o `beginBackgroundTask` tem bloco de expiração, e o trabalho tem de caber em cerca de 30 s.
 - **Uma só cópia:** confirmações e regras repetidas em vários ecrãs vivem num modificador (`acoesDeItem`, `apagarLista`) ou no núcleo.

@@ -44,7 +44,7 @@ O **ToDo** inverte isto: **cada ponto tem 3 dias de vida.** Se lhe tocas (editas
 - 🧹 **Dinâmica, não arquivo**: a lista ativa só tem o que ainda importa.
 - 🛟 **Nada se perde por engano**: o que expira é recuperável.
 - ⚡ **Registar em segundos**: escrever e guardar, com o teclado já aberto.
-- 🔒 **Tudo no teu iPhone**: sem servidor e sem custos. A inteligência corre no próprio telemóvel. Ligar uma conta Google ou Outlook é opcional e só lê o calendário.
+- 🔒 **Tudo no teu iPhone, por agora**: sem servidor e sem custos. A inteligência corre no próprio telemóvel. Ligar uma conta Google ou Outlook é opcional e só lê o calendário. Se um dia houver um servidor, avisa-se antes e a [política de privacidade](docs/POLITICA-PRIVACIDADE.md) muda primeiro.
 - ✨ **Simples e bonita**: nativa, com o liquid glass do iOS 26 e cores com significado.
 - 💜 **Carinho em cada gesto**: animações com física, como o botão Manter, em todos os ecrãs e nos widgets.
 
@@ -263,6 +263,7 @@ ToDo
 - **SwiftUI** com liquid glass (`glassEffect`, `GlassEffectContainer`), **SwiftData** com o esquema versionado (V6, pronto para o CloudKit) e migrações testadas, **WidgetKit** e **App Intents**, **Foundation Models** (o modelo da Apple, no iPhone), **EventKit** só para leitura, **UserNotifications** com ações, **PhotosPicker**.
 - **O núcleo é testado à parte** (`swift test`): cada regra do produto tem testes, com um relógio injetável para as datas.
 - **Sem dependências externas.**
+- **On-device hoje, backend talvez amanhã.** O núcleo não depende de UI nem de servidor, e os dados têm ids estáveis e lápides, o que deixa a porta aberta a um backend. O que já ajuda e o que teria de mudar está em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md#evolução-de-on-device-para-um-backend).
 
 ## Desenvolvimento
 
@@ -300,6 +301,7 @@ A app tem um **modo de demonstração** (`-demo YES -ecra <nome>`), com dados de
 - [ ] **M7** Conta Apple Developer: TestFlight e widget com dados ✓; falta a sincronização com o iCloud
 - [ ] **M8** Vistas partilhadas ao vivo, captura inteligente, Siri e Atalhos
 - [ ] **M9** Importar CSV; acabamento visual, háptica e acessibilidade
+- [ ] **Em aberto** Backend próprio (sincronização além do iCloud, partilha ao vivo, web ou outra plataforma): ainda não decidido
 
 ## Design
 

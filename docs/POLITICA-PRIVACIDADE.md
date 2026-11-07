@@ -4,6 +4,7 @@ RASCUNHO. Antes de publicar:
 - Publicar num endereço público (a Google e o TestFlight pedem o link) e pô-lo em Branding, na consola da Google.
 - Fazer uma versão em inglês: quem verifica a app na Google lê em inglês.
 - Rever sempre que a app passar a tratar dados novos (por exemplo, se um dia houver servidor, contas próprias ou análise de uso).
+- Se for criado um backend (ver docs/ARQUITETURA.md, "Evolução"), este texto deixa de ser verdadeiro em: "Em resumo" (ficam no iPhone, não tenho servidores), a tabela dos dados, "Dados da Google" (não são enviados para servidores meus), "O que não faço", "Os teus direitos" e "Quanto tempo se guardam". Reescrever, atualizar a data e avisar na app antes de a mudança entrar em vigor. Acrescentar também: onde está o servidor, quem tem acesso, retenção, como apagar a conta e os dados, e a ficha de privacidade da App Store.
 - Este texto não é aconselhamento jurídico.
 Os comentários HTML não aparecem na página publicada.
 -->
