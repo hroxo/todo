@@ -26,6 +26,8 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public static let intervaloManterCurto = 1...30
     public static let intervaloManterLongo = 1...90
     public static let intervaloRetencao = 1...60
+    /// Dias do calendário no Início, contando com hoje.
+    public static let intervaloCalendario = 1...7
     /// O slider do questionário; em Avançado continua até 30.
     public static let intervaloQuestionario = 2...15
 
@@ -47,6 +49,8 @@ public struct Definicoes: Codable, Equatable, Sendable {
     /// Sempre entre as 08:00 e as 21:59, como os outros avisos (regra da noite).
     public var horaFechoDia = 21
     public var minutoFechoDia = 0
+    /// Hoje e os dias seguintes que o Início mostra do calendário.
+    public var diasCalendario = 3
 
     public init() {}
 
@@ -74,6 +78,7 @@ public struct Definicoes: Codable, Equatable, Sendable {
         fechoDiaAtivo = try c.decodeIfPresent(Bool.self, forKey: .fechoDiaAtivo) ?? base.fechoDiaAtivo
         horaFechoDia = try dias(.horaFechoDia, base.horaFechoDia, 8...21)
         minutoFechoDia = try dias(.minutoFechoDia, base.minutoFechoDia, 0...59)
+        diasCalendario = try dias(.diasCalendario, base.diasCalendario, Self.intervaloCalendario)
     }
 
     /// Escolhe o modo dos avisos com a hora dele.

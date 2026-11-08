@@ -14,9 +14,17 @@ extension Tarefas {
     /// Os pontos principais ativos que expiram nas 24 horas seguintes a `data`, o mais urgente
     /// primeiro. Fora ficam os fixados, os das listas de compras e os que já passaram do prazo.
     public func pontosEmRisco(em data: Date) throws -> [Item] {
-        try candidatosFecho()
+        Self.emRisco(try itens(.ativo), em: data)
+    }
+
+    /// A mesma regra sobre itens já lidos (as `@Query` dos ecrãs): é ela que decide se aparece
+    /// "Rever" e quantos pontos as cartas mostram (Melhoria 35).
+    public static func emRisco(_ itens: [Item], em data: Date) -> [Item] {
+        itens
             .filter { item in
-                guard let limite = item.expiraEm, limite > data else { return false }
+                guard !item.foiApagado, item.estado == .ativo, !item.fixado, item.apagadoEm == nil,
+                      item.lista?.ehCompras != true, let limite = item.expiraEm, limite > data
+                else { return false }
                 return Prazo(item: item, agora: data)?.ultimoDia == true
             }
             .sorted { ($0.expiraEm ?? .distantFuture) < ($1.expiraEm ?? .distantFuture) }

@@ -153,9 +153,9 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 
 ### 7.1 Barra de separadores (liquid glass) [Decidido]
 
-- `TabView` nativa com 4 separadores: **Listas, Concluídos, Expirados, Definições**, com a barra do sistema escondida. [Alterado 07/11/2026: o iOS 27 deixou de desenhar o separador de pesquisa à parte e o "+" passava a ser um 5.º separador dentro da barra.]
+- `TabView` nativa com 4 separadores: **Listas, Arquivo, Streak (`flame`), Definições**, com a barra do sistema escondida. [Alterado 08/11/2026, Melhoria 35: Concluídos e Expirados juntam-se no Arquivo, para dar lugar ao Streak.] [Alterado 07/11/2026: o iOS 27 deixou de desenhar o separador de pesquisa à parte e o "+" passava a ser um 5.º separador dentro da barra.]
 - **A barra é nossa** (`BarraSeparadores`), com vidro nativo num `GlassEffectContainer`: os 4 separadores numa cápsula `.glassEffect(.regular.interactive())` (ícone e rótulo; o escolhido na cor de destaque, com fundo leve) e, à direita, na mesma linha e separado dela, o **"+" de captura** num círculo de vidro de 62 pt. Fica em `safeAreaInset` em baixo, para o conteúdo nunca ficar escondido.
-- O separador Expirados mostra um contador vermelho quando há itens.
+- O separador Arquivo mostra o contador vermelho dos Expirados quando há itens.
 - **"+":** toque abre a Nova nota. **Manter premido** (meio segundo, com vibração) faz nascer por cima, alinhada à direita, uma cápsula de vidro com o quadrado com visto (`checkmark.square.fill`) e "Nova lista". **Arrastar o dedo até ela e largar** abre a Nova lista; com o dedo em cima a cápsula fica azul e cresce um pouco (vibração leve). Largar noutro sítio não faz nada. No VoiceOver, a ação "Nova lista". Com 8 espaços, mostra o aviso do máximo. [Decidido 07/11/2026: opção B, "bolha com nome"]
 - O Detalhe esconde a barra (tem o Manter no fundo, 7.5).
 - A barra deixa de encolher ao percorrer (era o `.tabBarMinimizeBehavior` da barra do sistema).
@@ -163,7 +163,7 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 
 ### 7.2 Cartão de lista (Início)
 
-- Grelha de 2 colunas. Cada cartão tem 148 pt de altura e é preenchido com a cor base, com uma sombra suave da mesma cor (opacidade ~30%, raio 16).
+- Grelha de 2 colunas. Cada cartão tem 128 pt de altura [alterado 08/11/2026, Melhoria 35: era 148, para o Início ter mais ecrã] e é preenchido com a cor base, com uma sombra suave da mesma cor (opacidade ~30%, raio 16).
 - Em cima à esquerda, o ícone num círculo de 40 pt (branco a 25%, ou preto a 12% nas cores claras). Em cima à direita, um mini-anel com a "frescura" da lista (proporção de itens longe de expirar).
 - Em baixo, o nome (`.headline`) e "N ativos".
 - O último lugar da grelha é sempre o cartão "Nova lista", com contorno tracejado, que abre Personalizar lista.
@@ -243,6 +243,8 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.9 Expirados
 
+- **[Decidido 08/11/2026, Melhoria 35] Arquivo:** Expirados e Concluídos (7.11) são os dois lados de uma só página "Arquivo", com um controlo segmentado **Concluídos | Expirados · N** por baixo do título. Cada lado guarda os seus filtros. Nos Expirados, com pontos a expirar hoje, aparece por cima o botão de vidro "Rever N pontos que expiram hoje" (7.25).
+
 - Fundo `EstadoExpiradosFundo`. Título "Expirados" como nos outros separadores (`EcraBase`) e, por baixo, o ícone `hourglass` num círculo laranja de 40 pt com o texto "Ficam aqui 14 dias antes de serem apagados".
 - Cartão por item: em cima, ícone da lista, título e "Lista · apagado em N dias"; em baixo, o botão **Recuperar** (cápsula laranja clara, a toda a largura, numa só linha) e o botão Apagar (círculo cinzento). [22/10/2026: o "Recuperar" cortava-se ao lado da linha do prazo]
 - No Início há um aviso permanente "N itens em Expirados" que leva a este ecrã, sempre que N > 0.
@@ -287,11 +289,11 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 ### 7.12b Espaços com setas e calendário por espaço (mocks 11–14)
 
-- **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 3 espaços, sem setas, como antes.
+- **Mais de 4 espaços**: cartões de 112 pt, com ícone de 32 pt, anel de 34 pt e número de 30 pt [alterado 08/11/2026, Melhoria 35: era 128] (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 3 espaços, sem setas, como antes.
 - **Exatamente 4 espaços**: a primeira página fica cheia, por isso já há uma segunda página, só com o cartão "Nova lista" (rótulo "Nova lista" em vez de "Espaços 5–…").
 - **Máximo de 8**: na última página, "Nova lista" só aparece se houver menos de 8; com 8, aparece a nota "Máximo de 8 espaços".
 - **Manter premido o "+"** de baixo e arrastar até "Nova lista" (7.1); com 8, mostra o aviso do máximo. O toque curto continua a abrir a captura.
-- **Hoje no calendário por espaço** [Decidido]: eventos de todos os espaços, num só grupo branco, por hora. Cabeçalho "HOJE NO CALENDÁRIO" com "4 eventos · todos os espaços". Cada linha (62 pt): horas, barra da cor do calendário, título e, por baixo, o espaço (círculo do ícone de 18 pt, nome em `.footnote` semibold) e o local. O "+" fica na cor do espaço e cria o ponto nesse espaço. Calendários sem espaço não aparecem.
+- **Hoje no calendário por espaço** [Decidido]: eventos de todos os espaços, num só grupo branco, por hora. Cabeçalho "HOJE NO CALENDÁRIO" com "4 eventos · todos os espaços". Cada linha (62 pt): horas, barra da cor do calendário, título e, por baixo, o espaço (círculo do ícone de 18 pt, nome em `.footnote` semibold) e o local. O "+" fica na cor do espaço e cria o ponto nesse espaço. Calendários sem espaço não aparecem. **Próximos dias** [Decidido a pedido do Hugo, 8/11]: por baixo de "Hoje" vêm "Amanhã" e os dias da semana seguintes (`JanelaEventos`; 3 dias por defeito, de 1 a 7 em Definições › Calendário › "Dias no Início", um `Stepper`), cada um num grupo branco igual, sempre à vista e com "Sem eventos" se vazio; só "Hoje" recolhe os que já passaram.
 - Imagens dos mocks: `design/mocks/*.png` (geradas com `scripts/mocks.sh` a partir de `design/mocks/html/`).
 - **Eventos sem espaço** (Melhoria 6.1) [Decidido 22/10/2026, substitui "calendários sem espaço não aparecem"]: aparecem também, com um círculo tracejado de 18 pt e "Sem espaço" no lugar do espaço. O "+" de um evento sem espaço cria o ponto na última lista usada (pressão longa: escolher outra). Cada calendário tem três destinos: um espaço, **Sem espaço** (aparece) ou **Não mostrar** (escondido).
 - **Tocar num evento abre-o** (Melhoria 6.2): folha (`.medium`/`.large`) com o título, "Quinta, 22 out · 14:30–15:30", o local e o calendário; o botão em cápsula "Entrar na reunião" (`video.fill`) quando há link (o URL do evento ou o primeiro link Teams/Zoom/Meet/Webex no local ou nas notas, `LigacaoReuniao`); "Espaço do calendário" com "Associar"/"Mudar" (abre a escolha do mock 14); "Criar ponto em" com fichas de lista como na captura (a do espaço do evento vem preenchida); "Organizado por …"; **Participantes** com a resposta (aceite `checkmark.circle.fill` verde, talvez `questionmark.circle.fill` laranja, recusado `xmark.circle.fill` vermelho, pendente `clock`), escondida quando a conta não os dá; **Notas** (o texto do convite; o EventKit não dá o email original).
@@ -380,7 +382,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 
 - No topo do Início, logo a seguir à data: o que importa agora numa frase curta (até 2 linhas, com a hora antes dos nomes) e até 2 botões. É compacto: brilhos à esquerda, "x" à direita para o dispensar até o assunto mudar, e um contorno suave em gradiente (índigo, rosa, laranja) a marcar que é uma sugestão.
 - **O núcleo decide o que é relevante** (`Tarefas.paraTi`), por esta ordem:
-  1. pontos no último dia: "Abrir" e "Manter +5";
+  1. pontos no último dia: "Rever" (abre as cartas, 7.25) e "Abrir" [alterado 08/11/2026, Melhoria 35: era "Abrir" e "Manter +5"]; conta os mesmos pontos que as cartas (`Tarefas.emRisco`);
   2. uma lista vazia que sai nas próximas 24 h: "Tornar permanente" e "Mais 5 dias";
   3. um evento nas próximas 3 h cujo espaço tem um ponto com subtópicos por fazer: "Ver subtópicos";
   4. uma vista partilhada a meio, mexida nos últimos 2 dias: "Abrir …".
@@ -412,6 +414,16 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - Tocar abre o **ecrã de cartas**: um ponto de cada vez, com a lista, o anel laranja "Hoje", o título e "Expira amanhã às 06:38". Botões **Concluir** (verde, proeminente), **Manter +5**, **Manter +15** e **Deixar ir** (passa à frente: o ponto expira no prazo dele). Deslizar o cartão → mantém, ← deixa ir; os botões fazem o mesmo.
 - No fim, o Glassy celebra ("Dia verde! Bom trabalho.") ou fica calmo ("Dia fechado."), com "Concluíste 1, mantiveste 1, deixaste ir 1."
 - Em Definições › Notificações: "Fecho do dia" ligado ou desligado e a hora.
+- **Rever [Decidido 08/11/2026, Melhoria 35]:** as mesmas cartas a qualquer hora, com o título "Rever": no Início, pelo botão "Rever" do balão do Glassy sempre que há pontos a expirar hoje (7.21; depois da hora do fecho, o balão mostra "Fechar o dia", que abre as mesmas cartas); e pelo botão dos Expirados. Mostra os pontos que expiram hoje; sair não dá o dia por fechado. No fim, "Tudo revisto." (ou "Dia verde!").
+
+### 7.26 O teu mês [Decidido 08/11/2026, Melhoria 35]
+- [Alterado 08/11/2026: o Início ficava cheio de mais; a vista de calendário fica só no Streak.] **"O teu mês"** vive no separador **Streak** (7.27), com as bolas do widget (7.24): ✓ verde, ✕ vermelho, tracejado neutro; os dias por vir são só uma sombra cinzenta, e hoje tem anel. Mostra a grelha do mês (segunda primeiro), o título "Novembro de 2026" com "N dias verdes", setas de vidro ‹ › e deslizar para mudar de mês, entre o primeiro mês com registo e o atual (sem futuro), e a legenda com as três marcas.
+
+### 7.27 Streak: grãos e cenários [Decidido 08/11/2026, Melhoria 35; mock "O mundo do Glassy", B, em `design/mocks/html/Engagement.html`]
+- **Grãos** de areia (não "pontos": ponto é uma tarefa): **1 por dia verde**, nunca por ponto. Gastam-se a desbloquear cenários; um grão ganho nunca se tira. O totalizador do Streak usa `hourglass.bottomhalf.filled` num círculo laranja.
+- **Separador Streak** [Decidido 08/11/2026: o nome é "Streak", não "Cenários"]: é a página do teu ritmo. Por ordem: o totalizador ("7 grãos disponíveis", "N de 6 cenários são teus"), **O teu mês** (7.26) e **Cenários**, a coleção numa grelha de 2. No futuro, com backend, entra aqui o **ranking com amigos** (ideia 4B do Engagement.html), ainda por desenhar. O nome muda, a regra não: nada volta a zero, um dia falhado não tira grãos. Cada cenário: miniatura, nome e estado ("Em uso" com contorno verde e ✓, "Teu · tocar para usar", "Desbloquear · N grãos" ou "Faltam N grãos" com cadeado e a miniatura dessaturada). Comprar pede confirmação e passa logo a usar.
+- **Catálogo (proposta de preços):** Céu (grátis, o de sempre), Parque 3, Praia 7, Biblioteca 10, Viagem 14, Montanha 21. Desenhados em SwiftUI, cada um com versão de dia e de noite, como o céu (7.23).
+- O cenário escolhido é o **fundo do Início**; os outros ecrãs ficam com o céu. Com um cenário comprado, o dia ganho não pinta o fundo de verde (ficam os confettis).
 
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 

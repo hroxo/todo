@@ -174,7 +174,11 @@ struct ToDoApp: App {
         let pasta = BaseDados.pastaPartilhada
         if let pasta { _ = try? tarefas.registarHistorico(em: pasta) }
         let mudou = (try? tarefas.avaliar()).map { $0.expirados + $0.apagados > 0 } ?? false
-        if let pasta { _ = try? tarefas.registarHistorico(em: pasta) }
+        if let pasta, let historico = try? tarefas.registarHistorico(em: pasta) {
+            // Os grãos dos dias verdes (Melhoria 35). try?: um grão que falhe volta a
+            // tentar-se na manutenção seguinte, e nada se apaga.
+            try? tarefas.registarGraos(de: historico)
+        }
         try? contexto.save()
         guard mudou || !soSeMudou else { return }
         // Na demonstração não há avisos, mas o widget mostra os dados de exemplo.

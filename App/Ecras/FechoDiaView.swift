@@ -5,7 +5,15 @@ import ToDoCore
 /// Fecho do dia (Melhoria 33, DESIGN.md 7.25; mock 1B em `design/mocks/html/Engagement.html`):
 /// os pontos que chegam ao fim, um cartão de cada vez, com Concluir, Manter e Deixar ir. No fim,
 /// o Glassy conta como ficou o dia. Abre pela notificação, pelo Glassy no Início e pelo widget.
+/// Em modo `rever` (Melhoria 35) são as mesmas cartas a qualquer hora, pelo "Rever" do Início
+/// e dos Expirados, sem dar o dia por fechado.
 struct FechoDiaView: View {
+    enum Modo {
+        case fecho, rever
+    }
+
+    let modo: Modo
+
     @Environment(\.modelContext) private var contexto
     @Environment(\.dismiss) private var fechar
     @Environment(EstadoApp.self) private var estado
@@ -43,7 +51,7 @@ struct FechoDiaView: View {
             }
             .padding(.horizontal, Espaco.margem)
             .padding(.bottom, Espaco.fim)
-            .navigationTitle("Fechar o dia")
+            .navigationTitle(modo == .fecho ? "Fechar o dia" : "Rever")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -62,9 +70,10 @@ struct FechoDiaView: View {
             guard pontos.isEmpty else { return }
             pontos = (try? Tarefas(contexto: contexto).pontosEmRisco(em: .now)) ?? []
         }
-        // Também ao deslizar a folha para baixo: o dia fica fechado e o convite sai.
+        // Também ao deslizar a folha para baixo: o dia fica fechado e o convite sai. Rever não
+        // fecha o dia: o convite do fecho continua à hora dele.
         .onDisappear {
-            estado.fechoFeitoEm = .now
+            if modo == .fecho { estado.fechoFeitoEm = .now }
             estado.reagendarAvisos()
         }
     }
@@ -185,7 +194,7 @@ struct FechoDiaView: View {
             Spacer()
             Ampulheta(pose: verde ? .celebrar : .areia, nivelAreia: nil)
                 .frame(width: 110, height: 140)
-            Text(pontos.isEmpty ? "Nada chega ao fim hoje." : verde ? "Dia verde! Bom trabalho." : "Dia fechado.")
+            Text(pontos.isEmpty ? "Nada chega ao fim hoje." : verde ? "Dia verde! Bom trabalho." : modo == .fecho ? "Dia fechado." : "Tudo revisto.")
                 .font(.title2.weight(.bold))
                 .multilineTextAlignment(.center)
             if !pontos.isEmpty {

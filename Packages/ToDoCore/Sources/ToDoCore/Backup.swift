@@ -16,6 +16,16 @@ public struct Backup: Codable, Equatable, Sendable {
     /// Os dias do widget "O teu ritmo"; nil em backups de antes do histórico. Ao restaurar, a
     /// app junta-o ao do aparelho (`HistoricoDias.juntado`), sem apagar dias.
     public var historico: HistoricoDias?
+    /// Os dias que deram grão e os cenários comprados (Melhoria 35); nil em backups de antes.
+    /// Restaurar junta por id e nunca tira nada.
+    public var graos: [String]? = nil
+    public var cenarios: [CenarioB]? = nil
+
+    public struct CenarioB: Codable, Equatable, Sendable {
+        public var id: String
+        public var custo: Int
+        public var desbloqueadoEm: Date
+    }
 
     public struct ListaB: Codable, Equatable, Sendable {
         public var id: UUID
@@ -135,7 +145,11 @@ extension Tarefas {
                     itens: l.itens.sorted { $0.ordem < $1.ordem }.map(item)
                 )
             },
-            historico: historico
+            historico: historico,
+            graos: Set(try contexto.fetch(FetchDescriptor<DiaGanho>()).map(\.id)).sorted(),
+            cenarios: try contexto.fetch(FetchDescriptor<CenarioDesbloqueado>(sortBy: [SortDescriptor(\.id)])).map {
+                Backup.CenarioB(id: $0.id, custo: $0.custo, desbloqueadoEm: $0.desbloqueadoEm)
+            }
         )
     }
 
@@ -214,6 +228,18 @@ extension Tarefas {
             }
             for sub in b.subtopicos {
                 restaurarItem(sub, lista: nil, pai: item)
+            }
+        }
+
+        if aplicar {
+            let dias = Set(try contexto.fetch(FetchDescriptor<DiaGanho>()).map(\.id))
+            for dia in Set(backup.graos ?? []) where !dias.contains(dia) {
+                contexto.insert(DiaGanho(id: dia, ganhoEm: relogio.agora))
+            }
+            var compras = Set(try contexto.fetch(FetchDescriptor<CenarioDesbloqueado>()).map(\.id))
+            for c in backup.cenarios ?? [] where !compras.contains(c.id) {
+                contexto.insert(CenarioDesbloqueado(id: c.id, custo: c.custo, desbloqueadoEm: c.desbloqueadoEm))
+                compras.insert(c.id)
             }
         }
 

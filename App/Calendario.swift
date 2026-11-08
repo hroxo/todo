@@ -65,11 +65,13 @@ final class Calendario {
     }
 
     private(set) var acesso: Acesso = .porPedir
-    /// Eventos de hoje do iPhone e das contas ligadas, sem os repetidos (fica a versão da
+    /// Eventos de hoje e dos dias seguintes (`JanelaEventos`, `dias`) do iPhone e das contas ligadas, sem os repetidos (fica a versão da
     /// conta ligada, que tem mais detalhes) nem os dos calendários escondidos. Guardados: os
     /// ecrãs leem-nos várias vezes em cada desenho, e só mudam quando há diferenças.
     private(set) var eventos: [EventoHoje] = []
     private(set) var calendarios: [CalendarioLocal] = []
+    /// Dias lidos, contando com hoje (Definições › Calendários): relê-se em cada `atualizar()`.
+    private(set) var dias = Definicoes.carregar().diasCalendario
     /// A app morreu ou bloqueou com o calendário: não se mostra outra vez sem a pessoa pedir, para o
     /// calendário nunca impedir a app de abrir (DESIGN.md 7.12).
     private(set) var leituraFalhou = false
@@ -140,6 +142,7 @@ final class Calendario {
 
     func atualizar() {
         guard !Demo.ativo, ToDoApp.erroBaseDados == nil else { return }
+        dias = Definicoes.carregar().diasCalendario
         lerAcesso()
         atualizarContas()
         leitura?.cancel()
@@ -174,8 +177,8 @@ final class Calendario {
         if lidos != calendarios { calendarios = lidos }
         associarNovos(lidos.map { ($0.id, $0.titulo) })
         let ocultos = Set(espacos.filter { $0.value == marcaOculto }.keys)
-        let hoje = await Task.detached { [loja = self.loja, anteriores = convertidos] in
-            Self.lerEventosDeHoje(loja, ocultos: ocultos, anteriores: anteriores)
+        let hoje = await Task.detached { [loja = self.loja, anteriores = convertidos, dias] in
+            Self.lerEventos(loja, dias: dias, ocultos: ocultos, anteriores: anteriores)
         }.value
         convertidos = hoje.convertidos
         guard !Task.isCancelled, hoje.valores != locais else { return }
@@ -192,7 +195,7 @@ final class Calendario {
             chaveExterno: { ($0.id, $0.inicio) }
         )
         let novos = (juntos.locais + juntos.externos.map(converterExterno))
-            .sorted { ($0.diaInteiro ? 0 : 1, $0.inicio) < ($1.diaInteiro ? 0 : 1, $1.inicio) }
+            .sorted { $0.inicio < $1.inicio }
         if novos != eventos { eventos = novos }
     }
 
@@ -202,18 +205,18 @@ final class Calendario {
             .sorted { ($0.conta, $0.titulo) < ($1.conta, $1.titulo) }
     }
 
-    nonisolated private static func lerEventosDeHoje(
+    nonisolated private static func lerEventos(
         _ loja: EKEventStore,
+        dias: Int,
         ocultos: Set<String>,
         anteriores: [String: Convertido<EventoHoje>]
     ) -> (valores: [EventoHoje], convertidos: [String: Convertido<EventoHoje>]) {
         let visiveis = loja.calendars(for: .event).filter { !ocultos.contains($0.calendarIdentifier) }
         guard !visiveis.isEmpty else { return ([], [:]) }
-        let inicioDoDia = Calendar.current.startOfDay(for: .now)
-        let fimDoDia = Calendar.current.date(byAdding: .day, value: 1, to: inicioDoDia)!
-        let pedido = loja.predicateForEvents(withStart: inicioDoDia, end: fimDoDia, calendars: visiveis)
+        let janela = JanelaEventos.intervalo(agora: .now, dias: dias)
+        let pedido = loja.predicateForEvents(withStart: janela.inicio, end: janela.fim, calendars: visiveis)
         let eventos = loja.events(matching: pedido)
-            .sorted { ($0.isAllDay ? 0 : 1, $0.startDate) < ($1.isAllDay ? 0 : 1, $1.startDate) }
+            .sorted { $0.startDate < $1.startDate }
         return Diferencas.aplicar(
             eventos,
             anteriores: anteriores,
@@ -415,6 +418,9 @@ final class Calendario {
         func as_(_ hora: Int, _ minuto: Int) -> Date {
             Calendar.current.date(bySettingHour: hora, minute: minuto, second: 0, of: hoje)!
         }
+        func noutroDia(_ dias: Int, _ hora: Int, _ minuto: Int) -> Date {
+            Calendar.current.date(byAdding: .day, value: dias, to: as_(hora, minuto))!
+        }
         // Os calendários de exemplo têm o nome dos espaços, para a associação por nome.
         func evento(_ id: String, _ titulo: String, _ inicio: Date, _ fim: Date, _ local: String, _ cor: Color, _ calendario: String) -> EventoHoje {
             EventoHoje(id: id, eventoId: "demo-\(id)", titulo: titulo, inicio: inicio, fim: fim, diaInteiro: false,
@@ -438,6 +444,9 @@ final class Calendario {
             evento("3", "Revisão do roadmap Q1", as_(14, 30), as_(15, 30), "Sala 3", .blue, "Trabalho"),
             convite,
             evento("4", "Jantar com a Ana", as_(21, 0), as_(22, 30), "", .green, "Pessoal"),
+            evento("6", "Consulta de rotina", noutroDia(1, 9, 30), noutroDia(1, 10, 15), "Clínica", .green, "Pessoal"),
+            evento("7", "Planeamento da semana", noutroDia(1, 15, 0), noutroDia(1, 16, 0), "Sala 3", .blue, "Trabalho"),
+            evento("8", "Treino de força", noutroDia(2, 7, 30), noutroDia(2, 8, 30), "", .red, "Ginásio"),
         ].sorted { $0.inicio < $1.inicio }
         associarNovos(locais.map { ($0.calendarioId, $0.calendarioId) })
         juntarEventos()

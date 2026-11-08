@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Concluídos (DESIGN.md 7.11): itens concluídos nos últimos dias, com Reabrir. Filtra por
+/// Concluídos (DESIGN.md 7.11), um dos lados do Arquivo: itens concluídos nos últimos dias, com Reabrir. Filtra por
 /// lista e pela data de conclusão (Melhoria 3).
 struct ConcluidosView: View {
     @Environment(\.modelContext) private var contexto
@@ -24,70 +24,74 @@ struct ConcluidosView: View {
         let todos = concluidos.filter { !$0.foiApagado }.sorted { ($0.concluidoEm ?? .distantPast) > ($1.concluidoEm ?? .distantPast) }
         let itens = filtro.aplicar(todos, agora: agora)
 
-        NavigationStack {
-            EcraBaseLista(titulo: "Concluídos") {
-                BotaoFiltro(filtro: $estado.filtroConcluidos, listas: listas, tituloData: "Data de conclusão")
-            } conteudo: {
-                if filtro.ativo {
-                    Section {
-                        FichaFiltro(texto: filtro.rotulo(listas: listas)) { limparFiltros() }
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                }
+        EcraBaseLista(titulo: "Arquivo") {
+            BotaoFiltro(filtro: $estado.filtroConcluidos, listas: listas, tituloData: "Data de conclusão")
+        } conteudo: {
+            Section {
+                SegmentoArquivo()
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
 
+            if filtro.ativo {
                 Section {
-                    ForEach(itens) { item in
-                        linha(item, agora: agora)
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    reabrir(item)
-                                } label: {
-                                    Label("Reabrir", systemImage: "arrow.uturn.backward")
-                                }
-                                .tint(item.lista?.cor.base ?? .accentColor)
+                    FichaFiltro(texto: filtro.rotulo(listas: listas)) { limparFiltros() }
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
+
+            Section {
+                ForEach(itens) { item in
+                    linha(item, agora: agora)
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                reabrir(item)
+                            } label: {
+                                Label("Reabrir", systemImage: "arrow.uturn.backward")
                             }
-                            .swipeActions(edge: .trailing) {
-                                Button {
-                                    aApagar = item
-                                } label: {
-                                    Label("Apagar", systemImage: "trash")
-                                }
-                                .tint(.red)
+                            .tint(item.lista?.cor.base ?? .accentColor)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                aApagar = item
+                            } label: {
+                                Label("Apagar", systemImage: "trash")
                             }
-                            .contextMenu {
-                                Button {
-                                    reabrir(item)
-                                } label: {
-                                    Label("Reabrir", systemImage: "arrow.uturn.backward")
-                                }
-                                Button(role: .destructive) {
-                                    aApagar = item
-                                } label: {
-                                    Label("Apagar", systemImage: "trash")
-                                }
+                            .tint(.red)
+                        }
+                        .contextMenu {
+                            Button {
+                                reabrir(item)
+                            } label: {
+                                Label("Reabrir", systemImage: "arrow.uturn.backward")
                             }
-                    }
-                } footer: {
-                    if !itens.isEmpty {
-                        Text("Ficam aqui \(tarefas.definicoes.diasRetencaoConcluidos) dias antes de serem apagados.")
-                    }
+                            Button(role: .destructive) {
+                                aApagar = item
+                            } label: {
+                                Label("Apagar", systemImage: "trash")
+                            }
+                        }
+                }
+            } footer: {
+                if !itens.isEmpty {
+                    Text("Ficam aqui \(tarefas.definicoes.diasRetencaoConcluidos) dias antes de serem apagados.")
                 }
             }
-            .overlay {
-                if itens.isEmpty && filtro.ativo && !todos.isEmpty {
-                    VazioComFiltros { limparFiltros() }
-                } else if itens.isEmpty {
-                    EstadoVazio(
-                        pose: .areia,
-                        titulo: "Ainda nada concluído",
-                        texto: "O que concluíres fica aqui \(Formatos.dias(tarefas.definicoes.diasRetencaoConcluidos))."
-                    )
-                }
-            }
-            .sensoryFeedback(.success, trigger: reabertos)
-            .acoesDeItem(aEditar: $aEditar, aApagar: $aApagar)
         }
+        .overlay {
+            if itens.isEmpty && filtro.ativo && !todos.isEmpty {
+                VazioComFiltros { limparFiltros() }
+            } else if itens.isEmpty {
+                EstadoVazio(
+                    pose: .areia,
+                    titulo: "Ainda nada concluído",
+                    texto: "O que concluíres fica aqui \(Formatos.dias(tarefas.definicoes.diasRetencaoConcluidos))."
+                )
+            }
+        }
+        .sensoryFeedback(.success, trigger: reabertos)
+        .acoesDeItem(aEditar: $aEditar, aApagar: $aApagar)
     }
 
     private func linha(_ item: Item, agora: Date) -> some View {

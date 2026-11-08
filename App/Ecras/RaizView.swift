@@ -14,6 +14,9 @@ struct RaizView: View {
     @AppStorage("questionarioVisto") private var questionarioVisto = false
     @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
     @State private var barraEscondida = false
+    /// O cenário escolhido neste aparelho (Melhoria 35); só vale se a compra já cá estiver.
+    @AppStorage("cenarioEscolhido") private var cenarioEscolhido = CenarioId.ceu.rawValue
+    @Query private var compras: [CenarioDesbloqueado]
 
     /// Onde começa o questionário, ou nil quando não há nada a perguntar.
     private var inicioQuestionario: QuestionarioView.Passo? {
@@ -47,16 +50,17 @@ struct RaizView: View {
             Tab("Listas", systemImage: "list.bullet", value: EstadoApp.Separador.listas) {
                 InicioView().toolbarVisibility(.hidden, for: .tabBar)
             }
-            Tab("Concluídos", systemImage: "checkmark.circle", value: EstadoApp.Separador.concluidos) {
-                ConcluidosView().toolbarVisibility(.hidden, for: .tabBar)
+            Tab("Arquivo", systemImage: "archivebox", value: EstadoApp.Separador.arquivo) {
+                ArquivoView().toolbarVisibility(.hidden, for: .tabBar)
             }
-            Tab("Expirados", systemImage: "hourglass", value: EstadoApp.Separador.expirados) {
-                ExpiradosView().toolbarVisibility(.hidden, for: .tabBar)
+            Tab("Streak", systemImage: "flame", value: EstadoApp.Separador.streak) {
+                StreakView().toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("Definições", systemImage: "gearshape", value: EstadoApp.Separador.definicoes) {
                 DefinicoesView().toolbarVisibility(.hidden, for: .tabBar)
             }
         }
+        .environment(\.cenario, Cenario.ativo(escolhido: cenarioEscolhido, compras: compras))
         .onPreferenceChange(BarraEscondida.self) { [$barraEscondida] in $barraEscondida.wrappedValue = $0 }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if !barraEscondida {
@@ -111,7 +115,11 @@ struct RaizView: View {
             PersonalizarListaView(modo: .nova)
         }
         .sheet(isPresented: $estado.mostrarFecho) {
-            FechoDiaView()
+            FechoDiaView(modo: .fecho)
+                .environment(estado)
+        }
+        .sheet(isPresented: $estado.mostrarRever) {
+            FechoDiaView(modo: .rever)
                 .environment(estado)
         }
     }

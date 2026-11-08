@@ -11,6 +11,8 @@ public enum ErroTarefas: Error, Equatable {
     case limiteListas
     /// No máximo `Tarefas.maxPermanentes` listas permanentes (DESIGN.md 7.17).
     case limitePermanentes
+    /// Um cenário custa mais grãos do que há disponíveis (Melhoria 35).
+    case graosInsuficientes
 }
 
 /// Notificação a agendar para um item que vai expirar (especificação 6).

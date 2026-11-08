@@ -28,8 +28,25 @@ final class ParaTiTests: BaseTestes {
 
         XCTAssertEqual(cartao.motivo, .prazos)
         XCTAssertEqual(cartao.fraseBase, "2 pontos expiram em breve, o primeiro amanhã às 10:00: «Demo de sexta».")
-        XCTAssertEqual(cartao.botoes.map(\.acao), [.abrirItem(demo.id), .manter(demo.id)])
-        XCTAssertEqual(cartao.botoes.last?.rotulo, "Manter +5")
+        // Melhoria 35: rever os pontos um a um, nas cartas, é o primeiro botão.
+        XCTAssertEqual(cartao.botoes.map(\.acao), [.rever, .abrirItem(demo.id)])
+        XCTAssertEqual(cartao.botoes.first?.rotulo, "Rever")
+    }
+
+    /// O balão conta o mesmo que as cartas do Rever: um ponto que já passou do prazo (antes de a
+    /// avaliação de cada minuto o pôr em Expirados) não entra.
+    func testPrazosNaoContaOQueJaPassouDoPrazo() throws {
+        relogio.agora = data(2026, 10, 21, 10, 0)
+        try tarefas.criarItem(titulo: "Já foi", em: trabalho)
+        relogio.agora = data(2026, 10, 22, 12, 0)
+        let aChegar = try tarefas.criarItem(titulo: "Hoje à tarde", em: trabalho)
+        aChegar.expiraEm = data(2026, 10, 24, 18, 0)
+        avancar(horas: 50)
+
+        let cartao = try XCTUnwrap(tarefas.paraTi())
+
+        XCTAssertEqual(cartao.fraseBase, "Expira hoje às 18:00: «Hoje à tarde».")
+        XCTAssertEqual(try tarefas.pontosEmRisco(em: relogio.agora).map(\.titulo), ["Hoje à tarde"])
     }
 
     func testListaQueSaiAmanha() throws {

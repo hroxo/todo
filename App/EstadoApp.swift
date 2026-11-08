@@ -6,10 +6,18 @@ import ToDoCore
 @Observable
 final class EstadoApp {
     enum Separador: Hashable {
-        case listas, concluidos, expirados, definicoes
+        case listas, arquivo, streak, definicoes
+    }
+
+    /// Os dois lados do Arquivo (Melhoria 35): o que concluíste e o que expirou.
+    enum SecaoArquivo: Hashable {
+        case concluidos, expirados
     }
 
     var separador: Separador = .listas
+    var secaoArquivo: SecaoArquivo = .concluidos
+    /// Rever cartas a qualquer hora (Melhoria 35): o mesmo ecrã do Fecho do dia, sem o fechar.
+    var mostrarRever = false
     /// Navegação do separador Listas (Lista → Detalhe).
     var caminho = NavigationPath()
     var mostrarCaptura = false

@@ -45,13 +45,15 @@ A UI não contém regras: chama `Tarefas` (que recebe `ModelContext`, `Relogio` 
 - **Target `ToDoWidgets`** (app-extension, embutida na app). A app também compila `Widgets/VistaWidget.swift`, `Mascote.swift` e `Intents.swift`, para o ecrã de demo e para os intents.
 - **Versão:** `MARKETING_VERSION` e `CURRENT_PROJECT_VERSION` (o CI usa o número da execução).
 
-## Modelo de dados (esquema V6, pronto para o CloudKit)
+## Modelo de dados (esquema V7, pronto para o CloudKit)
 
 - **Lista** (um "espaço"): `id`, `nome`, `corRaw`, `ordem`, `icone`, `emoji?`, `tipoRaw` (`normal` | `compras`, que na UI é a "vista partilhada"), `partilhaId?`, `permanente`, `vaziaDesde?`, `itensGuardados` (cascade).
 - **Item**: `titulo`, `tipoRaw` (`tarefa` | `notaRapida`), `estadoRaw` (`ativo` | `concluido` | `expirado`), `fixado`, `criadoEm`, `ultimaAcaoEm`, `alteradoEm?`, `apagadoEm?`, `expiraEm?`, `expiradoEm?`, `concluidoEm?`, `ordem`, `nota?`, `eventoId?`, `eventoInicio?`, `lista?`, `pai?`, `subtopicosGuardados`, `fotosGuardadas` (cascade).
   - **Principal e subtópico:** o principal tem `lista` e não tem `pai`. O subtópico tem `pai` e não tem `lista` (usa `listaEfetiva`). Só há um nível.
   - **Lápides:** `apagadoEm` marca um ponto apagado numa vista partilhada, para a fusão não o ressuscitar. `itensAtivos` e `subtopicosOrdenados` escondem as lápides.
 - **Foto**: `dados` (`externalStorage`, JPEG reduzido), `ordem`, `criadaEm`, `item?`.
+- **DiaGanho** (V7, Melhoria 35): `id` (o dia, "2026-11-08"), `ganhoEm`. Um por dia verde, que deu um grão.
+- **CenarioDesbloqueado** (V7): `id` (`CenarioId.rawValue`), `custo` (o que se pagou, para os preços poderem mudar) e `desbloqueadoEm`.
 - **Regras do CloudKit:**
   - nada de `.unique`;
   - todos os campos com valor por defeito;
@@ -62,16 +64,16 @@ A UI não contém regras: chama `Tarefas` (que recebe `ModelContext`, `Relogio` 
 
 ### Migrações
 
-`EsquemaV1…V5` são cópias congeladas.
+`EsquemaV1…V5` são cópias congeladas. O V6 e o V7 partilham as classes `Lista`, `Item` e `Foto`, que não mudaram: o V7 só acrescenta `DiaGanho` e `CenarioDesbloqueado`.
 
 - **V4 → V5** é uma etapa própria (`migrarV4ParaV5`): marca as primeiras 4 listas como permanentes.
-- **V5 → V6** é `lightweight`.
+- **V5 → V6** e **V6 → V7** são `lightweight` (teste em `MigracaoV6Tests`).
 
 Para mudar o modelo:
-1. criar `EsquemaV7` (cópia mais a alteração);
+1. congelar o V7 (cópia de `Lista`, `Item`, `Foto` e dos dois modelos novos, se forem mudar) e criar o `EsquemaV8` com a alteração;
 2. acrescentar a etapa;
-3. apontar `BaseDados.contentor` para o V7;
-4. escrever um teste de migração a partir do V6;
+3. apontar `BaseDados.contentor` para o V8;
+4. escrever um teste de migração a partir do V7;
 5. publicar a estrutura no CloudKit (CONTA-DEVELOPER.md, passo 6).
 
 Nunca editar um esquema existente.
@@ -149,12 +151,21 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 - **Widget:** `resumoWidget(historicoGuardado:)` põe os últimos 15 dias em `ResumoWidget.dias`; `noMomento` desloca a janela à meia-noite. O `ConcluirPontoIntent` lê o histórico e regrava o resumo. `WidgetRitmo` (pequeno e médio, `VistaRitmo.swift`).
 - Cada aparelho tem o seu ficheiro; os dias dentro da retenção convergem com os pontos que o iCloud traz. Vai no backup (`Backup.historico`, opcional) e, ao restaurar, junta-se sem apagar dias.
 
+## Grãos e cenários (DESIGN.md 7.26 e 7.27)
+
+- **Mês** (`RitmoCalendario.swift`): `HistoricoDias.mes(de:agora:calendario:)` dá os dias de segunda a domingo, sempre gregorianos, com `hoje` e `futuro`. O mês só navega entre o primeiro registo e o mês atual.
+- **Grãos** (`Graos.swift`): 1 por dia verde, nunca por ponto. `Tarefas.registarGraos(de:)` cria um `DiaGanho` por dia verde que ainda não o tenha (idempotente; corre na `manutencao()` e no Início quando muda um ponto). Um grão nunca se tira: o dia que deixa de ser verde (Anular, Reabrir) fica com ele.
+- **Saldo** = dias ganhos distintos − custo dos cenários comprados (cada cenário conta uma vez, a cópia mais barata). Nada se apaga: as cópias de dois aparelhos juntam-se ao ler (`Cenario.saldo`, `desbloqueados`, `ativo`, também usados sobre o que as `@Query` leem).
+- **Cenários** (`Cenarios.swift`): o catálogo (`Cenario.catalogo`) é o único sítio com os preços. `desbloquear(_:)` recusa sem saldo (`ErroTarefas.graosInsuficientes`) e não gasta duas vezes. A escolha é por aparelho (`@AppStorage("cenarioEscolhido")`); sem a compra cá (aparelho novo antes do iCloud), fica o Céu.
+- **UI:** o separador **Streak** (`StreakView`) junta o saldo, o mês (`MesStreak`) e a coleção. `Tarefas.historicoParaEcra()` lê o histórico e regista o grão do dia, para o Início e o Streak. A raiz põe o cenário ativo em `\.cenario`; só o `EcraBase` com `cena` (o Início) o desenha (`FundoCeu` → `CenaCenario`) e muda a tinta do texto (`Ceu.paleta(_:cenario:)`).
+- Vão no iCloud (SwiftData) e no backup (`Backup.graos`, `Backup.cenarios`, opcionais; restaurar junta por id). O esquema do CloudKit tem de ser publicado outra vez com os tipos novos (`EsquemaICloud`, CONTA-DEVELOPER.md).
+
 ## Fecho do dia (DESIGN.md 7.25)
 
 - **`Tarefas.pontosEmRisco(em:)`**: ativos, não fixados, fora das compras, a menos de 24 h de expirar.
 - **`planoFechoDia()`**: o primeiro fecho (à hora de `Definicoes.horaFechoDia`) com pontos em risco; a app agenda uma notificação `fecho-dia` em `Notificacoes.reagendar()`. Tocar abre `todo://fecho`.
 - **`fechoPendente(feitoEm:)`**: depois da hora de hoje, com os avisos e o fecho ligados, quantos pontos o Glassy pede para fechar (`ProgressoDia.frase(saudacao:fechoPendente:)`). Zero se já fechaste o dia depois da hora: o ecrã de cartas grava `EstadoApp.fechoFeitoEm` ao desaparecer (UserDefaults, `Notificacoes.fechoFeitoEm`). No widget, `ResumoWidget.minutosFecho`, `fechoFeitoEm` e `fechoPendente(em:)`; o `ConcluirPontoIntent` copia-os do resumo anterior, porque a extensão não lê os UserDefaults da app.
-- **`FechoDiaView`**: as cartas ficam fixas ao abrir; antes de ler cada uma verifica `foiApagado`. "Deixar ir" não muda o ponto.
+- **`FechoDiaView`**: as cartas ficam fixas ao abrir; antes de ler cada uma verifica `foiApagado`. "Deixar ir" não muda o ponto. Em `modo: .rever` (Melhoria 35) são as mesmas cartas a qualquer hora, pelo "Rever" do balão do Glassy (`ParaTi.Acao.rever`) e dos Expirados, e não gravam `fechoFeitoEm`. `Tarefas.emRisco(_:em:)` é a regra única dos pontos em risco: usam-na as cartas, o "Para ti" e o botão dos Expirados.
 
 ## Vista partilhada e AirDrop (DESIGN.md 7.15)
 
@@ -198,7 +209,7 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 ## Estado da UI
 
 `EstadoApp` (`@Observable`, injetado por `.environment`) guarda:
-- o separador e o caminho de navegação;
+- o separador (Listas, Arquivo, Streak, Definições), o lado do Arquivo (`secaoArquivo`) e o caminho de navegação;
 - a captura rápida;
 - a lista atual (para pré-selecionar na captura);
 - os filtros de Concluídos e Expirados (só em memória).

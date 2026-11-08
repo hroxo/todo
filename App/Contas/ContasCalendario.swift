@@ -82,11 +82,10 @@ final class ContasCalendario {
 
     // MARK: - Ler
 
-    /// Os calendários de cada conta e os eventos de hoje dos que não estão escondidos.
+    /// Os calendários de cada conta e os eventos de hoje e dos dias seguintes dos que não estão escondidos.
     func atualizar(ocultos: Set<String> = []) async {
         guard !Demo.ativo else { return }
-        let hoje = Calendar.current.startOfDay(for: .now)
-        let amanha = Calendar.current.date(byAdding: .day, value: 1, to: hoje)!
+        let janela = JanelaEventos.intervalo(agora: .now, dias: Definicoes.carregar().diasCalendario)
         var novosCalendarios: [CalendarioExterno] = []
         var novosEventos: [EventoExterno] = []
         for fornecedor in Fornecedor.allCases where contas[fornecedor] != nil {
@@ -96,7 +95,7 @@ final class ContasCalendario {
                 let lista = try APICalendario.lerCalendarios(dados, fornecedor: fornecedor)
                 novosCalendarios += lista
                 for calendario in lista where !ocultos.contains(calendario.id) {
-                    let pedido = APICalendario.pedidoEventos(calendario, de: hoje, ate: amanha, token: token)
+                    let pedido = APICalendario.pedidoEventos(calendario, de: janela.inicio, ate: janela.fim, token: token)
                     let (dados, _) = try await URLSession.shared.data(for: pedido)
                     novosEventos += (try? APICalendario.lerEventos(dados, calendario: calendario)) ?? []
                 }

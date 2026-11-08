@@ -39,16 +39,18 @@ struct CartaoLista: View {
         let hoje = lista.expiramHoje(agora: agora).count
         let aExpirar = hoje > 0
 
-        // Estilo Fitness: o nome por cima e o número grande e arredondado em baixo.
+        // Estilo Fitness: o nome por cima e o número grande e arredondado em baixo. Nos cartões
+        // das páginas (mais baixos) o ícone, o anel e o número encolhem para caberem.
+        let compacto = altura < 120
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top) {
-                IconeListaView(lista: lista, tamanho: 36, fundo: cor.ficha)
+                IconeListaView(lista: lista, tamanho: compacto ? 32 : 36, fundo: cor.ficha)
                 Spacer()
                 AnelExpiracao(
                     fracao: fracao,
                     cor: cor.texto,
-                    tamanho: 40,
-                    espessura: 7,
+                    tamanho: compacto ? 34 : 40,
+                    espessura: compacto ? 6 : 7,
                     trilho: cor.ficha
                 )
             }
@@ -59,7 +61,7 @@ struct CartaoLista: View {
                 .opacity(0.9)
             HStack(alignment: .firstTextBaseline, spacing: Espaco.fino) {
                 Text("\(numero)")
-                    .font(.system(size: altura > 140 ? 40 : 34, weight: .bold, design: .rounded))
+                    .font(.system(size: compacto ? 30 : 34, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
                 Text(legenda)

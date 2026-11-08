@@ -35,7 +35,7 @@ public struct DiaHistorico: Codable, Equatable, Sendable, Identifiable {
     }()
 
     /// "Quarta, 21 out".
-    private var cabecalho: String? {
+    var cabecalho: String? {
         let partes = dia.split(separator: "-").compactMap { Int($0) }
         guard partes.count == 3,
               let data = Self.utc.date(from: DateComponents(year: partes[0], month: partes[1], day: partes[2], hour: 12))

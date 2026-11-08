@@ -129,18 +129,17 @@ struct BolaDia: View {
     let dia: DiaHistorico
     var hoje = false
     var tamanho: CGFloat = 16
+    /// Na semana e no mês da app (Melhoria 35): um dia que ainda não chegou, só uma sombra.
+    var futuro = false
+    /// O rótulo do VoiceOver, quando quem chama sabe mais (o dia por vir).
+    var rotulo: String?
 
     var body: some View {
         ZStack {
-            switch dia.estado {
-            case .verde:
-                Circle().fill(CoresEstado.concluido)
-                marca("checkmark")
-            case .vermelho:
-                Circle().fill(CorLista.vermelho.base)
-                marca("xmark")
-            case .neutro:
-                Circle().strokeBorder(.secondary.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [2.5, 2.5]))
+            if futuro {
+                Circle().fill(.secondary.opacity(0.18))
+            } else {
+                estado
             }
         }
         .frame(width: tamanho, height: tamanho)
@@ -150,7 +149,21 @@ struct BolaDia: View {
         }
         .widgetAccentable()
         .accessibilityElement()
-        .accessibilityLabel(hoje ? "Hoje, " + dia.rotulo : dia.rotulo)
+        .accessibilityLabel(rotulo ?? (hoje ? "Hoje, " + dia.rotulo : dia.rotulo))
+    }
+
+    @ViewBuilder
+    private var estado: some View {
+        switch dia.estado {
+        case .verde:
+            Circle().fill(CoresEstado.concluido)
+            marca("checkmark")
+        case .vermelho:
+            Circle().fill(CorLista.vermelho.base)
+            marca("xmark")
+        case .neutro:
+            Circle().strokeBorder(.secondary.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [2.5, 2.5]))
+        }
     }
 
     private func marca(_ simbolo: String) -> some View {

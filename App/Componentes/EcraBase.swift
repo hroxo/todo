@@ -29,12 +29,14 @@ enum Espaco {
 struct CabecalhoEcra<Acessorio: View>: View {
     let titulo: String
     var sobretitulo: String?
+    /// No Início, o cenário escolhido (a tinta muda com ele).
+    var cenario = CenarioId.ceu
     @ViewBuilder var acessorio: () -> Acessorio
 
     @Environment(\.ceu) private var ceu
 
     var body: some View {
-        let tinta = Ceu.paleta(ceu.fase).tinta
+        let tinta = Ceu.paleta(ceu.fase, cenario: cenario).tinta
         VStack(alignment: .leading, spacing: Espaco.minimo) {
             Text(sobretitulo ?? " ")
                 .font(.footnote.weight(.semibold))
@@ -63,16 +65,20 @@ struct EcraBase<Acessorio: View, Conteudo: View>: View {
     @ViewBuilder var acessorio: () -> Acessorio
     @ViewBuilder var conteudo: () -> Conteudo
 
+    /// Só a cena (o Início) mostra o cenário escolhido; os outros ecrãs ficam com o céu.
+    @Environment(\.cenario) private var escolhido
+
     var body: some View {
+        let cenario = cena ? escolhido : .ceu
         ScrollView {
             VStack(alignment: .leading, spacing: Espaco.bloco) {
-                CabecalhoEcra(titulo: titulo, sobretitulo: sobretitulo, acessorio: acessorio)
+                CabecalhoEcra(titulo: titulo, sobretitulo: sobretitulo, cenario: cenario, acessorio: acessorio)
                 conteudo()
             }
             .padding(.horizontal, Espaco.margem)
             .padding(.bottom, Espaco.fim)
         }
-        .background { FundoCeu(cena: cena, ganho: ganho) }
+        .background { FundoCeu(cena: cena, ganho: ganho, cenario: cenario) }
         .navigationTitle(titulo)
         .toolbarVisibility(.hidden, for: .navigationBar)
     }

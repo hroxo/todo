@@ -90,6 +90,10 @@ ECRAS=(
   "17f-questionario-ajustar|questionario-ajustar|"
   "18-fecho|fecho|"
   "18b-fecho-anfitria|fecho-anfitria|"
+  "19-streak|streak|"
+  "20-streak-cenarios|streak|-rolarCenarios YES"
+  "20b-cenario-praia|cenario-praia|-cenarioEscolhido praia"
+  "21-rever|rever|"
 )
 
 primeira=1

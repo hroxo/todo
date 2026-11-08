@@ -31,6 +31,10 @@ struct InicioView: View {
     @State private var posicaoAmpulheta = CGPoint.zero
     @Environment(\.accessibilityReduceMotion) private var reduzirMovimento
     @Environment(\.ceu) private var ceu
+    @Environment(\.cenario) private var cenario
+
+    /// O texto por cima do fundo: a tinta do cenário escolhido.
+    private var tinta: Color { Ceu.paleta(ceu.fase, cenario: cenario).tinta }
 
     private struct Acabado: Equatable {
         let id = UUID()
@@ -44,6 +48,8 @@ struct InicioView: View {
     }
 
     private static let espacoEcra = "inicio"
+    /// Os cartões das páginas (mais de 4 espaços), mais baixos para caber o resto do Início.
+    private static let alturaPaginada: CGFloat = 112
 
     /// Um lugar da grelha: um espaço ou o cartão "Nova lista".
     private enum Celula: Identifiable {
@@ -86,7 +92,7 @@ struct InicioView: View {
 
                     if !hoje.isEmpty {
                         VStack(alignment: .leading, spacing: Espaco.curto) {
-                            TituloSecao(texto: "Expiram hoje", cor: Ceu.paleta(ceu.fase).tinta)
+                            TituloSecao(texto: "Expiram hoje", cor: tinta)
                             VStack(spacing: 0) {
                                 ForEach(hoje) { item in
                                     linhaHoje(item, agora: agora)
@@ -112,6 +118,8 @@ struct InicioView: View {
                     }
                 }
                 .onAppear { festejar(progresso) }
+                // O grão do dia logo que fica verde (Melhoria 35), sem esperar pela manutenção.
+                .task(id: concluidos.count) { _ = Tarefas(contexto: contexto).historicoParaEcra() }
                 .onChange(of: progresso.completo) { festejar(progresso) }
                 #if DEBUG
                 .onChange(of: estado.rolarParaCalendario) { _, rolar in
@@ -155,28 +163,28 @@ struct InicioView: View {
         let paginas = Espacos.paginas(celulas(), espacos: listas.count)
         if paginas.count <= 1 {
             LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
-                ForEach(paginas.first ?? []) { celula($0, agora: agora, altura: 148) }
+                ForEach(paginas.first ?? []) { celula($0, agora: agora, altura: 128) }
             }
         } else {
             VStack(spacing: Espaco.curto) {
                 TabView(selection: $pagina) {
                     ForEach(paginas.indices, id: \.self) { indice in
                         LazyVGrid(columns: colunas, spacing: Espaco.grelha) {
-                            ForEach(paginas[indice]) { celula($0, agora: agora, altura: 128) }
+                            ForEach(paginas[indice]) { celula($0, agora: agora, altura: Self.alturaPaginada) }
                         }
                         .frame(maxHeight: .infinity, alignment: .top)
                         .tag(indice)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(height: 128 * 2 + Espaco.grelha)
+                .frame(height: Self.alturaPaginada * 2 + Espaco.grelha)
 
                 controlosPagina(total: paginas.count)
 
                 if listas.count >= Tarefas.maxListas {
                     Text("Máximo de \(Tarefas.maxListas) espaços")
                         .font(.caption)
-                        .foregroundStyle(Ceu.paleta(ceu.fase).tinta)
+                        .foregroundStyle(tinta)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -236,13 +244,13 @@ struct InicioView: View {
                 HStack(spacing: Espaco.curto) {
                     ForEach(0..<total, id: \.self) { indice in
                         Circle()
-                            .fill(Ceu.paleta(ceu.fase).tinta.opacity(indice == pagina ? 1 : 0.3))
+                            .fill(tinta.opacity(indice == pagina ? 1 : 0.3))
                             .frame(width: 8, height: 8)
                     }
                 }
                 Text(Espacos.rotuloPagina(pagina, espacos: listas.count))
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(Ceu.paleta(ceu.fase).tinta)
+                    .foregroundStyle(tinta)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Espacos.rotuloPagina(pagina, espacos: listas.count))
@@ -429,6 +437,8 @@ struct InicioView: View {
                 if let lista = listas.first(where: { $0.id == id }) { try? tarefas.definirPermanente(lista, true) }
             case .manterLista(let id):
                 if let lista = listas.first(where: { $0.id == id }) { tarefas.manterLista(lista) }
+            case .rever:
+                estado.mostrarRever = true
             }
         }
         try? contexto.save()

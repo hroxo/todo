@@ -21,7 +21,7 @@ struct CeuDoModo: ViewModifier {
 /// As cores do céu (DESIGN.md 7.23). O modo escuro é sempre noite e o claro sempre dia, por isso
 /// os cartões e as folhas só têm de trocar o preto do sistema pelo índigo da noite.
 enum Ceu {
-    private static func cor(_ hex: UInt32) -> Color {
+    static func cor(_ hex: UInt32) -> Color {
         Color(uiColor: uiCor(hex))
     }
 
@@ -60,11 +60,13 @@ enum Ceu {
     }
 }
 
-/// O fundo dos ecrãs: a cor do céu e, no Início, a cena com o sol ou a lua atrás das colinas.
-/// O dia ganho fica verde, exceto no modo escuro: aí o texto é claro e continua o céu estrelado.
+/// O fundo dos ecrãs: a cor do céu e, no Início, a cena com o sol ou a lua atrás das colinas,
+/// ou o cenário escolhido (Melhoria 35). O dia ganho fica verde, exceto no modo escuro (aí o
+/// texto é claro e continua o céu estrelado) e num cenário comprado, que não se esconde.
 struct FundoCeu: View {
     var cena = false
     var ganho = false
+    var cenario = CenarioId.ceu
 
     @Environment(\.ceu) private var ceu
 
@@ -73,8 +75,19 @@ struct FundoCeu: View {
     ]
 
     var body: some View {
-        let verde = ganho && ceu.fase != .noite
+        let verde = ganho && ceu.fase != .noite && cenario == .ceu
         let paleta = verde ? Ceu.ganho : Ceu.paleta(ceu.fase)
+        if cena && cenario != .ceu {
+            CenaCenario(cenario: cenario, fase: ceu.fase)
+                .ignoresSafeArea()
+                .animation(.smooth(duration: 1), value: ceu.fase)
+                .accessibilityHidden(true)
+        } else {
+            ceuDoDia(paleta: paleta, verde: verde)
+        }
+    }
+
+    private func ceuDoDia(paleta: Ceu.Paleta, verde: Bool) -> some View {
         GeometryReader { g in
             ZStack(alignment: .topLeading) {
                 paleta.ceu
@@ -117,24 +130,6 @@ struct FundoCeu: View {
                 Circle().frame(width: 40, height: 40).offset(x: 13, y: -4).blendMode(.destinationOut)
             }
             .compositingGroup()
-    }
-
-    /// Uma colina que enche o ecrã até ao fundo, para o céu nunca aparecer por baixo dela.
-    private struct Colina: Shape {
-        let esquerda, controloX, controloY, direita: CGFloat
-
-        func path(in r: CGRect) -> Path {
-            Path { p in
-                p.move(to: CGPoint(x: 0, y: esquerda * r.height))
-                p.addQuadCurve(
-                    to: CGPoint(x: r.width, y: direita * r.height),
-                    control: CGPoint(x: controloX * r.width, y: controloY * r.height)
-                )
-                p.addLine(to: CGPoint(x: r.width, y: r.height))
-                p.addLine(to: CGPoint(x: 0, y: r.height))
-                p.closeSubpath()
-            }
-        }
     }
 }
 

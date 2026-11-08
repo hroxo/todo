@@ -210,13 +210,18 @@ struct SecaoCalendario: View {
     /// com um toque; os outros mostram-se sempre (DESIGN.md 7.12).
     // Sem TimelineView própria: aninhada na da raiz, dá um ciclo de layout que deixa a app em branco ao abrir (History.md).
     @ViewBuilder private var hoje: some View {
-        let passados = calendario.eventos.filter { !$0.diaInteiro && $0.fim <= agora }
-        let porVir = calendario.eventos.filter { $0.diaInteiro || $0.fim > agora }
+        let dias = JanelaEventos.agrupar(calendario.eventos, agora: agora, dias: calendario.dias, inicio: \.inicio)
+            .map { grupo in
+                (grupo, eventos: grupo.eventos.sorted { ($0.diaInteiro ? 0 : 1, $0.inicio) < ($1.diaInteiro ? 0 : 1, $1.inicio) })
+            }
+        let deHoje = dias[0].eventos
+        let passados = deHoje.filter { !$0.diaInteiro && $0.fim <= agora }
+        let porVir = deHoje.filter { $0.diaInteiro || $0.fim > agora }
         VStack(alignment: .leading, spacing: Espaco.curto) {
             HStack {
                 TituloSecao(texto: "Hoje no calendário")
                 Spacer()
-                if !calendario.eventos.isEmpty {
+                if !deHoje.isEmpty {
                     Text(porVir.isEmpty ? "Todos passaram" : (porVir.count == 1 ? "1 por vir" : "\(porVir.count) por vir"))
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.secondary)
@@ -232,7 +237,7 @@ struct SecaoCalendario: View {
             }
 
             VStack(spacing: 0) {
-                if calendario.eventos.isEmpty {
+                if deHoje.isEmpty {
                     Text("Nada no calendário hoje. Em Definições › Calendários escolhes o espaço de cada calendário.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -256,6 +261,35 @@ struct SecaoCalendario: View {
                 ForEach(porVir) { evento in
                     linha(evento, agora: agora)
                     if evento != porVir.last {
+                        Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
+                    }
+                }
+            }
+            .background(Ceu.cartao, in: .rect(cornerRadius: 18, style: .continuous))
+            .clipShape(.rect(cornerRadius: 18, style: .continuous))
+
+            ForEach(dias.dropFirst(), id: \.0.dia) { grupo, eventos in
+                seguinte(grupo.titulo, eventos)
+            }
+        }
+    }
+
+    /// Os dias a seguir a hoje: sem recolher nada, e sempre à vista, mesmo vazios.
+    private func seguinte(_ titulo: String, _ eventos: [EventoHoje]) -> some View {
+        VStack(alignment: .leading, spacing: Espaco.curto) {
+            TituloSecao(texto: titulo)
+                .padding(.top, Espaco.curto)
+            VStack(spacing: 0) {
+                if eventos.isEmpty {
+                    Text("Sem eventos")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                        .padding(.horizontal, Espaco.bloco)
+                }
+                ForEach(eventos) { evento in
+                    linha(evento, agora: agora)
+                    if evento != eventos.last {
                         Divider().padding(.leading, Espaco.bloco + larguraHora + Espaco.grelha)
                     }
                 }

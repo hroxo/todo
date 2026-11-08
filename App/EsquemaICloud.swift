@@ -5,7 +5,8 @@ import SwiftData
 import ToDoCore
 
 /// Só em compilações de desenvolvimento (DESIGN.md 7.19): cria no ambiente de desenvolvimento
-/// do CloudKit a estrutura dos dados da app (os tipos de registo de Lista, Item e Foto). Depois
+/// do CloudKit a estrutura dos dados da app (os tipos de registo do esquema atual: Lista, Item,
+/// Foto e, desde o V7, DiaGanho e CenarioDesbloqueado). Depois
 /// publica-se em produção no painel do CloudKit (docs/CONTA-DEVELOPER.md). Sem isto, as
 /// versões do TestFlight não sincronizam. Sem a conta paga e o iCloud ligado, falha e diz porquê.
 enum EsquemaICloud {
@@ -14,7 +15,7 @@ enum EsquemaICloud {
     }
 
     static func criar() throws {
-        guard let modelo = NSManagedObjectModel.makeManagedObjectModel(for: [Lista.self, Item.self, Foto.self]) else {
+        guard let modelo = NSManagedObjectModel.makeManagedObjectModel(for: EsquemaV7.models) else {
             throw Erro.semModelo
         }
         // Uma base de dados à parte, temporária: só serve para enviar a estrutura.

@@ -26,6 +26,9 @@ A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas p
 
 ## Novidades
 
+- 🔥 **Streak.** Cada dia verde dá um grão de areia. No separador Streak vês o teu mês, andas para trás no histórico e gastas os grãos em cenários para o Início: Parque, Praia, Biblioteca, Viagem e Montanha. Nada volta a zero, e o que é teu nunca se perde.
+- 🗄️ **Arquivo.** Concluídos e Expirados numa só página, com um segmento.
+- 🃏 **Rever a qualquer hora.** O Glassy avisa quando há pontos a expirar hoje e abre-os um cartão de cada vez: desliza para a direita para manter, para a esquerda para deixar ir.
 - 🟩 **Widget "O teu ritmo".** Os teus últimos 7 ou 15 dias: verde quando concluis um ponto, vermelho quando algo expira, neutro sem atividade. Conta dias, não pontos.
 - 🌙 **Fecho do dia.** À noite, um aviso, o Glassy e o widget convidam-te a decidir os pontos que chegam ao fim, um cartão de cada vez: Concluir, Manter ou Deixar ir.
 - 👋 **Questionário de boas-vindas.** Na primeira abertura, três perguntas ajustam a app ao teu ritmo: quanto tempo fica um ponto, quando chega o aviso (24 horas antes, de manhã ou à noite) e para que a vais usar (cria os primeiros espaços).
@@ -102,7 +105,7 @@ Uma lista a dois, por secções (o Continente, o IKEA, a sala), com pontos que s
 <td valign="top">
 
 ### 📅 O teu dia ao lado das listas
-Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone, ou uma conta Google ou Outlook ligada na app) e vê os eventos de hoje no Início, cada um no seu espaço ou sem espaço. Toca num evento para ver os participantes, as notas do convite e o link da reunião. Um **+** transforma um evento num ponto, uma vez só.
+Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone, ou uma conta Google ou Outlook ligada na app) e vê os eventos de hoje e dos dias seguintes no Início (Hoje, Amanhã e o dia da semana; 3 dias por defeito, de 1 a 7 em Definições › Calendário), cada um no seu espaço ou sem espaço. Toca num evento para ver os participantes, as notas do convite e o link da reunião. Um **+** transforma um evento num ponto, uma vez só.
 
 </td>
 <td align="center"><img src="docs/media/fluxo-calendario.gif" width="240" alt="Cartão para ligar o calendário e, depois, os eventos de hoje por espaço"></td>
@@ -134,7 +137,7 @@ E ainda:
 - **Descrição curta** e até **4 fotos** em cada ponto.
 - **Fixar** o que nunca deve expirar.
 - **Captura rápida**, com descrição, fotos, subtópicos e escolha do espaço logo ao criar.
-- **Concluídos** durante 7 dias, para reabrir se for preciso, com **filtros** por espaço e por data (também em Expirados).
+- **Arquivo**: **Concluídos** durante 7 dias, para reabrir se for preciso, e **Expirados** durante 14, com **filtros** por espaço e por data.
 - **Exportar CSV** de um espaço ou de tudo, pronto a abrir no Excel ou no Numbers.
 - **Backup em JSON**: exportar e restaurar tudo, com fotos e definições. Mesmo um backup antigo entra sem perder pontos: o que já venceu ganha tempo novo.
 - **Listas que se arrumam**: uma lista vazia sai ao fim de 5 dias (com aviso na véspera); até 4 podem ser permanentes.

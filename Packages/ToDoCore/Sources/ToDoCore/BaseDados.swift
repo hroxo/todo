@@ -392,9 +392,19 @@ public enum EsquemaV6: VersionedSchema {
     public static var models: [any PersistentModel.Type] { [Lista.self, Item.self, Foto.self] }
 }
 
+/// V7 (Melhoria 35): os grãos e os cenários comprados (`DiaGanho`, `CenarioDesbloqueado`),
+/// com as mesmas regras do CloudKit. Lista, Item e Foto não mudam, por isso o V6 e o V7
+/// partilham as mesmas classes: a migração só acrescenta as duas tabelas novas.
+public enum EsquemaV7: VersionedSchema {
+    public static let versionIdentifier = Schema.Version(7, 0, 0)
+    public static var models: [any PersistentModel.Type] {
+        [Lista.self, Item.self, Foto.self, DiaGanho.self, CenarioDesbloqueado.self]
+    }
+}
+
 public enum PlanoMigracao: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [EsquemaV1.self, EsquemaV2.self, EsquemaV3.self, EsquemaV4.self, EsquemaV5.self, EsquemaV6.self]
+        [EsquemaV1.self, EsquemaV2.self, EsquemaV3.self, EsquemaV4.self, EsquemaV5.self, EsquemaV6.self, EsquemaV7.self]
     }
     public static var stages: [MigrationStage] {
         [
@@ -403,6 +413,7 @@ public enum PlanoMigracao: SchemaMigrationPlan {
             .lightweight(fromVersion: EsquemaV3.self, toVersion: EsquemaV4.self),
             migrarV4ParaV5,
             .lightweight(fromVersion: EsquemaV5.self, toVersion: EsquemaV6.self),
+            .lightweight(fromVersion: EsquemaV6.self, toVersion: EsquemaV7.self),
         ]
     }
 }
@@ -436,7 +447,7 @@ public enum BaseDados {
 
     /// Sem `url`, usa o ficheiro no App Group, se houver, ou o ficheiro por defeito da app.
     public static func contentor(emMemoria: Bool = false, url: URL? = nil) throws -> ModelContainer {
-        let esquema = Schema(versionedSchema: EsquemaV6.self)
+        let esquema = Schema(versionedSchema: EsquemaV7.self)
         // iCloud (DESIGN.md 7.19): `.automatic` sincroniza com o contentor CloudKit das
         // entitlements da app e não faz nada sem elas (hoje, sem a conta paga). Os testes, a
         // memória e os ficheiros explícitos nunca sincronizam.

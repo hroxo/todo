@@ -237,6 +237,7 @@ struct DefinicoesView: View {
             .onChange(of: definicoes) { _, novas in
                 novas.guardar()
                 estado.reagendarAvisos()
+                if calendario.dias != novas.diasCalendario { calendario.atualizar() }
             }
             .sheet(item: $formulario) { PersonalizarListaView(modo: $0) }
             // O questionário grava as definições: ao fechar, lê-as outra vez (e o onChange reagenda).
@@ -367,6 +368,14 @@ struct DefinicoesView: View {
                     }
                 }
                 Toggle("Mostrar eventos no Início", isOn: $mostrarCalendario)
+                if mostrarCalendario {
+                    Stepper(value: $definicoes.diasCalendario, in: Definicoes.intervaloCalendario) {
+                        LabeledContent("Dias no Início") {
+                            Text(definicoes.diasCalendario == 1 ? "Só hoje" : "\(definicoes.diasCalendario) dias")
+                                .monospacedDigit()
+                        }
+                    }
+                }
             case .porPedir:
                 Button {
                     Task {

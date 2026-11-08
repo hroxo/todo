@@ -127,6 +127,16 @@ enum Demo {
         }
 
         _ = try? t.avaliar()
+
+        // Grãos de exemplo (Melhoria 35): 9 dias verdes nas últimas duas semanas, e o Parque já comprado.
+        var gregoriano = Calendar(identifier: .gregorian)
+        gregoriano.timeZone = .current
+        for atras in [1, 2, 4, 5, 6, 8, 9, 11, 13] {
+            let dia = gregoriano.date(byAdding: .day, value: -atras, to: .now)!
+            let c = gregoriano.dateComponents([.year, .month, .day], from: dia)
+            contexto.insert(DiaGanho(id: String(format: "%04d-%02d-%02d", c.year!, c.month!, c.day!), ganhoEm: dia))
+        }
+        try? t.desbloquear(.parque)
         try? contexto.save()
     }
 
@@ -189,14 +199,29 @@ enum Demo {
             estado.rolarParaCalendario = true
             estado.abrirEventoDemo = true
         case "expirados":
-            estado.separador = .expirados
+            estado.secaoArquivo = .expirados
+            estado.separador = .arquivo
         case "expirados-filtro":
             estado.filtroExpirados = FiltroItens(listaId: listas.dropFirst().first?.id, periodo: .ultimos7)
-            estado.separador = .expirados
+            estado.secaoArquivo = .expirados
+            estado.separador = .arquivo
         case "concluidos":
-            estado.separador = .concluidos
+            estado.secaoArquivo = .concluidos
+            estado.separador = .arquivo
         case "definicoes":
             estado.separador = .definicoes
+        case "streak":
+            estado.separador = .streak
+        case "cenario-praia":
+            // Grãos que cheguem para a Praia, comprada e no fundo do Início.
+            for atras in 20..<28 {
+                contexto.insert(DiaGanho(id: "demo-\(atras)", ganhoEm: .now))
+            }
+            try? Tarefas(contexto: contexto, definicoes: Definicoes()).desbloquear(.praia)
+            // A escolha vem do argumento `-cenarioEscolhido praia`, que não fica gravado.
+            try? contexto.save()
+        case "rever":
+            estado.mostrarRever = true
         default:
             break
         }

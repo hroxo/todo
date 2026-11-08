@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A barra de baixo (DESIGN.md 7.1): os 4 separadores numa cápsula de vidro e o "+" da captura
+/// A barra de baixo (DESIGN.md 7.1): os 4 separadores (Listas, Arquivo, Streak, Definições) numa cápsula de vidro e o "+" da captura
 /// num círculo à parte, à direita. É nossa porque o iOS 27 deixou de separar o separador de
 /// pesquisa e o "+" passava a ser mais um separador dentro da barra. Tocar no "+" abre a Nova
 /// nota; mantê-lo premido mostra por cima a cápsula "Nova lista" (ver `BotaoMais`).
@@ -17,8 +17,8 @@ struct BarraSeparadores: View {
             HStack(spacing: Espaco.grelha) {
                 HStack(spacing: 0) {
                     botao("Listas", simbolo: "list.bullet", .listas)
-                    botao("Concluídos", simbolo: "checkmark.circle", .concluidos)
-                    botao("Expirados", simbolo: "hourglass", .expirados, contagem: expirados)
+                    botao("Arquivo", simbolo: "archivebox", .arquivo, contagem: expirados)
+                    botao("Streak", simbolo: "flame", .streak)
                     botao("Definições", simbolo: "gearshape", .definicoes)
                 }
                 .padding(.horizontal, Espaco.fino)

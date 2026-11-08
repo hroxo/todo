@@ -15,6 +15,8 @@ public struct ParaTi: Equatable, Sendable {
         case abrirLista(UUID)
         case tornarPermanente(UUID)
         case manterLista(UUID)
+        /// As cartas do Rever, com os pontos que expiram hoje (Melhoria 35).
+        case rever
     }
 
     public struct Botao: Equatable, Sendable, Identifiable {
@@ -64,7 +66,9 @@ extension Tarefas {
     }
 
     private func paraTiPrazos(_ agora: Date) throws -> ParaTi? {
-        let hoje = try prioridades(limite: 10).filter { Prazo(item: $0.item, agora: agora)?.ultimoDia == true }
+        // Os mesmos pontos que as cartas do Rever mostram.
+        let emRisco = Set(try pontosEmRisco(em: agora).map(\.persistentModelID))
+        let hoje = try prioridades(limite: 10).filter { emRisco.contains($0.item.persistentModelID) }
         guard let primeiro = hoje.first?.item, let limite = primeiro.expiraEm else { return nil }
         let hora = Formatos.hora(limite, calendario: calendario)
         let dia = calendario.isDate(limite, inSameDayAs: agora) ? "hoje" : "amanhã"
@@ -75,8 +79,8 @@ extension Tarefas {
         var factos = hoje.prefix(3).map { "\($0.item.titulo) (\($0.item.lista?.nome ?? "")): \($0.razao)" }
         factos.insert("Pontos a expirar nas próximas 24 horas: \(hoje.count)", at: 0)
         let botoes = [
+            ParaTi.Botao(rotulo: "Rever", acao: .rever),
             ParaTi.Botao(rotulo: "Abrir", acao: .abrirItem(primeiro.id)),
-            ParaTi.Botao(rotulo: "Manter +\(definicoes.diasManterCurto)", acao: .manter(primeiro.id)),
         ]
         return ParaTi(motivo: .prazos, fraseBase: fraseBase, factos: factos, botoes: botoes)
     }

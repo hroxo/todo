@@ -2,13 +2,15 @@ import SwiftData
 import SwiftUI
 import ToDoCore
 
-/// Expirados (mock "Expirados", DESIGN.md 7.9): o que perdeu o prazo fica aqui 14 dias,
+/// Expirados (mock "Expirados", DESIGN.md 7.9), um dos lados do Arquivo: o que perdeu o prazo fica aqui 14 dias,
 /// com Recuperar e Apagar. Filtra por lista e pela data de expiração (Melhoria 3).
 struct ExpiradosView: View {
     @Environment(\.modelContext) private var contexto
     @Environment(EstadoApp.self) private var estado
     @Query(filter: #Predicate<Item> { $0.estadoRaw == "expirado" }) private var expirados: [Item]
     @Query(sort: \Lista.ordem) private var listas: [Lista]
+    @Query(filter: #Predicate<Item> { $0.estadoRaw == "ativo" && $0.fixado == false && $0.pai == nil })
+    private var ativos: [Item]
 
     @State private var aEditar: Item?
     @State private var aApagar: Item?
@@ -22,44 +24,58 @@ struct ExpiradosView: View {
         let todos = expirados.filter { !$0.foiApagado }.sorted { ($0.expiradoEm ?? .distantPast) > ($1.expiradoEm ?? .distantPast) }
         let itens = filtro.aplicar(todos, agora: .now)
 
-        NavigationStack {
-            EcraBase(titulo: "Expirados") {
-                BotaoFiltro(filtro: $estado.filtroExpirados, listas: listas, tituloData: "Data de expiração")
-                    .tint(CoresEstado.expiraTinta)
-            } conteudo: {
-                if filtro.ativo {
-                    FichaFiltro(texto: filtro.rotulo(listas: listas)) { limparFiltros() }
-                }
+        EcraBase(titulo: "Arquivo") {
+            BotaoFiltro(filtro: $estado.filtroExpirados, listas: listas, tituloData: "Data de expiração")
+                .tint(CoresEstado.expiraTinta)
+        } conteudo: {
+            SegmentoArquivo()
 
-                HStack(spacing: Espaco.grelha) {
-                    Image(systemName: "hourglass")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(CoresEstado.expira))
-                        .accessibilityHidden(true)
-                    Text("Ficam aqui \(tarefas.definicoes.diasRetencaoExpirados) dias antes de serem apagados")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(CoresEstado.expiraTinta)
+            // Antes de expirarem (Melhoria 35): as mesmas cartas do Fecho do dia.
+            let aChegar = Tarefas.emRisco(ativos, em: .now).count
+            if aChegar > 0 {
+                Button {
+                    estado.mostrarRever = true
+                } label: {
+                    Label(aChegar == 1 ? "Rever 1 ponto que expira hoje" : "Rever \(aChegar) pontos que expiram hoje", systemImage: "rectangle.stack")
+                        .font(.subheadline.weight(.bold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
                 }
-
-                if itens.isEmpty && filtro.ativo && !todos.isEmpty {
-                    VazioComFiltros { limparFiltros() }
-                        .padding(.top, Espaco.margem)
-                } else if itens.isEmpty {
-                    EstadoVazio(
-                        pose: .celebrar,
-                        titulo: "Nada expirou",
-                        texto: "Estás em dia. O que ficar \(Formatos.dias(tarefas.definicoes.diasExpiracao)) sem ações aparece aqui.",
-                        cor: CoresEstado.expiraTinta
-                    )
-                } else {
-                    ForEach(itens) { cartao($0) }
-                }
+                .buttonStyle(.glass)
+                .tint(CoresEstado.expiraTinta)
             }
-            .sensoryFeedback(.success, trigger: recuperados)
-            .acoesDeItem(aEditar: $aEditar, aApagar: $aApagar)
+
+            if filtro.ativo {
+                FichaFiltro(texto: filtro.rotulo(listas: listas)) { limparFiltros() }
+            }
+
+            HStack(spacing: Espaco.grelha) {
+                Image(systemName: "hourglass")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(CoresEstado.expira))
+                    .accessibilityHidden(true)
+                Text("Ficam aqui \(tarefas.definicoes.diasRetencaoExpirados) dias antes de serem apagados")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(CoresEstado.expiraTinta)
+            }
+
+            if itens.isEmpty && filtro.ativo && !todos.isEmpty {
+                VazioComFiltros { limparFiltros() }
+                    .padding(.top, Espaco.margem)
+            } else if itens.isEmpty {
+                EstadoVazio(
+                    pose: .celebrar,
+                    titulo: "Nada expirou",
+                    texto: "Estás em dia. O que ficar \(Formatos.dias(tarefas.definicoes.diasExpiracao)) sem ações aparece aqui.",
+                    cor: CoresEstado.expiraTinta
+                )
+            } else {
+                ForEach(itens) { cartao($0) }
+            }
         }
+        .sensoryFeedback(.success, trigger: recuperados)
+        .acoesDeItem(aEditar: $aEditar, aApagar: $aApagar)
     }
 
     /// Título e "Lista · apagado em N dias" em cima; Recuperar (a toda a largura, para nunca
