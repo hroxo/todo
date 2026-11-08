@@ -45,4 +45,11 @@ final class ProgressoDiaTests: BaseTestes {
         XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 2).frase(saudacao: "Bom dia!"), "Boa! Faltam 2 pontos hoje.")
         XCTAssertEqual(ProgressoDia(concluidos: 2, porFazer: 0).frase(saudacao: "Bom dia!"), "Dia ganho! Bom trabalho.")
     }
+
+    /// Depois da hora do Fecho do dia, com pontos a chegar ao fim (Melhoria 33).
+    func testFraseDoFechoDoDia() {
+        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 3).frase(saudacao: "Boa noite!", fechoPendente: 3), "Fechas o dia? 3 pontos chegam ao fim.")
+        XCTAssertEqual(ProgressoDia(concluidos: 1, porFazer: 1).frase(saudacao: "Boa noite!", fechoPendente: 1), "Fechas o dia? 1 ponto chega ao fim.")
+        XCTAssertEqual(ProgressoDia(concluidos: 0, porFazer: 3).frase(saudacao: "Boa noite!", fechoPendente: 0), "Boa noite! Hoje são 3 pontos.")
+    }
 }

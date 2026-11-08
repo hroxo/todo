@@ -109,6 +109,24 @@ extension Binding where Value == Definicoes {
             }
         )
     }
+
+    /// A hora do Fecho do dia como `Date`, para o `DatePicker` das Definições.
+    var horaFecho: Binding<Date> {
+        Binding<Date>(
+            get: {
+                Calendar.current.date(
+                    bySettingHour: wrappedValue.horaFechoDia,
+                    minute: wrappedValue.minutoFechoDia,
+                    second: 0,
+                    of: .now
+                ) ?? .now
+            },
+            set: { nova in
+                let c = Calendar.current.dateComponents([.hour, .minute], from: nova)
+                wrappedValue.definirHoraFecho(c.hour ?? 21, c.minute ?? 0)
+            }
+        )
+    }
 }
 
 extension Binding where Value == Bool {

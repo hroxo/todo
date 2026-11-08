@@ -13,6 +13,9 @@ public struct Backup: Codable, Equatable, Sendable {
     public var criadoEm: Date
     public var definicoes: Definicoes
     public var listas: [ListaB]
+    /// Os dias do widget "O teu ritmo"; nil em backups de antes do histórico. Ao restaurar, a
+    /// app junta-o ao do aparelho (`HistoricoDias.juntado`), sem apagar dias.
+    public var historico: HistoricoDias?
 
     public struct ListaB: Codable, Equatable, Sendable {
         public var id: UUID
@@ -110,7 +113,7 @@ public struct ResumoRestauro: Equatable, Sendable {
 }
 
 extension Tarefas {
-    public func criarBackup() throws -> Backup {
+    public func criarBackup(historico: HistoricoDias? = nil) throws -> Backup {
         func item(_ i: Item) -> Backup.ItemB {
             Backup.ItemB(
                 id: i.id, titulo: i.titulo, tipo: i.tipoRaw, estado: i.estadoRaw, fixado: i.fixado,
@@ -131,7 +134,8 @@ extension Tarefas {
                     tipo: l.tipoRaw, partilhaId: l.partilhaId, permanente: l.permanente, vaziaDesde: l.vaziaDesde,
                     itens: l.itens.sorted { $0.ordem < $1.ordem }.map(item)
                 )
-            }
+            },
+            historico: historico
         )
     }
 

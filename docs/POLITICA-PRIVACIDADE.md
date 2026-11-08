@@ -32,6 +32,7 @@ A ToDo é desenvolvida por [O TEU NOME]. Para qualquer questão sobre privacidad
 | --- | --- | --- |
 | Pontos, subtópicos, descrições, listas e fotos que escreves | Fazer a app funcionar | No teu iPhone, na base de dados da app |
 | Definições (durações, hora dos avisos) | Lembrar as tuas escolhas | No teu iPhone |
+| Histórico de dias (em que dias concluíste pontos ou algum expirou, sem o texto dos pontos) | Mostrar o widget "O teu ritmo" | No teu iPhone e no backup que exportares |
 | Eventos do calendário do iPhone | Mostrar o teu dia e criar pontos a partir deles | Lidos pela app através do sistema, com a tua autorização. Não são guardados à parte |
 | Dados da tua conta Google ou Microsoft, se a ligares | Mostrar o teu calendário (ver abaixo) | Lidos para o iPhone. Só o endereço de email e as chaves de acesso ficam guardados, no Keychain do iPhone |
 | Nome e email do "Iniciar sessão com a Apple", se o usares | Mostrar o teu nome na app | No Keychain do iPhone |

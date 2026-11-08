@@ -26,9 +26,11 @@ A tua lista mostra só o que ainda importa, sem se tornar um arquivo de coisas p
 
 ## Novidades
 
+- 🟩 **Widget "O teu ritmo".** Os teus últimos 7 ou 15 dias: verde quando concluis um ponto, vermelho quando algo expira, neutro sem atividade. Conta dias, não pontos.
+- 🌙 **Fecho do dia.** À noite, um aviso, o Glassy e o widget convidam-te a decidir os pontos que chegam ao fim, um cartão de cada vez: Concluir, Manter ou Deixar ir.
 - 👋 **Questionário de boas-vindas.** Na primeira abertura, três perguntas ajustam a app ao teu ritmo: quanto tempo fica um ponto, quando chega o aviso (24 horas antes, de manhã ou à noite) e para que a vais usar (cria os primeiros espaços).
 - 🌗 **Aparência à escolha.** Sistema, Claro, Escuro ou Reativo, que escurece depois do pôr do sol.
-- ➕ **O "+" outra vez à parte da barra**, também no iOS 27; mantém-no premido para criar uma lista.
+- ➕ **O "+" outra vez à parte da barra**, também no iOS 27; mantém-no premido e arrasta até "Nova lista" para criar uma lista.
 - ⏳ **O Glassy, anfitrião do Início.** A mascote está viva: respira, pisca, e a areia conta como vai o teu dia. Fica preocupada quando os pontos se acumulam e festeja quando o dia fica ganho.
 - 🌅 **Um céu que segue o dia.** O Início tem colinas, sol e lua: dia no modo claro, noite no escuro, como o teu iPhone.
 - ✍️ **Captura mais completa.** Descrição e fotos logo ao criar um ponto.
@@ -110,7 +112,7 @@ Liga o calendário (Apple, Google, Outlook: as contas que já tens no iPhone, ou
 <td valign="top">
 
 ### 🗂️ Até 8 espaços
-Trabalho, Pessoal, Casa… cada espaço tem a sua cor e um ícone ou emoji. Com 4 ou mais, o Início mostra páginas com setas (a segunda já traz o cartão "Nova lista"); mantém premido o "+" de baixo e escolhe Nova lista.
+Trabalho, Pessoal, Casa… cada espaço tem a sua cor e um ícone ou emoji. Com 4 ou mais, o Início mostra páginas com setas (a segunda já traz o cartão "Nova lista"); mantém premido o "+" de baixo e arrasta o dedo até "Nova lista".
 
 </td>
 </tr>

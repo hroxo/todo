@@ -6,6 +6,7 @@ import WidgetKit
 struct ToDoWidgets: WidgetBundle {
     var body: some Widget {
         WidgetPontos()
+        WidgetRitmo()
         WidgetNovaNota()
         ControloNovaNota()
     }
@@ -56,6 +57,29 @@ struct WidgetPontos: Widget {
         .configurationDisplayName("O que importa agora")
         .description("Os pontos que precisam de ti, com o anel do prazo. Toca no círculo para concluir.")
         .supportedFamilies([.systemMedium])
+    }
+}
+
+/// "O teu ritmo" (DESIGN.md 7.24): 7 dias no pequeno, 15 no médio.
+struct WidgetRitmo: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "com.hugo.todo.ritmo", provider: FornecedorResumo()) { entrada in
+            VistaRitmoFamilia(resumo: entrada.resumo, data: entrada.date)
+                .containerBackground(for: .widget) { Color(.systemBackground) }
+        }
+        .configurationDisplayName("O teu ritmo")
+        .description("Os teus últimos dias: verde quando concluis, vermelho quando algo expira.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+private struct VistaRitmoFamilia: View {
+    let resumo: ResumoWidget?
+    let data: Date
+    @Environment(\.widgetFamily) private var familia
+
+    var body: some View {
+        VistaRitmo(resumo: resumo, data: data, quantos: familia == .systemMedium ? ResumoWidget.diasRitmo : 7)
     }
 }
 

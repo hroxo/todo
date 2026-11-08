@@ -110,6 +110,24 @@ struct DefinicoesView: View {
                          : "Avisa na véspera do dia em que o item expira, a esta hora (entre as 08:00 e as 22:00).")
                 }
 
+                if definicoes.avisosAtivos {
+                    Section {
+                        Toggle(isOn: $definicoes.fechoDiaAtivo) {
+                            Label {
+                                Text("Fecho do dia")
+                            } icon: {
+                                IconeDefinicao(simbolo: "moon.stars.fill", cor: .indigo)
+                            }
+                        }
+                        if definicoes.fechoDiaAtivo {
+                            DatePicker("Hora do fecho", selection: $definicoes.horaFecho, displayedComponents: .hourAndMinute)
+                                .environment(\.locale, Locale(identifier: "pt_PT"))
+                        }
+                    } footer: {
+                        Text("À noite, um aviso com os pontos que chegam ao fim, para os decidires um a um. Só quando há algum, e entre as 08:00 e as 22:00.")
+                    }
+                }
+
                 Section {
                     Toggle(isOn: $definicoes.inteligenciaAtiva) {
                         Label {
@@ -318,6 +336,10 @@ struct DefinicoesView: View {
         do {
             try Tarefas(contexto: contexto).restaurar(backup)
             try contexto.save()
+            // try?: os dias do widget não são dados do utilizador; os pontos já entraram.
+            if let historico = backup.historico, let pasta = BaseDados.pastaPartilhada {
+                try? HistoricoDias.juntarAoGuardado(historico, em: pasta)
+            }
             definicoes = definicoes.aoRestaurar(backup.definicoes)
             estado.reagendarAvisos()
             estado.avisoPartilha = "Backup restaurado."

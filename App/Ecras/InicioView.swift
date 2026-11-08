@@ -346,15 +346,19 @@ struct InicioView: View {
 
     // MARK: - Anfitriã (DESIGN.md 7.22)
 
-    /// O balão diz, por esta ordem: o "Boa!" do ponto acabado de concluir, a sugestão de "Para ti"
-    /// ou a frase do dia.
+    /// O balão diz, por esta ordem: o "Boa!" do ponto acabado de concluir, o Fecho do dia (depois
+    /// da hora, com pontos a chegar ao fim), a sugestão de "Para ti" ou a frase do dia.
     private func anfitria(progresso: ProgressoDia, sugestao: ParaTi?, agora: Date) -> some View {
+        let fecho = (try? Tarefas(contexto: contexto).fechoPendente(feitoEm: estado.fechoFeitoEm)) ?? 0
         let fraseDoDia = progresso.frase(saudacao: ceu.saudacao)
         let frase: String
         let botoes: [CartaoAnfitria.Botao]
         if let acabado {
             frase = progresso.completo ? fraseDoDia : "Boa! Menos um."
             botoes = [.init(rotulo: "Anular") { anular(acabado) }]
+        } else if fecho > 0 {
+            frase = progresso.frase(saudacao: ceu.saudacao, fechoPendente: fecho)
+            botoes = [.init(rotulo: "Fechar o dia") { estado.mostrarFecho = true }]
         } else if let sugestao {
             frase = frasesParaTi[sugestao.chave] ?? sugestao.fraseBase
             botoes = sugestao.botoes.map { botao in .init(rotulo: botao.rotulo) { agir(botao.acao) } }
@@ -369,7 +373,8 @@ struct InicioView: View {
             pose: progresso.completo ? .celebrar : .para(agora, tudoEmDia: false, estado: glassy),
             frase: frase,
             botoes: botoes,
-            dispensar: acabado == nil ? sugestao.map { sugestao in
+            // O "×" é da sugestão de "Para ti": com o Anular ou o fecho no balão, não aparece.
+            dispensar: acabado == nil && fecho == 0 ? sugestao.map { sugestao in
                 { withAnimation(.snappy) { paraTiDispensado = sugestao.chave } }
             } : nil,
             saltos: saltos

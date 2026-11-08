@@ -16,16 +16,21 @@ public enum TextoAviso {
 
     /// "Expira amanhã às 18:30", contado a partir da hora a que o aviso aparece.
     public static func quando(_ aviso: Aviso, calendario: Calendar = .current) -> String {
-        let hora = Formatos.hora(aviso.expiraEm, calendario: calendario)
+        quando(expiraEm: aviso.expiraEm, agora: aviso.data, calendario: calendario)
+    }
+
+    /// O mesmo para qualquer prazo (também no Fecho do dia).
+    public static func quando(expiraEm limite: Date, agora: Date, calendario: Calendar = .current) -> String {
+        let hora = Formatos.hora(limite, calendario: calendario)
         let dia = calendario.dateComponents(
             [.day],
-            from: calendario.startOfDay(for: aviso.data),
-            to: calendario.startOfDay(for: aviso.expiraEm)
+            from: calendario.startOfDay(for: agora),
+            to: calendario.startOfDay(for: limite)
         ).day ?? 0
         switch dia {
         case ...0: return "Expira hoje às \(hora)"
         case 1: return "Expira amanhã às \(hora)"
-        default: return "Expira \(Formatos.dia(aviso.expiraEm, agora: aviso.data, calendario: calendario)) às \(hora)"
+        default: return "Expira \(Formatos.dia(limite, agora: agora, calendario: calendario)) às \(hora)"
         }
     }
 

@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engagement · cinco ideias, duas versões cada</title>
+<style>
+:root{--azul:#0071E3;--roxo:#8E44C9;--amar:#FFCC00;--verde:#34C759;--lar:#FF9500;--txt2:#6C6C70;--fundo:#F2F2F7;--areia:#F5B84A}
+*{box-sizing:border-box}
+body{margin:0;background:#E5E5EA;font-family:-apple-system,'SF Pro Display','Inter',system-ui,sans-serif;color:#000}
+.folha{max-width:1180px;margin:0 auto;padding:40px 24px 80px}
+.folha>h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+.folha>p{margin:0 0 6px;color:#3A3A3C;max-width:760px;line-height:1.5}
+.aviso{margin:18px 0 8px;padding:12px 16px;border-radius:14px;background:#FFF4DC;color:#5C4300;font-size:14px;line-height:1.45;max-width:760px}
+.legenda{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:#3A3A3C;margin:10px 0 0}
+.ideia{display:grid;grid-template-columns:240px 1fr;gap:28px;margin-top:44px;padding-top:28px;border-top:2px solid #C7C7CC}
+.ideia h2{margin:0 0 4px;font-size:22px;letter-spacing:-.01em}
+.ideia .n{font-size:13px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em}
+.ideia p{font-size:14px;line-height:1.5;margin:8px 0;color:#3A3A3C}
+.sinal{font-size:13px;padding:10px 12px;border-radius:12px;background:#fff;margin-top:12px;line-height:1.45}
+.sinal b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin-bottom:2px}
+.versoes{display:flex;gap:28px;flex-wrap:wrap}
+.versao{width:254px}
+.versao .cap{font-size:14px;font-weight:700;margin:10px 0 2px}
+.versao .cap small{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:8px;background:#000;color:#fff;font-size:11px}
+.versao .cap small.b{background:var(--roxo)}
+.versao .desc{font-size:13px;color:#3A3A3C;line-height:1.4;min-height:54px}
+.pers{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.pers span{font-size:11px;font-weight:600;padding:3px 7px;border-radius:9px;background:#fff;color:#3A3A3C;white-space:nowrap}
+.pers .s{background:#DDF5E3;color:#14622B}.pers .r{background:#FFE1DE;color:#8A1C13}
+.moldura{width:254px;height:536px;border-radius:34px;overflow:hidden;border:6px solid #1C1C1E;background:#000;box-shadow:0 14px 36px rgba(0,0,0,.2)}
+.escala{zoom:.62;width:390px;height:844px}
+/* ecrã do iPhone, como nos mocks existentes */
+.ph{width:390px;height:844px;position:relative;overflow:hidden;background:var(--fundo);padding:60px 20px 0;display:flex;flex-direction:column;gap:14px}
+.ph .eye{font-size:13px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em}
+.ph h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-.02em}
+.ph h3{margin:0;font-size:13px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em}
+.grelha{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sp{height:112px;border-radius:22px;padding:14px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.sp b{font-size:17px}.sp span{font-size:13px;font-weight:600}
+.cartao{background:#fff;border-radius:20px;padding:14px 16px}
+.pill{border:none;border-radius:22px;height:44px;padding:0 20px;font-size:15px;font-weight:700;color:#fff;background:var(--azul);font-family:inherit}
+.pill.vidro{background:rgba(255,255,255,.22);backdrop-filter:blur(12px)}
+.noite{border-radius:26px;padding:18px;color:#fff;background:linear-gradient(150deg,#1D1B3F,#47307F);display:flex;align-items:center;gap:8px}
+.noite .k{font-size:11px;font-weight:700;letter-spacing:.06em;opacity:.7}
+.noite .big{font-size:24px;font-weight:800;margin:2px 0 4px;letter-spacing:-.01em}
+.noite .sub{font-size:13px;opacity:.85;line-height:1.35;margin-bottom:12px}
+.semana{display:flex;justify-content:space-between}
+.dia{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--txt2)}
+.bola{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.bola.g{background:var(--verde);color:#fff}
+.bola.n{border:2px dashed #C7C7CC}
+.bola.h{border:3px solid var(--azul);background:#fff}
+.bola.f{background:#E5E5EA}
+.bola.v{border:2px solid #E5E5EA}
+.tab{position:absolute;left:16px;right:16px;bottom:28px;display:flex;gap:10px;align-items:center}
+.tab .cap{flex:1;height:62px;border-radius:31px;padding:4px;display:flex;background:rgba(255,255,255,.7);backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,.9);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.tab .it{flex:1;border-radius:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:600;color:#3A3A3C}
+.tab .it.on{background:rgba(0,113,227,.13);color:#0062CC}
+.tab .mais{width:62px;height:62px;border-radius:31px;background:rgba(0,113,227,.9);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,113,227,.35)}
+.topo{display:flex;justify-content:space-between;align-items:center}
+.topo .l{font-size:17px;font-weight:700}
+.topo .a{font-size:15px;font-weight:600;color:#0062CC}
+.bt{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.bt i{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-style:normal}
+.linha{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E5E5EA}
+.linha:last-child{border-bottom:none}
+.linha .t{flex:1;font-size:16px;font-weight:600}
+.linha .t small{display:block;font-size:13px;font-weight:500;color:var(--txt2)}
+.chk{width:26px;height:26px;border-radius:50%;border:2px solid #C7C7CC;display:flex;align-items:center;justify-content:center;color:#fff}
+.chk.on{background:var(--azul);border-color:var(--azul)}
+.gota{display:inline-block;width:14px;height:18px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:var(--areia)}
+.gota.v{background:#E5E5EA}
+.av{width:38px;height:38px;border-radius:50%;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+.mini{display:flex;gap:3px}.mini b{width:9px;height:9px;border-radius:50%;background:#E5E5EA}.mini b.g{background:var(--verde)}
+.cena{border-radius:20px;height:140px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;font-weight:700;font-size:14px;position:relative;overflow:hidden}
+.cena small{font-weight:600;opacity:.9;font-size:12px}
+.cena.bloq{filter:grayscale(1) brightness(.85);color:#1C1C1E}
+.cena.bloq small{opacity:1}
+</style>
+</head>
+<body>
+<div class="folha">
+  <h1>Engagement: cinco ideias, duas versões cada</h1>
+  <p>Mocks para escolher o que vale a pena construir. <b>A</b> é a versão subtil, que usa só regras que a app já tem. <b>B</b> é a ousada, que pede uma regra ou um ecrã novo.</p>
+  <p>A medida certa para esta app é <b>abrir mais vezes</b>, não ficar mais tempo. A lista que se limpa sozinha serve melhor com sessões curtas e regulares.</p>
+  <div class="aviso">Tudo aqui é <b>hipótese</b>: os símbolos por persona (acumuladora, controladora, despejadora, competitivo, grupo) são palpites a validar com os testers, não dados. Nenhuma destas ideias está implementada.</div>
+  <div class="legenda"><span>▲ ajuda</span><span>◆ neutro</span><span>▼ risco</span><span>Acu = acumuladora · Con = controladora · Des = despejadora · Com = competitivo · Gru = grupo de amigos</span></div>
+
+  <!-- 1 -->
+  <section class="ideia">
+    <div>
+      <div class="n">Ideia 1</div><h2>Fecho do dia</h2>
+      <p>Um motivo para abrir a app à noite: decidir o que fica, o que sai e o que se conclui. O Glassy conta o dia.</p>
+      <div class="sinal"><b>Sinal a medir</b>Aberturas entre as 20:00 e as 23:00 e % de dias com o fecho feito.</div>
+    </div>
+    <div class="versoes">
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div><div class="eye">Sábado, 7 nov</div><h1>Listas</h1></div>
+          <div class="noite"><div style="flex:1"><div class="k">21:00 · FECHO DO DIA</div><div class="big">Fechas o dia?</div><div class="sub">3 pontos chegam ao último dia. Leva 30 segundos.</div><button class="pill vidro">Fechar o dia</button></div><i data-g="84,0.35,0.6,sleep"></i></div>
+          <div class="grelha"><div class="sp" style="background:#0071E3"><b>Trabalho</b><span>7 ativos</span></div><div class="sp" style="background:#8E44C9"><b>Pessoal</b><span>5 ativos</span></div></div>
+          <i data-tab="0"></i>
+        </div></div></div>
+        <div class="cap"><small>A</small>Cartão no Início</div>
+        <div class="desc">Aparece à noite por cima dos espaços. Toque abre o fecho; ignorar não custa nada.</div>
+        <div class="pers"><span class="s">Acu ▲</span><span>Con ◆</span><span class="s">Des ▲</span><span>Com ◆</span><span>Gru ◆</span></div>
+      </div>
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph" style="background:#fff">
+          <div class="topo"><span class="a" style="color:var(--txt2)">Sair</span><span class="l">Fechar o dia</span><span class="a">2 de 3</span></div>
+          <div style="position:relative;height:400px;margin-top:10px">
+            <div style="position:absolute;inset:26px 18px 0;background:#E5E5EA;border-radius:28px"></div>
+            <div style="position:absolute;inset:10px 6px 14px;background:#F2F2F7;border-radius:28px;box-shadow:0 8px 24px rgba(0,0,0,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center">
+              <span style="font-size:12px;font-weight:800;color:#fff;background:var(--azul);padding:3px 10px;border-radius:10px">Trabalho</span>
+              <svg width="110" height="110" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="#E5E5EA" stroke-width="4"/><circle cx="18" cy="18" r="13" fill="none" stroke="#FF9500" stroke-width="4" stroke-linecap="round" stroke-dasharray="14 81.7" transform="rotate(-90 18 18)"/><text x="18" y="21" text-anchor="middle" font-size="8" font-weight="800" fill="#FF9500">1 dia</text></svg>
+              <div style="font-size:24px;font-weight:800;letter-spacing:-.01em">Marcar dentista</div>
+              <div style="font-size:14px;color:var(--txt2)">Criado há 3 dias · sem lhe tocares</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-around;margin-top:8px">
+            <div class="bt"><i style="background:#8E8E93"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></i>Largar</div>
+            <div class="bt"><i style="background:var(--azul)"><span class="gota" style="background:#fff;width:18px;height:24px"></span></i>Manter +5</div>
+            <div class="bt"><i style="background:var(--verde)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>Concluir</div>
+          </div>
+          <div style="text-align:center;font-size:13px;color:var(--txt2)">Ou desliza: ← largar · → manter</div>
+        </div></div></div>
+        <div class="cap"><small class="b">B</small>Decidir em cartas</div>
+        <div class="desc">Ecrã cheio com um ponto de cada vez. É a versão que mais parece um jogo.</div>
+        <div class="pers"><span>Acu ◆</span><span class="s">Con ▲</span><span class="s">Des ▲</span><span class="s">Com ▲</span><span>Gru ◆</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="ideia">
+    <div>
+      <div class="n">Ideia 2</div><h2>Dia ganho</h2>
+      <p>O contrário de um streak. Um dia é ganho quando nada expirou por esquecimento. Dias sem nada em risco ficam neutros e nada volta a zero.</p>
+      <div class="sinal"><b>Sinal a medir</b>% de dias ganhos e regresso no dia seguinte a um dia ganho.</div>
+    </div>
+    <div class="versoes">
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div><div class="eye">Sábado, 7 nov</div><h1>Listas</h1></div>
+          <div class="cartao" style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:10px"><span class="bola g" style="width:30px;height:30px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div><div style="font-weight:800;font-size:17px">Ontem foi dia ganho</div><div style="font-size:13px;color:var(--txt2)">Nada expirou por esquecimento</div></div></div>
+            <div class="semana">
+              <div class="dia">S<span class="bola g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+              <div class="dia">T<span class="bola g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+              <div class="dia">Q<span class="bola n"></span></div>
+              <div class="dia">Q<span class="bola g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+              <div class="dia">S<span class="bola g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+              <div class="dia">S<span class="bola h"></span></div>
+              <div class="dia">D<span class="bola f"></span></div>
+            </div>
+            <div style="font-size:13px;color:var(--txt2)">4 dias ganhos esta semana</div>
+          </div>
+          <div class="grelha"><div class="sp" style="background:#0071E3"><b>Trabalho</b><span>7 ativos</span></div><div class="sp" style="background:#8E44C9"><b>Pessoal</b><span>5 ativos</span></div></div>
+          <i data-tab="0"></i>
+        </div></div></div>
+        <div class="cap"><small>A</small>Selo e semana</div>
+        <div class="desc">Uma linha no Início. O círculo tracejado é um dia sem nada em risco: não conta, nem pesa.</div>
+        <div class="pers"><span class="s">Acu ▲</span><span>Con ◆</span><span class="s">Des ▲</span><span class="r">Com ▼</span><span>Gru ◆</span></div>
+      </div>
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div class="topo"><span class="a" style="color:var(--txt2)">‹ Voltar</span><span class="l">O teu mês</span><span style="width:50px"></span></div>
+          <div><div class="eye">Outubro</div><h1 style="font-size:44px">24 dias ganhos</h1></div>
+          <div class="cartao" style="padding:16px">
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:10px"><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span></div>
+            <div id="mes" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#3A3A3C;padding:0 4px">
+            <div style="display:flex;gap:8px;align-items:center"><span class="bola g" style="width:16px;height:16px"></span>Dia ganho</div>
+            <div style="display:flex;gap:8px;align-items:center"><span class="bola n" style="width:16px;height:16px"></span>Sem nada em risco: não conta, nem pesa</div>
+            <div style="display:flex;gap:8px;align-items:center"><span class="bola v" style="width:16px;height:16px"></span>Ficou algo por decidir</div>
+          </div>
+        </div></div></div>
+        <div class="cap"><small class="b">B</small>O mês inteiro</div>
+        <div class="desc">Mapa do mês sem vermelhos. Os dias falhados são só um círculo vazio.</div>
+        <div class="pers"><span>Acu ◆</span><span class="s">Con ▲</span><span>Des ◆</span><span class="s">Com ▲</span><span>Gru ◆</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="ideia">
+    <div>
+      <div class="n">Ideia 3</div><h2>Areia de hoje</h2>
+      <p>O Manter passa a ter um orçamento diário. Decidir o que merece viver torna-se a jogada. É a ideia mais disruptiva e a que mexe numa regra do produto.</p>
+      <div class="sinal"><b>Sinal a medir</b>Manter por dia, aberturas de manhã e quantos testers desligam a regra.</div>
+    </div>
+    <div class="versoes">
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div class="topo"><span class="a">‹ Trabalho</span><span style="width:50px"></span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding-top:6px">
+            <svg width="120" height="120" viewBox="0 0 36 36"><circle cx="18" cy="18" r="13" fill="none" stroke="#E5E5EA" stroke-width="4"/><circle cx="18" cy="18" r="13" fill="none" stroke="#FF9500" stroke-width="4" stroke-linecap="round" stroke-dasharray="14 81.7" transform="rotate(-90 18 18)"/><text x="18" y="21" text-anchor="middle" font-size="8" font-weight="800" fill="#FF9500">1 dia</text></svg>
+            <div style="font-size:26px;font-weight:800;letter-spacing:-.01em">Marcar dentista</div>
+            <div style="font-size:14px;color:var(--txt2)">Expira amanhã às 09:12</div>
+          </div>
+          <div class="cartao" style="display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:8px">
+            <button class="pill" style="width:100%;height:56px;font-size:17px">Manter +5 dias</button>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700"><span class="gota"></span><span class="gota"></span><span class="gota v"></span>Areia de hoje: 2 de 3</div>
+            <div style="font-size:13px;color:var(--txt2)">Renova amanhã às 08:00</div>
+          </div>
+          <button class="pill" style="background:#fff;color:#14622B;height:52px">Concluir</button>
+        </div></div></div>
+        <div class="cap"><small>A</small>Orçamento no Manter</div>
+        <div class="desc">O botão de sempre, com três gotas por baixo. Cada Manter gasta uma.</div>
+        <div class="pers"><span>Acu ◆</span><span class="r">Con ▼</span><span class="s">Des ▲</span><span class="s">Com ▲</span><span>Gru ◆</span></div>
+      </div>
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph" style="background:#fff">
+          <div><div class="eye">Sábado, 7 nov</div><h1>Tens 3 de areia.</h1></div>
+          <div style="font-size:15px;color:#3A3A3C;line-height:1.4">Escolhe o que merece viver mais. O resto segue o seu caminho.</div>
+          <div class="cartao" style="background:#F2F2F7;padding:4px 16px">
+            <div class="linha"><span class="chk on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="t">Marcar dentista<small>Último dia</small></div></div>
+            <div class="linha"><span class="chk on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="t">Enviar proposta<small>Falta 1 subtópico</small></div></div>
+            <div class="linha"><span class="chk on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="t">Renovar seguro<small>2 dias</small></div></div>
+            <div class="linha"><span class="chk"></span><div class="t" style="color:var(--txt2)">Ver série nova<small>3 dias</small></div></div>
+            <div class="linha"><span class="chk"></span><div class="t" style="color:var(--txt2)">Ideia do podcast<small>3 dias</small></div></div>
+          </div>
+          <div style="text-align:center;font-size:13px;color:var(--txt2)"><span class="gota"></span> <span class="gota"></span> <span class="gota"></span> &nbsp;3 de 3 usadas</div>
+          <button class="pill" style="height:54px;font-size:17px">Manter 3 · deixar 2</button>
+        </div></div></div>
+        <div class="cap"><small class="b">B</small>Escolher de manhã</div>
+        <div class="desc">Ritual das 08:00: escolhes três pontos para manter vivos. Dá razão para abrir de manhã.</div>
+        <div class="pers"><span class="s">Acu ▲</span><span>Con ◆</span><span class="s">Des ▲</span><span>Com ◆</span><span>Gru ◆</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="ideia">
+    <div>
+      <div class="n">Ideia 4</div><h2>Semana com amigos</h2>
+      <p>O social sem servidor: primeiro um cartão que se envia por Mensagens, depois, se os amigos o pedirem, um grupo. Ranking semanal, a recomeçar à segunda.</p>
+      <div class="sinal"><b>Sinal a medir</b>Cartões enviados por semana e quantos amigos o pedem em automático.</div>
+    </div>
+    <div class="versoes">
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph" style="background:#1C1C1E;align-items:center;padding-top:70px">
+          <div style="width:310px;border-radius:34px;padding:26px 22px;color:#fff;background:linear-gradient(160deg,#8E44C9,#4B2A8F);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;box-shadow:0 20px 50px rgba(142,68,201,.4)">
+            <div style="font-size:13px;font-weight:700;letter-spacing:.08em;opacity:.8">SEMANA 45</div>
+            <i data-g="120,0.5,0.5,party"></i>
+            <div style="font-size:84px;font-weight:800;line-height:1;letter-spacing:-.03em">6/7</div>
+            <div style="font-size:18px;font-weight:700">dias ganhos</div>
+            <div class="semana" style="width:100%;margin-top:12px"><span class="bola" style="background:#fff;width:28px;height:28px"></span><span class="bola" style="background:#fff;width:28px;height:28px"></span><span class="bola" style="background:#fff;width:28px;height:28px"></span><span class="bola" style="background:rgba(255,255,255,.3);width:28px;height:28px"></span><span class="bola" style="background:#fff;width:28px;height:28px"></span><span class="bola" style="background:#fff;width:28px;height:28px"></span><span class="bola" style="background:#fff;width:28px;height:28px"></span></div>
+            <div style="font-size:12px;opacity:.75;margin-top:14px">ToDo · a lista que se limpa sozinha</div>
+          </div>
+          <button class="pill" style="margin-top:22px;background:#fff;color:#000;width:310px">Enviar aos amigos</button>
+        </div></div></div>
+        <div class="cap"><small>A</small>Cartão semanal</div>
+        <div class="desc">Imagem para enviar por Mensagens. Não precisa de servidor e só sai o que a pessoa envia.</div>
+        <div class="pers"><span class="r">Acu ▼</span><span>Con ◆</span><span>Des ◆</span><span class="s">Com ▲</span><span class="s">Gru ▲</span></div>
+      </div>
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div class="topo"><span class="a" style="color:var(--txt2)">‹ Voltar</span><span class="l">Semana 45</span><span class="a">Convidar</span></div>
+          <div style="font-size:13px;color:var(--txt2);text-align:center">Recomeça segunda · só vês dias ganhos, nunca os pontos</div>
+          <div class="cartao" style="padding:4px 16px">
+            <div class="linha"><b style="width:18px;color:var(--txt2)">1</b><span class="av" style="background:#34C759">M</span><div class="t">Marta<div class="mini" style="margin-top:4px"><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b></div></div><b style="font-size:18px">7/7</b></div>
+            <div class="linha" style="background:#EAF3FF;margin:0 -16px;padding:12px 16px"><b style="width:18px;color:var(--txt2)">2</b><span class="av" style="background:#0071E3">Tu</span><div class="t">Tu<div class="mini" style="margin-top:4px"><b class="g"></b><b class="g"></b><b></b><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b></div></div><b style="font-size:18px">6/7</b></div>
+            <div class="linha"><b style="width:18px;color:var(--txt2)">2</b><span class="av" style="background:#FF9500">R</span><div class="t">Rui<div class="mini" style="margin-top:4px"><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b><b class="g"></b><b></b><b class="g"></b></div></div><b style="font-size:18px">6/7</b></div>
+            <div class="linha"><b style="width:18px;color:var(--txt2)">4</b><span class="av" style="background:#8E44C9">B</span><div class="t">Bea<div class="mini" style="margin-top:4px"><b class="g"></b><b></b><b class="g"></b><b></b><b class="g"></b><b class="g"></b><b></b></div></div><b style="font-size:18px">4/7</b></div>
+          </div>
+          <div style="border:2px dashed #C7C7CC;border-radius:18px;height:54px;display:flex;align-items:center;justify-content:center;color:var(--txt2);font-weight:600;font-size:15px">+ Convidar outro amigo</div>
+          <div style="font-size:13px;color:var(--txt2);padding:0 4px;line-height:1.4">Empates partilham o lugar. Sem medalhas e sem histórico: na segunda ninguém está à frente.</div>
+        </div></div></div>
+        <div class="cap"><small class="b">B</small>Grupo de amigos</div>
+        <div class="desc">Ranking semanal. Pede sincronização (CloudKit) e muda a política de privacidade.</div>
+        <div class="pers"><span class="r">Acu ▼</span><span>Con ◆</span><span>Des ◆</span><span class="s">Com ▲</span><span class="s">Gru ▲</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="ideia">
+    <div>
+      <div class="n">Ideia 5</div><h2>O mundo do Glassy</h2>
+      <p>O placar é uma coisa que se vê, não um número. O cenário do Glassy muda com os dias ganhos e fica numa coleção que nunca se perde.</p>
+      <div class="sinal"><b>Sinal a medir</b>Dias até desbloquear um cenário e aberturas do ecrã da coleção.</div>
+    </div>
+    <div class="versoes">
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div><div class="eye">Sábado, 7 nov</div><h1>Listas</h1></div>
+          <div style="height:250px;border-radius:28px;position:relative;overflow:hidden;background:linear-gradient(180deg,#8EC9FF,#DDF1FF 62%,#BFE8A8 62%);display:flex;flex-direction:column;justify-content:space-between;padding:16px">
+            <div style="color:#0B3A66"><div style="font-size:12px;font-weight:800;letter-spacing:.06em">CENÁRIO · PARQUE</div><div style="font-size:13px;margin-top:2px">Mais 3 dias ganhos para o próximo</div></div>
+            <div style="position:absolute;left:30px;right:-30px;bottom:-60px;height:130px;border-radius:50%;background:#7CCB6A"></div>
+            <div style="position:absolute;right:26px;bottom:34px"><i data-g="110,0.55,0.4,ok"></i></div>
+            <div style="position:relative;height:10px;border-radius:5px;background:rgba(255,255,255,.7);width:55%"><div style="height:100%;width:57%;border-radius:5px;background:var(--azul)"></div></div>
+          </div>
+          <div class="grelha"><div class="sp" style="background:#0071E3"><b>Trabalho</b><span>7 ativos</span></div><div class="sp" style="background:#8E44C9"><b>Pessoal</b><span>5 ativos</span></div></div>
+          <i data-tab="0"></i>
+        </div></div></div>
+        <div class="cap"><small>A</small>Cenário que evolui</div>
+        <div class="desc">O Início ganha um cenário vivo. A barra mostra quanto falta para o próximo, sem nada que se perca.</div>
+        <div class="pers"><span class="s">Acu ▲</span><span>Con ◆</span><span class="s">Des ▲</span><span>Com ◆</span><span>Gru ◆</span></div>
+      </div>
+      <div class="versao">
+        <div class="moldura"><div class="escala"><div class="ph">
+          <div class="topo"><span class="a" style="color:var(--txt2)">‹ Voltar</span><span class="l">Cenários</span><span style="width:50px"></span></div>
+          <div style="font-size:13px;color:var(--txt2)">3 de 6 desbloqueados · só se ganha, nunca se perde</div>
+          <div class="grelha" style="gap:12px">
+            <div class="cena" style="background:linear-gradient(180deg,#8EC9FF,#7CCB6A)"><span>Parque</span><small>Desbloqueado</small></div>
+            <div class="cena" style="background:linear-gradient(180deg,#FFB86B,#FF6B8B)"><span>Viagem</span><small>Desbloqueado</small></div>
+            <div class="cena" style="background:linear-gradient(180deg,#5B3A29,#A8744F)"><span>Biblioteca</span><small>Desbloqueado</small></div>
+            <div class="cena bloq" style="background:linear-gradient(180deg,#24235A,#6B4FB5)"><span>Noite</span><small>Faltam 3 dias ganhos</small></div>
+            <div class="cena bloq" style="background:linear-gradient(180deg,#5BD6D0,#FFE39A)"><span>Praia</span><small>Faltam 10 dias ganhos</small></div>
+            <div class="cena bloq" style="background:linear-gradient(180deg,#9FB4C7,#E9EEF3)"><span>Montanha</span><small>Faltam 20 dias ganhos</small></div>
+          </div>
+        </div></div></div>
+        <div class="cap"><small class="b">B</small>Coleção</div>
+        <div class="desc">Uma coleção de cenários a desbloquear. Dá um motivo para abrir sem criar culpa.</div>
+        <div class="pers"><span>Acu ◆</span><span>Con ◆</span><span>Des ◆</span><span class="s">Com ▲</span><span class="s">Gru ▲</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// Glassy: ampulheta com areia (topo/baixo de 0 a 1) e humor
+function glassy(size, top, bot, mood){
+  const h = size*80/60, id = 'c'+Math.random().toString(36).slice(2,7);
+  const body = 'M12 6H48C48 28 36 34 36 40C36 46 48 52 48 74H12C12 52 24 46 24 40C24 34 12 28 12 6Z';
+  const rosto = mood==='sleep'
+    ? '<path d="M22 19h5M33 19h5" stroke="#3A3A3C" stroke-width="2" stroke-linecap="round"/><path d="M26 25q4 2 8 0" stroke="#3A3A3C" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+    : mood==='party'
+    ? '<circle cx="25" cy="19" r="2" fill="#3A3A3C"/><circle cx="35" cy="19" r="2" fill="#3A3A3C"/><path d="M24 24q6 6 12 0z" fill="#3A3A3C"/><path d="M6 12l3 3M54 10l-3 3M5 30h4M51 30h4" stroke="#FF9500" stroke-width="2" stroke-linecap="round"/>'
+    : '<circle cx="25" cy="19" r="2" fill="#3A3A3C"/><circle cx="35" cy="19" r="2" fill="#3A3A3C"/><path d="M26 24q4 3 8 0" stroke="#3A3A3C" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+  return `<svg width="${size}" height="${h}" viewBox="0 0 60 80" style="flex:none"><defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs>
+  <path d="${body}" fill="rgba(255,255,255,.55)" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+  <g clip-path="url(#${id})"><rect x="10" y="${37-top*31}" width="40" height="${top*31+1}" fill="#F5B84A"/><rect x="10" y="${74-bot*31}" width="40" height="${bot*31}" fill="#F5B84A"/></g>
+  <path d="${body}" fill="none" stroke="#9AA3B2" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M9 6h42M9 74h42" stroke="#6C6C70" stroke-width="3.4" stroke-linecap="round"/>${rosto}</svg>`;
+}
+document.querySelectorAll('i[data-g]').forEach(e=>{const [s,t,b,m]=e.dataset.g.split(',');e.outerHTML=glassy(+s,+t,+b,m);});
+// Barra de separadores (cápsula + "+" à parte)
+const ic = [
+ 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+ 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12.5l2.8 2.8L16 9.8',
+ 'M6 3h12M6 21h12M7 3c0 6 10 6 10 9s-10 3-10 9M17 3c0 6-10 6-10 9s10 3 10 9',
+ 'M4 7h9M19 7h1M4 17h3M13 17h7M13.5 7a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0M7.5 17a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0'];
+const nomes=['Listas','Concluídos','Expirados','Definições'];
+document.querySelectorAll('i[data-tab]').forEach(e=>{
+  const on=+e.dataset.tab;
+  e.outerHTML=`<nav class="tab"><div class="cap">${ic.map((p,i)=>`<span class="it ${i===on?'on':''}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${p}"/></svg>${nomes[i]}</span>`).join('')}</div><span class="mais"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></nav>`;
+});
+// Mês de outubro de 2026 (1 de outubro = quinta): g ganho, n neutro, v por decidir
+const est='ggnggvggnggggvggngggggnggggvggg'.split('');
+let m='';for(let i=0;i<3;i++)m+='<span></span>';
+est.forEach((c,i)=>{m+=`<span class="bola ${c==='g'?'g':c==='n'?'n':'v'}" style="width:100%;height:auto;aspect-ratio:1;border-radius:10px;font-size:11px;font-weight:700">${c==='g'?'':''}${i+1}</span>`;});
+document.getElementById('mes').innerHTML=m;
+</script>
+</body>
+</html>

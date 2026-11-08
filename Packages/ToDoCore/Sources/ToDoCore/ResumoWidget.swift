@@ -9,6 +9,8 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
     /// Pontos guardados de reserva, além dos que se mostram.
     public static let maxReserva = 5
     public static let nomeFicheiro = "resumo-widget.json"
+    /// Dias no widget "O teu ritmo" (o médio); o pequeno mostra os últimos 7.
+    public static let diasRitmo = 15
 
     public var frase: String
     public var pontos: [Ponto]
@@ -23,6 +25,13 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
     public var datas: DatasGlassy?
     /// Os pontos que entram quando os de `pontos` expirarem.
     public var seguintes: [Ponto]?
+    /// Os últimos `diasRitmo` dias, até ao do resumo; nil em resumos antigos.
+    public var dias: [DiaHistorico]?
+    /// A hora do Fecho do dia, em minutos desde a meia-noite; nil com o fecho desligado ou em
+    /// resumos antigos.
+    public var minutosFecho: Int?
+    /// Quando fechaste o dia pela última vez: depois da hora do fecho, tira o convite até ao dia seguinte.
+    public var fechoFeitoEm: Date?
 
     public struct Ponto: Codable, Equatable, Sendable, Identifiable {
         public var id: UUID
@@ -51,7 +60,7 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
         }
     }
 
-    public init(frase: String, pontos: [Ponto], totalAtivos: Int, expiramHoje: Int, geradoEm: Date, tema: TemaMascote? = nil, glassy: EstadoGlassy? = nil, datas: DatasGlassy? = nil, seguintes: [Ponto]? = nil) {
+    public init(frase: String, pontos: [Ponto], totalAtivos: Int, expiramHoje: Int, geradoEm: Date, tema: TemaMascote? = nil, glassy: EstadoGlassy? = nil, datas: DatasGlassy? = nil, seguintes: [Ponto]? = nil, dias: [DiaHistorico]? = nil, minutosFecho: Int? = nil, fechoFeitoEm: Date? = nil) {
         self.frase = frase
         self.pontos = pontos
         self.totalAtivos = totalAtivos
@@ -61,6 +70,19 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
         self.glassy = glassy
         self.datas = datas
         self.seguintes = seguintes
+        self.dias = dias
+        self.minutosFecho = minutosFecho
+        self.fechoFeitoEm = fechoFeitoEm
+    }
+
+    /// Quantos pontos o widget pede para fechar a uma dada hora: os do último dia, só depois da
+    /// hora do fecho. Usa os números de `noMomento` dessa hora.
+    public func fechoPendente(em data: Date, calendario: Calendar = .current) -> Int {
+        guard let minutosFecho,
+              let hora = calendario.date(bySettingHour: minutosFecho / 60, minute: minutosFecho % 60, second: 0, of: data),
+              data >= hora, (fechoFeitoEm ?? .distantPast) < hora
+        else { return 0 }
+        return expiramHoje
     }
 
     /// O resumo tal como deve ser visto a uma dada hora: sem os pontos cujo prazo já passou, com
@@ -86,6 +108,8 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
             novo.frase = Self.fraseBase(totalAtivos: novo.totalAtivos, expiramHoje: novo.expiramHoje)
         }
         novo.glassy = datas.estado(em: data)
+        // Depois da meia-noite a janela anda: o dia novo começa neutro até a app o registar.
+        novo.dias = dias.map { HistoricoDias(dias: $0).ultimos(Self.diasRitmo, ate: data, calendario: calendario) }
         return novo
     }
 
@@ -158,7 +182,10 @@ public struct ResumoWidget: Codable, Equatable, Sendable {
             ],
             totalAtivos: 12,
             expiramHoje: 1,
-            geradoEm: agora
+            geradoEm: agora,
+            dias: zip(HistoricoDias().ultimos(diasRitmo, ate: agora, calendario: .current), Array("vvnvrvvnvvrvvnv")).map { dia, letra in
+                DiaHistorico(dia: dia.dia, concluiu: letra == Character("v"), expirou: letra == Character("r"))
+            }
         )
     }
 }
@@ -188,8 +215,9 @@ extension Tarefas {
             .map { ($0.item, razao($0.item, agora: agora)) }
     }
 
-    /// O resumo para o widget, com a frase de base (a app pode trocá-la pela do modelo).
-    public func resumoWidget() throws -> ResumoWidget {
+    /// O resumo para o widget, com a frase de base (a app pode trocá-la pela do modelo). Com o
+    /// histórico gravado, leva também os dias de "O teu ritmo", com o de hoje tirado dos pontos.
+    public func resumoWidget(historicoGuardado: HistoricoDias? = nil, fechoFeitoEm: Date? = nil) throws -> ResumoWidget {
         let agora = relogio.agora
         let ativos = try itens(.ativo).filter { !$0.ehSubtopico && $0.apagadoEm == nil && $0.lista?.ehCompras != true }
         let hoje = ativos.filter { Prazo(item: $0, agora: agora)?.ultimoDia == true }.count
@@ -216,7 +244,14 @@ extension Tarefas {
             tema: try temaMascote(),
             glassy: datas.estado(em: agora),
             datas: datas,
-            seguintes: Array(pontos.dropFirst(ResumoWidget.maxPontos))
+            seguintes: Array(pontos.dropFirst(ResumoWidget.maxPontos)),
+            dias: try historicoGuardado.map {
+                try historico(juntandoA: $0).ultimos(ResumoWidget.diasRitmo, ate: agora, calendario: calendario)
+            },
+            minutosFecho: definicoes.avisosAtivos && definicoes.fechoDiaAtivo
+                ? min(21, max(8, definicoes.horaFechoDia)) * 60 + definicoes.minutoFechoDia
+                : nil,
+            fechoFeitoEm: fechoFeitoEm
         )
     }
 

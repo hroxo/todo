@@ -156,7 +156,7 @@ No modelo: `icone: String` com o nome do SF Symbol, ou `emoji: String?`. Se `emo
 - `TabView` nativa com 4 separadores: **Listas, Concluídos, Expirados, Definições**, com a barra do sistema escondida. [Alterado 07/11/2026: o iOS 27 deixou de desenhar o separador de pesquisa à parte e o "+" passava a ser um 5.º separador dentro da barra.]
 - **A barra é nossa** (`BarraSeparadores`), com vidro nativo num `GlassEffectContainer`: os 4 separadores numa cápsula `.glassEffect(.regular.interactive())` (ícone e rótulo; o escolhido na cor de destaque, com fundo leve) e, à direita, na mesma linha e separado dela, o **"+" de captura** num círculo de vidro de 62 pt. Fica em `safeAreaInset` em baixo, para o conteúdo nunca ficar escondido.
 - O separador Expirados mostra um contador vermelho quando há itens.
-- **"+":** toque abre a Nova nota; **manter premido** abre, a partir do "+", o menu com **Nova lista** (`Menu` com `primaryAction`, que também serve o VoiceOver). Com 8 espaços, Nova lista mostra o aviso do máximo.
+- **"+":** toque abre a Nova nota. **Manter premido** (meio segundo, com vibração) faz nascer por cima, alinhada à direita, uma cápsula de vidro com o quadrado com visto (`checkmark.square.fill`) e "Nova lista". **Arrastar o dedo até ela e largar** abre a Nova lista; com o dedo em cima a cápsula fica azul e cresce um pouco (vibração leve). Largar noutro sítio não faz nada. No VoiceOver, a ação "Nova lista". Com 8 espaços, mostra o aviso do máximo. [Decidido 07/11/2026: opção B, "bolha com nome"]
 - O Detalhe esconde a barra (tem o Manter no fundo, 7.5).
 - A barra deixa de encolher ao percorrer (era o `.tabBarMinimizeBehavior` da barra do sistema).
 - O conteúdo percorre **por baixo** da barra (é isso que dá o efeito de vidro), mas a última linha tem de ficar visível quando se chega ao fim.
@@ -290,7 +290,7 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - **Mais de 4 espaços**: cartões de 128 pt (2 × 2 por página) e, por baixo, uma linha com duas setas de vidro (círculos de 44 pt, `chevron.left`/`chevron.right`; a do lado sem mais páginas fica esbatida), pontos de página e "Espaços 1–4 de 6". Deslizar na grelha também muda de página (`TabView` com `.page` ou `ScrollView` paginado). Até 3 espaços, sem setas, como antes.
 - **Exatamente 4 espaços**: a primeira página fica cheia, por isso já há uma segunda página, só com o cartão "Nova lista" (rótulo "Nova lista" em vez de "Espaços 5–…").
 - **Máximo de 8**: na última página, "Nova lista" só aparece se houver menos de 8; com 8, aparece a nota "Máximo de 8 espaços".
-- **Manter premido o "+"** de baixo: abre o menu com Nova lista (7.1); com 8, mostra o aviso do máximo. O toque curto continua a abrir a captura.
+- **Manter premido o "+"** de baixo e arrastar até "Nova lista" (7.1); com 8, mostra o aviso do máximo. O toque curto continua a abrir a captura.
 - **Hoje no calendário por espaço** [Decidido]: eventos de todos os espaços, num só grupo branco, por hora. Cabeçalho "HOJE NO CALENDÁRIO" com "4 eventos · todos os espaços". Cada linha (62 pt): horas, barra da cor do calendário, título e, por baixo, o espaço (círculo do ícone de 18 pt, nome em `.footnote` semibold) e o local. O "+" fica na cor do espaço e cria o ponto nesse espaço. Calendários sem espaço não aparecem.
 - Imagens dos mocks: `design/mocks/*.png` (geradas com `scripts/mocks.sh` a partir de `design/mocks/html/`).
 - **Eventos sem espaço** (Melhoria 6.1) [Decidido 22/10/2026, substitui "calendários sem espaço não aparecem"]: aparecem também, com um círculo tracejado de 18 pt e "Sem espaço" no lugar do espaço. O "+" de um evento sem espaço cria o ponto na última lista usada (pressão longa: escolher outra). Cada calendário tem três destinos: um espaço, **Sem espaço** (aparece) ou **Não mostrar** (escondido).
@@ -400,6 +400,18 @@ A pré-visualização atualiza-se a cada toque. "OK" grava; "Cancelar" descarta.
 - O Início tem a cena com colinas; os outros ecrãs só a cor do céu; as listas e os detalhes mantêm o fundo na cor da lista.
 - Por defeito segue o modo do sistema; em Definições › Aparência pode ficar sempre claro, sempre escuro ou **Reativo** (7.11), e o céu acompanha.
 - O Glassy saúda pelo relógio, em qualquer modo: "Bom dia!" das 6h às 12h, "Boa tarde!" até às 20h e "Boa noite!" depois.
+
+### 7.24 Widget "O teu ritmo" [Decidido 07/11/2026, mock 2 em `design/mocks/html/Engagement.html`]
+- Cada dia é **binário**: **verde** (✓, `EstadoConcluido`) se concluíste um ponto, **vermelho** (✕, `ListaVermelho`) se algo expirou e nada foi concluído, **neutro** (contorno tracejado) sem atividade. Num dia com as duas coisas, o verde ganha. Fechar 1 ponto ou mil dá o mesmo dia: nunca se mostram contagens de pontos, só de dias.
+- **Pequeno:** "O teu ritmo", o número de dias verdes em 7 e uma linha de 7 dias com a inicial por baixo. **Médio:** 15 dias numa grelha de 5 × 3, o número à esquerda e o Glassy pequeno por baixo.
+- Hoje tem um anel à volta. A marca (✓, ✕, tracejado) diz o mesmo que a cor, também no modo tingido; cada dia tem rótulo para o VoiceOver ("Quarta, 21 out: concluíste pontos").
+- Contam os pontos principais fora das listas de compras. Dias sem registo ficam neutros.
+
+### 7.25 Fecho do dia [Decidido 07/11/2026, mock 1B em `design/mocks/html/Engagement.html`]
+- À hora escolhida (por defeito 21:00, sempre entre as 08:00 e as 22:00), quando há pontos no último dia do prazo: uma **notificação** "Fecho do dia · Fechas o dia? N pontos chegam ao fim.", a mesma frase no **Glassy** do Início com o botão "Fechar o dia" e, no **widget médio** "O teu ritmo", a cápsula "Fechar o dia" no lugar do Glassy. Sem pontos em risco, com os avisos desligados, ou depois de fechares o dia (sair do ecrã de cartas, mesmo a meio), nada aparece até ao fecho seguinte.
+- Tocar abre o **ecrã de cartas**: um ponto de cada vez, com a lista, o anel laranja "Hoje", o título e "Expira amanhã às 06:38". Botões **Concluir** (verde, proeminente), **Manter +5**, **Manter +15** e **Deixar ir** (passa à frente: o ponto expira no prazo dele). Deslizar o cartão → mantém, ← deixa ir; os botões fazem o mesmo.
+- No fim, o Glassy celebra ("Dia verde! Bom trabalho.") ou fica calmo ("Dia fechado."), com "Concluíste 1, mantiveste 1, deixaste ir 1."
+- Em Definições › Notificações: "Fecho do dia" ligado ou desligado e a hora.
 
 ### 7.20 Iniciar sessão com a Apple (opcional) [Decidido 28/10/2026]
 

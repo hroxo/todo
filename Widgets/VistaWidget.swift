@@ -4,6 +4,8 @@ import WidgetKit
 
 /// URL que abre a captura rápida na app (o "+" dos widgets e o controlo Nova nota).
 let urlCaptura = URL(string: "todo://captura")!
+/// URL que abre o Fecho do dia (o widget "O teu ritmo" e a notificação).
+let urlFecho = URL(string: "todo://fecho")!
 
 /// Widget médio "o que importa agora" (DESIGN.md 7.14), ao estilo Fitness: à esquerda o número
 /// grande do dia ("1 expira hoje", ou os ativos) com a frase por baixo; à direita os 3 pontos

@@ -88,6 +88,8 @@ ECRAS=(
   "17d-questionario-uso|questionario-uso|"
   "17e-questionario-pronto|questionario-pronto|"
   "17f-questionario-ajustar|questionario-ajustar|"
+  "18-fecho|fecho|"
+  "18b-fecho-anfitria|fecho-anfitria|"
 )
 
 primeira=1

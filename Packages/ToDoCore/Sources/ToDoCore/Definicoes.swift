@@ -42,6 +42,11 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public var diasListaVazia = 5
     /// Textos e sugestões escritos pelo modelo da Apple no iPhone (DESIGN.md 7.16).
     public var inteligenciaAtiva = true
+    /// Fecho do dia (Melhoria 33): à hora escolhida, notificação, frase do Glassy e widget.
+    public var fechoDiaAtivo = true
+    /// Sempre entre as 08:00 e as 21:59, como os outros avisos (regra da noite).
+    public var horaFechoDia = 21
+    public var minutoFechoDia = 0
 
     public init() {}
 
@@ -66,6 +71,9 @@ public struct Definicoes: Codable, Equatable, Sendable {
         modoAviso = (try? c.decodeIfPresent(ModoAviso.self, forKey: .modoAviso)) ?? base.modoAviso
         diasListaVazia = try dias(.diasListaVazia, base.diasListaVazia, Self.intervaloRetencao)
         inteligenciaAtiva = try c.decodeIfPresent(Bool.self, forKey: .inteligenciaAtiva) ?? base.inteligenciaAtiva
+        fechoDiaAtivo = try c.decodeIfPresent(Bool.self, forKey: .fechoDiaAtivo) ?? base.fechoDiaAtivo
+        horaFechoDia = try dias(.horaFechoDia, base.horaFechoDia, 8...21)
+        minutoFechoDia = try dias(.minutoFechoDia, base.minutoFechoDia, 0...59)
     }
 
     /// Escolhe o modo dos avisos com a hora dele.
@@ -80,6 +88,12 @@ public struct Definicoes: Codable, Equatable, Sendable {
     public mutating func definirHora(_ hora: Int, _ minuto: Int) {
         horaNotificacao = modoAviso == .vinteQuatroHoras ? hora : min(21, max(8, hora))
         minutoNotificacao = minuto
+    }
+
+    /// A hora do Fecho do dia, sempre entre as 08:00 e as 21:59 (regra da noite).
+    public mutating func definirHoraFecho(_ hora: Int, _ minuto: Int) {
+        horaFechoDia = min(21, max(8, hora))
+        minutoFechoDia = minuto
     }
 
     /// "De manhã, às 09:00", para o questionário e as Definições.

@@ -15,6 +15,12 @@ final class EstadoApp {
     var mostrarCaptura = false
     /// Nova lista no menu do "+" (manter premido): abre o formulário.
     var mostrarNovaLista = false
+    /// Fecho do dia: pela notificação, pelo Glassy no Início ou pelo widget (todo://fecho).
+    var mostrarFecho = false
+    /// Quando fechaste o dia; aqui para o Glassy tirar o convite logo, e gravado para os avisos e o widget.
+    var fechoFeitoEm = Notificacoes.fechoFeitoEm {
+        didSet { Notificacoes.fechoFeitoEm = fechoFeitoEm }
+    }
     /// Só para o modo de demonstração: o Início abre na última página (a do "Nova lista").
     var irParaUltimaPagina = false
     /// Só para o modo de demonstração: abre Personalizar lista no Início.

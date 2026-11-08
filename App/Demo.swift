@@ -168,6 +168,14 @@ enum Demo {
         case "questionario-pronto": estado.questionarioDemo = .pronto
         case "widget":
             estado.demoWidgets = true
+        case "fecho":
+            // Os pontos de exemplo no último dia ("Preparar demo de sexta" e companhia).
+            estado.mostrarFecho = true
+        case "fecho-anfitria":
+            // A hora do fecho mais cedo, para o Glassy convidar a fechar o dia a qualquer hora.
+            var definicoes = Definicoes.carregar()
+            definicoes.definirHoraFecho(8, 0)
+            definicoes.guardar()
         case "personalizar":
             estado.abrirPersonalizar = true
         case "quatro-listas":

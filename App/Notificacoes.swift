@@ -13,6 +13,14 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
     static let categoriaLista = "LISTA_VAZIA"
     /// Prefixo dos identificadores dos avisos de listas; os dos itens são só o id do item.
     private static let prefixoLista = "lista-"
+    /// O Fecho do dia (DESIGN.md 7.25): um só pedido, sempre com o mesmo identificador.
+    private static let idFecho = "fecho-dia"
+    /// Quando fechaste o dia pela última vez (o ecrã de cartas grava ao sair): tira o convite
+    /// do Glassy e do widget até ao fecho seguinte.
+    static var fechoFeitoEm: Date? {
+        get { UserDefaults.standard.object(forKey: "fechoFeitoEm") as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: "fechoFeitoEm") }
+    }
 
     private enum Acao: String {
         case manterCurto = "MANTER_CURTO"
@@ -57,13 +65,15 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         let definicoes = Definicoes.carregar()
         let tarefas = Tarefas(contexto: ModelContext(contentor))
         let avisosListas = (try? tarefas.planoAvisosListas()) ?? []
-        // As listas primeiro: são poucas (no máximo 8) e o iOS só guarda 64 avisos.
-        let avisos = Array(((try? tarefas.planoAvisos()) ?? []).prefix(Tarefas.maxAvisos - avisosListas.count))
+        let fecho = try? tarefas.planoFechoDia()
+        // As listas e o fecho primeiro: são poucos (no máximo 9) e o iOS só guarda 64 avisos.
+        let avisos = Array(((try? tarefas.planoAvisos()) ?? []).prefix(Tarefas.maxAvisos - avisosListas.count - 1))
         let centro = UNUserNotificationCenter.current()
         centro.removeAllPendingNotificationRequests()
         for aviso in avisosListas {
             agendar(aviso)
         }
+        if let fecho { agendar(fecho) }
         let inteligente = definicoes.inteligenciaAtiva
         atualizarWidget(tarefas, inteligente: inteligente)
         for aviso in avisos {
@@ -112,7 +122,9 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func atualizarWidget(_ tarefas: Tarefas, inteligente: Bool) {
-        guard let pasta = BaseDados.pastaPartilhada, var resumo = try? tarefas.resumoWidget() else { return }
+        guard let pasta = BaseDados.pastaPartilhada,
+              var resumo = try? tarefas.resumoWidget(historicoGuardado: HistoricoDias.ler(de: pasta), fechoFeitoEm: Self.fechoFeitoEm)
+        else { return }
         let chave = "\(resumo.totalAtivos)|\(resumo.expiramHoje)|"
             + resumo.pontos.map { "\($0.id)\($0.razao)" }.joined(separator: "|")
         if inteligente, let escrita = fraseEscrita, escrita.chave == chave {
@@ -167,6 +179,22 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().add(pedido)
     }
 
+    /// O número é o da hora a que se agendou; a app reagenda sempre que sai, e tocar abre o
+    /// ecrã de cartas com os pontos que chegam ao fim nesse momento.
+    private func agendar(_ fecho: PlanoFecho) {
+        let conteudo = UNMutableNotificationContent()
+        conteudo.title = "Fecho do dia"
+        conteudo.body = ProgressoDia.fraseFecho(fecho.pontos)
+        conteudo.sound = .default
+        let quando = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fecho.data)
+        let pedido = UNNotificationRequest(
+            identifier: Self.idFecho,
+            content: conteudo,
+            trigger: UNCalendarNotificationTrigger(dateMatching: quando, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(pedido)
+    }
+
     /// Muda quando muda alguma coisa que o texto diz.
     private static func chave(_ aviso: Aviso) -> String {
         "\(aviso.itemId)|\(aviso.data.timeIntervalSince1970)|\(aviso.expiraEm.timeIntervalSince1970)|\(aviso.subtopicosPorFazer)|\(aviso.lista ?? "")"
@@ -204,7 +232,9 @@ final class Notificacoes: NSObject, UNUserNotificationCenterDelegate {
         let acao = Acao(rawValue: response.actionIdentifier)
         let identificador = response.notification.request.identifier
         DispatchQueue.main.async {
-            if let acao {
+            if identificador == Self.idFecho {
+                UIApplication.shared.open(URL(string: "todo://fecho")!)
+            } else if let acao {
                 if identificador.hasPrefix(Self.prefixoLista),
                    let id = UUID(uuidString: String(identificador.dropFirst(Self.prefixoLista.count))) {
                     self.tratar(acao, listaId: id)

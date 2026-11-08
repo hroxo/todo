@@ -173,6 +173,52 @@ final class WidgetTests: BaseTestes {
         XCTAssertEqual(antigo.noMomento(dias(30, desde: relogio.agora)), antigo)
     }
 
+    // MARK: - O teu ritmo (Melhoria 33)
+
+    func testResumoTrazOsUltimos15DiasComHoje() throws {
+        tarefas.concluir(try tarefas.criarItem(titulo: "Feito", em: trabalho))
+
+        let dias = try XCTUnwrap(tarefas.resumoWidget(historicoGuardado: HistoricoDias()).dias)
+
+        XCTAssertEqual(dias.count, ResumoWidget.diasRitmo)
+        XCTAssertEqual(dias.last?.dia, "2026-10-21")
+        XCTAssertEqual(dias.last?.estado, .verde)
+        XCTAssertEqual(dias.dropLast().filter { $0.estado != .neutro }.count, 0)
+    }
+
+    func testSemHistoricoOResumoNaoTemDias() throws {
+        XCTAssertNil(try tarefas.resumoWidget().dias)
+    }
+
+    func testDepoisDaMeiaNoiteAJanelaAnda() throws {
+        tarefas.concluir(try tarefas.criarItem(titulo: "Feito", em: trabalho))
+        let resumo = try tarefas.resumoWidget(historicoGuardado: HistoricoDias())
+
+        let amanha = try XCTUnwrap(resumo.noMomento(data(2026, 10, 22, 0, 30), calendario: calendario).dias)
+
+        XCTAssertEqual(amanha.count, ResumoWidget.diasRitmo)
+        XCTAssertEqual(amanha.last?.dia, "2026-10-22")
+        XCTAssertEqual(amanha.last?.estado, .neutro)
+        XCTAssertEqual(amanha.dropLast().last?.estado, .verde)
+    }
+
+    func testResumoSemDiasLeSe() throws {
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(tarefas.resumoWidget())) as? [String: Any])
+        json["dias"] = nil
+        let resumo = try JSONDecoder().decode(ResumoWidget.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(resumo.dias)
+    }
+
+    /// O `ConcluirPontoIntent` conclui fora da app e reescreve o resumo com o histórico gravado.
+    func testConcluirNoWidgetPoeHojeVerdeSemPerderOntem() throws {
+        let guardado = HistoricoDias(dias: [DiaHistorico(dia: "2026-10-20", concluiu: false, expirou: true)])
+        tarefas.concluir(try tarefas.criarItem(titulo: "No widget", em: trabalho))
+
+        let dias = try XCTUnwrap(tarefas.resumoWidget(historicoGuardado: guardado).dias)
+
+        XCTAssertEqual(dias.suffix(2).map(\.estado), [.vermelho, .verde])
+    }
+
     func testFicheiroEstragadoNaoRebentaOWidget() throws {
         let pasta = FileManager.default.temporaryDirectory.appendingPathComponent("resumo-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: pasta, withIntermediateDirectories: true)

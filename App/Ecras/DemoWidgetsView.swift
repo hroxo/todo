@@ -7,6 +7,11 @@ import ToDoCore
 /// sem ir à galeria de widgets.
 struct DemoWidgetsView: View {
     private let resumo = ResumoWidget.exemplo()
+    private var comFecho: ResumoWidget {
+        var resumo = resumo
+        resumo.minutosFecho = 0
+        return resumo
+    }
 
     var body: some View {
         ScrollView {
@@ -15,6 +20,19 @@ struct DemoWidgetsView: View {
                     cartao(VistaPontos(resumo: resumo, data: .now))
                         .environment(\.colorScheme, esquema)
                 }
+                // O teu ritmo: o pequeno (7 dias) e o médio (15), em claro e escuro.
+                ForEach([ColorScheme.light, .dark], id: \.self) { esquema in
+                    HStack(spacing: 16) {
+                        ritmo(VistaRitmo(resumo: resumo, data: .now), largura: 170)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(width: 364)
+                    .environment(\.colorScheme, esquema)
+                    ritmo(VistaRitmo(resumo: resumo, data: .now, quantos: ResumoWidget.diasRitmo), largura: 364)
+                        .environment(\.colorScheme, esquema)
+                }
+                // Depois da hora do Fecho do dia: o médio convida a fechar o dia.
+                ritmo(VistaRitmo(resumo: comFecho, data: .now, quantos: ResumoWidget.diasRitmo), largura: 364)
                 // Sem pontos: o Glassy em todas as poses e, de dia, nos três temas.
                 ForEach(PoseMascote.allCases, id: \.self) { pose in
                     vazio(pose, .geral)
@@ -38,6 +56,15 @@ struct DemoWidgetsView: View {
             .padding(16)
             .frame(width: 364, height: 170)
             .background(FundoPontos(resumo: resumo))
+            .clipShape(.rect(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
+    }
+
+    private func ritmo(_ vista: some View, largura: CGFloat) -> some View {
+        vista
+            .padding(16)
+            .frame(width: largura, height: 170)
+            .background(Color(.systemBackground))
             .clipShape(.rect(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
     }

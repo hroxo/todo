@@ -33,8 +33,13 @@ struct ConcluirPontoIntent: AppIntent {
             // O identificador do aviso é o id do ponto (Notificacoes.agendar): sem isto, tocava na mesma.
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [itemId.uuidString])
         }
-        if let pasta = BaseDados.pastaPartilhada {
-            try? tarefas.resumoWidget().gravar(em: pasta)
+        if let pasta = BaseDados.pastaPartilhada, var resumo = try? tarefas.resumoWidget(historicoGuardado: HistoricoDias.ler(de: pasta)) {
+            // As definições e o fecho feito vivem nos UserDefaults da app, que a extensão não lê:
+            // o fecho fica como a app o gravou.
+            let anterior = ResumoWidget.ler(de: pasta)
+            resumo.minutosFecho = anterior?.minutosFecho
+            resumo.fechoFeitoEm = anterior?.fechoFeitoEm
+            try? resumo.gravar(em: pasta)
         }
         WidgetCenter.shared.reloadAllTimelines()
         return .result()

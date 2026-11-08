@@ -26,7 +26,8 @@ enum Backups {
         try? gestor.removeItem(at: pasta)
         try gestor.createDirectory(at: pasta, withIntermediateDirectories: true)
         let url = pasta.appendingPathComponent(Backup.nomeFicheiro(agora))
-        try Tarefas(contexto: contexto).criarBackup().dados().write(to: url, options: .atomic)
+        let historico = BaseDados.pastaPartilhada.map(HistoricoDias.ler(de:))
+        try Tarefas(contexto: contexto).criarBackup(historico: historico).dados().write(to: url, options: .atomic)
         return url
     }
 

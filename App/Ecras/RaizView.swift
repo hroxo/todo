@@ -110,5 +110,9 @@ struct RaizView: View {
         .sheet(isPresented: $estado.mostrarNovaLista) {
             PersonalizarListaView(modo: .nova)
         }
+        .sheet(isPresented: $estado.mostrarFecho) {
+            FechoDiaView()
+                .environment(estado)
+        }
     }
 }

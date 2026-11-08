@@ -109,6 +109,24 @@ final class BackupTests: BaseTestes {
         }
     }
 
+    /// O histórico de dias (Melhoria 33) vai no backup e, ao restaurar, junta-se sem apagar dias.
+    func testHistoricoVaiNoBackupEJuntaAoRestaurar() throws {
+        let guardado = HistoricoDias(dias: [DiaHistorico(dia: "2026-10-01", concluiu: true, expirou: false)])
+        let backup = try viaFicheiro(tarefas.criarBackup(historico: guardado))
+        XCTAssertEqual(backup.historico, guardado)
+
+        let local = HistoricoDias(dias: [DiaHistorico(dia: "2026-10-02", concluiu: false, expirou: true)])
+        XCTAssertEqual(local.juntado(com: try XCTUnwrap(backup.historico)).dias.map(\.dia), ["2026-10-01", "2026-10-02"])
+    }
+
+    /// Um backup de antes do histórico lê-se, sem histórico.
+    func testBackupSemHistoricoLeSe() throws {
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: tarefas.criarBackup().dados()) as? [String: Any])
+        json["historico"] = nil
+        let backup = try Backup.ler(JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(backup.historico)
+    }
+
     /// Um backup com dois meses: "Nada é apagado" tem de valer também na abertura seguinte.
     func testBackupAntigoNaoApagaNadaNaAberturaSeguinte() throws {
         try tarefas.criarListasIniciaisSeVazio()

@@ -20,6 +20,7 @@ targets:
       # A vista do widget médio também se mostra no ecrã de demonstração, e os intents têm
       # de estar na app (o Nova nota abre-a).
       - Widgets/VistaWidget.swift
+      - Widgets/VistaRitmo.swift
       - Widgets/Mascote.swift
       - Widgets/Intents.swift
     # Juntam-se às chaves geradas (GENERATE_INFOPLIST_FILE): o tipo de ficheiro das listas
@@ -84,8 +85,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     scheme: {}
 
-  # Widgets: o médio "o que importa agora", o "+" do ecrã bloqueado e o controlo Nova nota
-  # (DESIGN.md 7.14). Partilha com a app as cores, o anel e os dados do App Group.
+  # Widgets: o médio "o que importa agora", "O teu ritmo", o "+" do ecrã bloqueado e o controlo
+  # Nova nota (DESIGN.md 7.14 e 7.24). Partilha com a app as cores, o anel e os dados do App Group.
   ToDoWidgets:
     type: app-extension
     platform: iOS

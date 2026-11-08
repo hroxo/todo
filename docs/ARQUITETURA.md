@@ -141,6 +141,21 @@ Tem `fraseBase`, `factos` (para o modelo do iPhone não inventar) e até 2 botõ
 - **Sem pontos** (ou sem App Group), o widget mostra a **Ampulheta** (`Mascote.swift`, desenhada em `Canvas`): 4 poses ao longo do dia e cenários por tema.
 - O ecrã de demo `-ecra widget` (`DemoWidgetsView`) mostra as mesmas vistas dentro da app.
 
+## Histórico de dias e "O teu ritmo" (DESIGN.md 7.24)
+
+- **`HistoricoDias`** (`historico-dias.json` no App Group): um `DiaHistorico` binário por dia (`concluiu`, `expirou`; verde ganha). Fica fora do SwiftData por ser derivado: Concluídos e Expirados apagam-se no fim da retenção, e `recuperar` limpa o `expiradoEm`, por isso os dias passados não se tiram só dos pontos.
+- **`Tarefas.historico(juntandoA:)`** junta o que os pontos mostram ao que estava gravado: os dias passados só ganham informação, o de hoje vem só dos pontos (Anular e Reabrir desfazem-no).
+- **Ordem em `manutencao()`:** `registarHistorico` → `avaliar()` → `registarHistorico`. O primeiro apanha os concluídos antes de a retenção os apagar; o segundo, os que acabaram de expirar.
+- **Widget:** `resumoWidget(historicoGuardado:)` põe os últimos 15 dias em `ResumoWidget.dias`; `noMomento` desloca a janela à meia-noite. O `ConcluirPontoIntent` lê o histórico e regrava o resumo. `WidgetRitmo` (pequeno e médio, `VistaRitmo.swift`).
+- Cada aparelho tem o seu ficheiro; os dias dentro da retenção convergem com os pontos que o iCloud traz. Vai no backup (`Backup.historico`, opcional) e, ao restaurar, junta-se sem apagar dias.
+
+## Fecho do dia (DESIGN.md 7.25)
+
+- **`Tarefas.pontosEmRisco(em:)`**: ativos, não fixados, fora das compras, a menos de 24 h de expirar.
+- **`planoFechoDia()`**: o primeiro fecho (à hora de `Definicoes.horaFechoDia`) com pontos em risco; a app agenda uma notificação `fecho-dia` em `Notificacoes.reagendar()`. Tocar abre `todo://fecho`.
+- **`fechoPendente(feitoEm:)`**: depois da hora de hoje, com os avisos e o fecho ligados, quantos pontos o Glassy pede para fechar (`ProgressoDia.frase(saudacao:fechoPendente:)`). Zero se já fechaste o dia depois da hora: o ecrã de cartas grava `EstadoApp.fechoFeitoEm` ao desaparecer (UserDefaults, `Notificacoes.fechoFeitoEm`). No widget, `ResumoWidget.minutosFecho`, `fechoFeitoEm` e `fechoPendente(em:)`; o `ConcluirPontoIntent` copia-os do resumo anterior, porque a extensão não lê os UserDefaults da app.
+- **`FechoDiaView`**: as cartas ficam fixas ao abrir; antes de ler cada uma verifica `foiApagado`. "Deixar ir" não muda o ponto.
+
 ## Vista partilhada e AirDrop (DESIGN.md 7.15)
 
 - **Estrutura:** uma lista `compras` tem secções (os itens) e pontos (os subtópicos).

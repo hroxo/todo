@@ -21,8 +21,10 @@ public struct ProgressoDia: Equatable, Sendable {
     /// O dia só está ganho depois de concluir alguma coisa: um dia sem pontos não dá festa.
     public var completo: Bool { concluidos > 0 && porFazer == 0 }
 
-    /// O que a Ampulheta diz quando não há nada mais importante.
-    public func frase(saudacao: String) -> String {
+    /// O que a Ampulheta diz quando não há nada mais importante. Depois da hora do Fecho do dia,
+    /// com pontos a chegar ao fim (`Tarefas.fechoPendente`), convida a fechar o dia.
+    public func frase(saudacao: String, fechoPendente: Int = 0) -> String {
+        if fechoPendente > 0 { return Self.fraseFecho(fechoPendente) }
         if completo { return "Dia ganho! Bom trabalho." }
         switch (concluidos, porFazer) {
         case (_, 0): return "\(saudacao) Nada urgente hoje."
@@ -31,5 +33,10 @@ public struct ProgressoDia: Equatable, Sendable {
         case (_, 1): return "Boa! Só falta 1 ponto hoje."
         case (_, let n): return "Boa! Faltam \(n) pontos hoje."
         }
+    }
+
+    /// O convite do Fecho do dia: no Glassy, na notificação e no widget.
+    public static func fraseFecho(_ pontos: Int) -> String {
+        pontos == 1 ? "Fechas o dia? 1 ponto chega ao fim." : "Fechas o dia? \(pontos) pontos chegam ao fim."
     }
 }

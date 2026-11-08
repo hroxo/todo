@@ -102,10 +102,16 @@ struct ToDoApp: App {
     @MainActor
     private func abrirFicheiro(_ url: URL) {
         // todo://captura: o "+" dos widgets e o controlo Nova nota (DESIGN.md 7.14).
+        // todo://fecho: o Fecho do dia, do widget e da notificação (DESIGN.md 7.25).
         if url.scheme == "todo" {
-            if url.host() == "captura" {
+            switch url.host() {
+            case "captura":
                 estado.separador = .listas
                 estado.mostrarCaptura = true
+            case "fecho":
+                estado.separador = .listas
+                estado.mostrarFecho = true
+            default: break
             }
             return
         }
@@ -162,7 +168,13 @@ struct ToDoApp: App {
             vigiadas.subtract(tratadas)
             defaults.set(vigiadas.map(\.uuidString), forKey: Self.chaveListasVigiadas)
         }
+        // O histórico de dias regista-se antes de avaliar (que apaga os concluídos no fim da
+        // retenção) e depois (os que acabaram de expirar). try?: o histórico não é dado do
+        // utilizador e uma falha não pode travar a manutenção.
+        let pasta = BaseDados.pastaPartilhada
+        if let pasta { _ = try? tarefas.registarHistorico(em: pasta) }
         let mudou = (try? tarefas.avaliar()).map { $0.expirados + $0.apagados > 0 } ?? false
+        if let pasta { _ = try? tarefas.registarHistorico(em: pasta) }
         try? contexto.save()
         guard mudou || !soSeMudou else { return }
         // Na demonstração não há avisos, mas o widget mostra os dados de exemplo.
